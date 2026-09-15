@@ -194,18 +194,21 @@ public partial class MainWindow : Window
     private void ShowSuccess(string msg)
     {
         TxtStatus.Text    = msg;
-        TxtStatus.Foreground = new SolidColorBrush(Color.FromRgb(74, 222, 128)); // green
+        TxtStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#15803D")); // green
     }
 
     private static Border MakeVersionBadge(string year, bool detected)
     {
-        var color = detected ? "#1B2B1F" : "#1E2340";
-        var fg    = detected ? "#4ADE80" : "#3A4270";
+        var bg    = detected ? "#DCFCE7" : "#F1F5F9";
+        var border= detected ? "#86EFAC" : "#E2E8F0";
+        var fg    = detected ? "#15803D" : "#94A3B8";
         var icon  = detected ? "✓" : "—";
 
         return new Border
         {
-            Background     = new SolidColorBrush((Color)ColorConverter.ConvertFromString(color)),
+            Background     = new SolidColorBrush((Color)ColorConverter.ConvertFromString(bg)),
+            BorderBrush    = new SolidColorBrush((Color)ColorConverter.ConvertFromString(border)),
+            BorderThickness= new Thickness(1),
             CornerRadius   = new CornerRadius(8),
             Padding        = new Thickness(12, 6, 12, 6),
             Margin         = new Thickness(0, 0, 8, 8),
