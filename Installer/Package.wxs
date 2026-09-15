@@ -18,6 +18,9 @@
       DowngradeErrorMessage="Phien ban moi hon da duoc cai. Vui long go cai dat truoc."
       Schedule="afterInstallInitialize" />
 
+    <!-- Nhúng toàn bộ file nén (cab) vào bên trong file MSI -->
+    <MediaTemplate EmbedCab="yes" />
+
     <!-- Giao dien wizard gon (Welcome -> Install -> Finish) -->
     <ui:WixUI Id="WixUI_Minimal" />
     <WixVariable Id="WixUIDialogBmp"  Value="Assets\Dialog.bmp" />
