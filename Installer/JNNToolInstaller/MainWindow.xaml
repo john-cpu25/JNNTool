@@ -242,17 +242,35 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- Latest version -->
+                            <!-- Latest version from Git -->
                             <Border Grid.Column="2" Style="{StaticResource Card}">
-                                <StackPanel>
-                                    <TextBlock Text="LATEST" Foreground="#64748B"
-                                               FontSize="10" FontWeight="Bold" Margin="0,0,0,4"/>
-                                    <TextBlock x:Name="TxtLatestVersion"
-                                               Text="—" Foreground="#2563EB"
-                                               FontSize="19" FontWeight="Bold"/>
-                                    <TextBlock x:Name="TxtLatestDate"
-                                               Text="" Foreground="#94A3B8" FontSize="11" Margin="0,2,0,0"/>
-                                </StackPanel>
+                                <Grid>
+                                    <StackPanel>
+                                        <TextBlock x:Name="TxtLatestLabel" Text="LATEST (GIT)" Foreground="#64748B"
+                                                   FontSize="10" FontWeight="Bold" Margin="0,0,0,4"/>
+                                        <TextBlock x:Name="TxtLatestVersion"
+                                                   Text="—" Foreground="#2563EB"
+                                                   FontSize="19" FontWeight="Bold"/>
+                                        <TextBlock x:Name="TxtLatestDate"
+                                                   Text="" Foreground="#94A3B8" FontSize="11" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                    <Button Click="BtnCheckUpdate_Click"
+                                            HorizontalAlignment="Right" VerticalAlignment="Top"
+                                            Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1"
+                                            Cursor="Hand" Padding="8,3" Height="24">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}"
+                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                                        CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                        <TextBlock Text="🔄 Kiểm tra Git" FontSize="10" Foreground="#2563EB" FontWeight="SemiBold"/>
+                                    </Button>
+                                </Grid>
                             </Border>
                         </Grid>
 

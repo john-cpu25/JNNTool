@@ -48,6 +48,7 @@ public partial class MainWindow : Window
         if (_checker.LatestManifest != null)
         {
             var m = _checker.LatestManifest;
+            TxtLatestLabel.Text   = _checker.IsFetchedFromGit ? "LATEST (TỪ GIT)" : "LATEST";
             TxtLatestVersion.Text = $"v{m.Version}";
             TxtLatestDate.Text    = m.ReleaseDate;
 
@@ -62,15 +63,19 @@ public partial class MainWindow : Window
         // Update badge
         if (_checker.UpdateAvailable)
         {
-            TxtUpdateTitle.Text = $"Có phiên bản mới: v{_checker.LatestManifest!.Version}";
-            TxtUpdateSub.Text   = "Nhấn 'Cài đặt / Cập nhật' để nâng cấp";
+            TxtUpdateTitle.Text = $"Có phiên bản mới trên Git: v{_checker.LatestManifest!.Version}";
+            TxtUpdateSub.Text   = "Nhấn 'Cập nhật từ Git' để tải và cài đặt tự động";
             UpdateBadge.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            UpdateBadge.Visibility = Visibility.Collapsed;
         }
 
         // BtnInstall label
         BtnInstall.Content = _checker.IsInstalled
-            ? (_checker.UpdateAvailable ? "⬆  Cập nhật ngay" : "🔄  Cài lại")
-            : "⬇  Cài đặt";
+            ? (_checker.UpdateAvailable ? "⬆  Cập nhật từ Git" : "🔄  Cài lại / Đồng bộ Git")
+            : "⬇  Cài đặt từ Git";
 
         // Revit versions
         RevitVersionsPanel.Children.Clear();
@@ -83,6 +88,48 @@ public partial class MainWindow : Window
     }
 
     // ─── Buttons ─────────────────────────────────────────────────────────────
+
+    private async void BtnCheckUpdate_Click(object sender, RoutedEventArgs e)
+    {
+        SetBusy(true);
+        ProgressPanel.Visibility = Visibility.Visible;
+        TxtStatus.Text = "Đang kiểm tra phiên bản mới nhất từ Git (GitHub)...";
+        TxtStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2563EB"));
+        ProgressBar.IsIndeterminate = true;
+
+        await _checker.LoadAsync();
+        RefreshUI();
+
+        ProgressBar.IsIndeterminate = false;
+        ProgressPanel.Visibility = Visibility.Collapsed;
+        SetBusy(false);
+
+        if (_checker.UpdateAvailable)
+        {
+            MessageBox.Show(
+                $"Đã tìm thấy phiên bản mới trên Git: v{_checker.LatestManifest!.Version}!\n" +
+                $"Ngày phát hành: {_checker.LatestManifest.ReleaseDate}\n\n" +
+                "Bạn có thể nhấn nút 'Cập nhật từ Git' để tự động tải và cài đặt ngay.",
+                "Có bản cập nhật mới",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        else if (_checker.IsInstalled)
+        {
+            MessageBox.Show(
+                $"Bạn đang dùng phiên bản mới nhất (v{_checker.InstalledManifest?.Version ?? "1.0.0"}) từ Git!\n\n" +
+                "Nếu cần tải lại hoặc cài đặt lại, bạn có thể nhấn nút 'Cài lại / Đồng bộ Git'.",
+                "Đã là phiên bản mới nhất",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        else
+        {
+            MessageBox.Show(
+                $"Phiên bản mới nhất trên Git: v{_checker.LatestManifest?.Version ?? "1.0.0"}.\n" +
+                "Nhấn 'Cài đặt từ Git' để tiến hành cài đặt vào Revit.",
+                "Thông tin phiên bản",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+    }
 
     private async void BtnInstall_Click(object sender, RoutedEventArgs e)
     {
