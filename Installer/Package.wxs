@@ -22,6 +22,9 @@
     <ui:WixUI Id="WixUI_Minimal" />
     <WixVariable Id="WixUIDialogBmp"  Value="Assets\Dialog.bmp" />
 
+    <Icon Id="AppIcon.ico" SourceFile="JNNToolInstaller\icon.ico" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon.ico" />
+
 
 
     <!-- ============================================================
@@ -90,6 +93,7 @@
                   Name="JNNTool Updater"
                   Target="[AppDir]JNNToolInstaller.exe"
                   WorkingDirectory="AppDir"
+                  Icon="AppIcon.ico"
                   Description="Quan ly va cap nhat JNNTool Revit Plugin" />
         <!-- Shortcut go cai dat -->
         <Shortcut Id="UninstallShortcut"

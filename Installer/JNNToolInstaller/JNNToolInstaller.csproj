@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Assets\logo.png" />
     <Resource Include="Assets\dog.jpg" />
     <None Update="Assets\*" CopyToOutputDirectory="PreserveNewest" />
     <None Update="version.json" CopyToOutputDirectory="Always" />

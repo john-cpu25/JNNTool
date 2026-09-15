@@ -7,6 +7,7 @@
         ResizeMode="NoResize"
         WindowStyle="None"
         AllowsTransparency="True"
+        Icon="pack://application:,,,/Assets/logo.png"
         Background="Transparent">
 
     <Window.Resources>
@@ -99,11 +100,12 @@
         </Border.Effect>
 
         <Grid>
-            <!-- Dog Watermark Background with soft white overlay -->
+            <!-- Logo Watermark Background with soft white overlay -->
             <Grid ClipToBounds="True">
-                <Image Source="pack://application:,,,/Assets/dog.jpg"
-                       Stretch="UniformToFill"
-                       Opacity="0.08"
+                <Image Source="pack://application:,,,/Assets/logo.png"
+                       Stretch="Uniform"
+                       Width="340" Height="340"
+                       Opacity="0.05"
                        HorizontalAlignment="Center"
                        VerticalAlignment="Center"
                        RenderOptions.BitmapScalingMode="HighQuality"/>
@@ -128,13 +130,14 @@
                 <!-- Custom Title Bar -->
                 <Border Grid.Row="0" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseDown">
                     <Grid>
-                        <!-- Left: macOS dots -->
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="18,0">
-                            <Ellipse Width="12" Height="12" Fill="#FF5F57" Margin="0,0,6,0" Cursor="Hand"
+                        <!-- Left: App icon and macOS dots -->
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="14,0">
+                            <Image Source="pack://application:,,,/Assets/logo.png" Width="20" Height="20" Margin="0,0,10,0" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            <Ellipse Width="10" Height="10" Fill="#FF5F57" Margin="0,0,5,0" Cursor="Hand"
                                      PreviewMouseLeftButtonDown="CloseBtn_Click"/>
-                            <Ellipse Width="12" Height="12" Fill="#FEBC2E" Margin="0,0,6,0" Cursor="Hand"
+                            <Ellipse Width="10" Height="10" Fill="#FEBC2E" Margin="0,0,5,0" Cursor="Hand"
                                      PreviewMouseLeftButtonDown="MinimizeBtn_Click"/>
-                            <Ellipse Width="12" Height="12" Fill="#28C840"/>
+                            <Ellipse Width="10" Height="10" Fill="#28C840"/>
                         </StackPanel>
 
                         <!-- Center: title -->
@@ -202,12 +205,12 @@
                 <Grid Grid.Row="1" Margin="26,4,26,20">
                     <StackPanel VerticalAlignment="Top">
 
-                        <!-- Header with Dog Avatar Logo -->
+                        <!-- Header with JN Avatar Logo -->
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-                            <Border Width="50" Height="50" CornerRadius="12" Margin="0,0,14,0"
-                                    ClipToBounds="True" Background="#F1F5F9" BorderBrush="#2563EB" BorderThickness="1.5">
-                                <Image Source="pack://application:,,,/Assets/dog.jpg"
-                                       Stretch="UniformToFill"
+                            <Border Width="52" Height="52" CornerRadius="12" Margin="0,0,14,0"
+                                    ClipToBounds="True" Background="White" BorderBrush="#E2E8F0" BorderThickness="1.5">
+                                <Image Source="pack://application:,,,/Assets/logo.png"
+                                       Stretch="Uniform" Margin="4"
                                        RenderOptions.BitmapScalingMode="HighQuality"/>
                             </Border>
                             <StackPanel VerticalAlignment="Center">
