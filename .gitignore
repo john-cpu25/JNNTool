@@ -18,6 +18,7 @@ Installer/dist/
 *.msi
 *.zip
 *.nupkg
+*.cab
 
 # Temporary files
 *.tmp
