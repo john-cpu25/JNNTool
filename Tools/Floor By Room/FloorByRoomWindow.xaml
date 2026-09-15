@@ -1,0 +1,210 @@
+﻿<Window x:Class="JNNTool.FloorByRoomWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Vé Sàn Theo Room" Height="420" Width="420"
+        WindowStartupLocation="CenterScreen"
+        Topmost="True" ResizeMode="NoResize"
+        Background="#1E1E2E">
+
+    <Window.Resources>
+        <!-- Styles chung -->
+        <Style x:Key="LabelStyle" TargetType="Label">
+            <Setter Property="Foreground" Value="#CDD6F4"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style x:Key="InputStyle" TargetType="TextBox">
+            <Setter Property="Background" Value="#313244"/>
+            <Setter Property="Foreground" Value="#CDD6F4"/>
+            <Setter Property="BorderBrush" Value="#585B70"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Padding" Value="6,0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="CaretBrush" Value="#CDD6F4"/>
+        </Style>
+        
+        <Style x:Key="ComboStyle" TargetType="ComboBox">
+            <Setter Property="Background" Value="#313244"/>
+            <Setter Property="Foreground" Value="#CDD6F4"/>
+            <Setter Property="BorderBrush" Value="#585B70"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Padding" Value="4,0"/>
+        </Style>
+
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Background" Value="#89B4FA"/>
+            <Setter Property="Foreground" Value="#1E1E2E"/>
+            <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="12,0">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#B4BEFE"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SecondaryButton" TargetType="Button">
+            <Setter Property="Background" Value="#45475A"/>
+            <Setter Property="Foreground" Value="#CDD6F4"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="12,0">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#585B70"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- Tiêu đề -->
+            <RowDefinition Height="16"/>
+            <!-- Spacer -->
+            <RowDefinition Height="Auto"/>
+            <!-- Floor Type -->
+            <RowDefinition Height="12"/>
+            <RowDefinition Height="Auto"/>
+            <!-- Chiều dày -->
+            <RowDefinition Height="12"/>
+            <RowDefinition Height="Auto"/>
+            <!-- Offset -->
+            <RowDefinition Height="12"/>
+            <RowDefinition Height="Auto"/>
+            <!-- Room list header -->
+            <RowDefinition Height="*"/>
+            <!-- Room list -->
+            <RowDefinition Height="16"/>
+            <RowDefinition Height="Auto"/>
+            <!-- Buttons -->
+        </Grid.RowDefinitions>
+
+        <!-- === Tiêu đề === -->
+        <StackPanel Grid.Row="0" Orientation="Vertical">
+            <TextBlock Text="Vé Sàn Theo Room"
+                       Foreground="#89B4FA"
+                       FontFamily="Segoe UI Semibold"
+                       FontSize="18"
+                       HorizontalAlignment="Center"/>
+            <Rectangle Height="1" Fill="#45475A" Margin="0,8,0,0"/>
+        </StackPanel>
+
+        <!-- === Floor Type === -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="140"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Label Content="Loại Sàn (Floor Type):" Style="{StaticResource LabelStyle}" Grid.Column="0"/>
+            <ComboBox x:Name="cmbFloorTypes" Style="{StaticResource ComboStyle}"
+                      Grid.Column="1" IsEditable="True" Margin="0"/>
+        </Grid>
+
+        <!-- === Chiều dày sàn === -->
+        <Grid Grid.Row="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="140"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="50"/>
+            </Grid.ColumnDefinitions>
+            <Label Content="Chiều dày sàn:" Style="{StaticResource LabelStyle}" Grid.Column="0"/>
+            <TextBox x:Name="txtThickness" Style="{StaticResource InputStyle}"
+                     Grid.Column="1" Text="200" Margin="0"/>
+            <Label Content="mm" Style="{StaticResource LabelStyle}" Grid.Column="2"
+                   Foreground="#585B70" HorizontalAlignment="Left" Padding="6,0,0,0"/>
+        </Grid>
+
+        <!-- === Offset sàn === -->
+        <Grid Grid.Row="6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="140"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="50"/>
+            </Grid.ColumnDefinitions>
+            <Label Content="Offset từ Level:" Style="{StaticResource LabelStyle}" Grid.Column="0"/>
+            <TextBox x:Name="txtOffset" Style="{StaticResource InputStyle}"
+                     Grid.Column="1" Text="0" Margin="0"/>
+            <Label Content="mm" Style="{StaticResource LabelStyle}" Grid.Column="2"
+                   Foreground="#585B70" HorizontalAlignment="Left" Padding="6,0,0,0"/>
+        </Grid>
+
+        <!-- === Header Room List === -->
+        <Grid Grid.Row="8" Margin="0,0,0,4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Danh sách Room:" Foreground="#A6ADC8"
+                       FontFamily="Segoe UI" FontSize="12"
+                       VerticalAlignment="Center" Grid.Column="0"/>
+            <Button x:Name="btnPickRooms" Content="⊕ Chọn Room" Grid.Column="1"
+                    Style="{StaticResource SecondaryButton}"
+                    Height="26" FontSize="11" Margin="0,0,6,0"
+                    Click="BtnPickRooms_Click"/>
+            <Button x:Name="btnClearRooms" Content="✕ Xóa" Grid.Column="2"
+                    Style="{StaticResource SecondaryButton}"
+                    Height="26" FontSize="11"
+                    Click="BtnClearRooms_Click"/>
+        </Grid>
+
+        <!-- === Room List === -->
+        <Border Grid.Row="9" BorderBrush="#45475A" BorderThickness="1" CornerRadius="6">
+            <ListBox x:Name="lstRooms"
+                     Background="#181825"
+                     Foreground="#CDD6F4"
+                     FontFamily="Segoe UI"
+                     FontSize="12"
+                     BorderThickness="0"
+                     Padding="4"/>
+        </Border>
+
+        <!-- === Buttons === -->
+        <Grid Grid.Row="11">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Button x:Name="btnCancel" Content="Huỷ" Grid.Column="0"
+                    Style="{StaticResource SecondaryButton}"
+                    Click="BtnCancel_Click"/>
+            <Button x:Name="btnCreate" Content="▶  Tạo Sàn" Grid.Column="2"
+                    Style="{StaticResource PrimaryButton}"
+                    Click="BtnCreate_Click"/>
+        </Grid>
+    </Grid>
+</Window>

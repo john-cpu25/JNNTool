@@ -1,0 +1,56 @@
+﻿<Window x:Class="JNNTool.Tools.CSIxRevit.UI.ImportWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Import ETABS to Revit" Height="600" Width="720"
+        WindowStartupLocation="CenterScreen" Background="#F8F9FA" FontFamily="Segoe UI">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="#1E293B" Padding="16,12" CornerRadius="8" Margin="0,0,0,12">
+            <StackPanel>
+                <TextBlock Text="CẤU HÌNH KHỚP TIẾT DIỆN VÀ TẦNG (ETABS ➔ REVIT)" Foreground="White" FontSize="15" FontWeight="Bold"/>
+                <TextBlock Text="Chọn Level đích và khớp loại Tiết diện/Family tương ứng." Foreground="#94A3B8" FontSize="12" Margin="0,4,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="4,0,0,12">
+            <TextBlock Text="Chọn Level gốc trong Revit:" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="#334155" Margin="0,0,10,0"/>
+            <ComboBox x:Name="CmbLevels" Width="200" DisplayMemberPath="Name" VerticalAlignment="Center"/>
+        </StackPanel>
+
+        <DataGrid x:Name="DgMapping" Grid.Row="2" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single"
+                  HeadersVisibility="Column" Background="White" RowHeight="36" GridLinesVisibility="Horizontal" 
+                  HorizontalGridLinesBrush="#E2E8F0" BorderBrush="#CBD5E1" BorderThickness="1">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Tiết diện ETABS" Binding="{Binding EtabsSectionName}" Width="160" IsReadOnly="True" FontWeight="Bold"/>
+                <DataGridTextColumn Header="Thông tin Tiết diện (Size - Mat)" Binding="{Binding SectionDetails}" Width="220" IsReadOnly="True" Foreground="Gray"/>
+                <DataGridTextColumn Header="Loại Đối Tượng" Binding="{Binding ElementType}" Width="120" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Số Lượng" Binding="{Binding ObjectCount}" Width="80" IsReadOnly="True" FontWeight="SemiBold" Foreground="#475569"/>
+                <DataGridTemplateColumn Header="Revit Family / Type (Tiết diện)" Width="*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <ComboBox ItemsSource="{Binding AvailableTypes}" 
+                                      SelectedItem="{Binding SelectedType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                      DisplayMemberPath="Name"
+                                      Margin="4" VerticalAlignment="Center"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button x:Name="BtnAutoMatch" Content="⚡ Tự động Khớp" Width="130" Height="34" Margin="0,0,10,0" 
+                    Background="#0EA5E9" Foreground="White" FontWeight="Bold" BorderThickness="0" Cursor="Hand" Click="BtnAutoMatch_Click"/>
+            <Button x:Name="BtnCancel" Content="Hủy bỏ" Width="90" Height="34" Margin="0,0,10,0" 
+                    Background="#E2E8F0" Foreground="#334155" FontWeight="SemiBold" BorderThickness="0" Cursor="Hand" Click="BtnCancel_Click"/>
+            <Button x:Name="BtnImport" Content="🚀 Bắt đầu Dựng Hình" Width="160" Height="34" 
+                    Background="#10B981" Foreground="White" FontWeight="Bold" BorderThickness="0" Cursor="Hand" Click="BtnImport_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

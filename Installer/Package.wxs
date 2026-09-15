@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  JNNTool Revit Plugin - WiX v4 MSI Installer
+  Cai dat vao: C:\ProgramData\Autodesk\ApplicationPlugins\JNNTool.bundle\
+  Ho tro: Revit 2022 / 2023 / 2024 (net48) va 2025 / 2026 (net8)
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+
+  <Package Name="JNNTool Revit Plugin"
+           Manufacturer="JNN"
+           Version="1.0.0"
+           UpgradeCode="7f04a601-5e26-4b8c-8f4b-57f920f92b7c"
+           Compressed="yes">
+
+    <!-- Tu dong go ban cu khi cai ban moi -->
+    <MajorUpgrade
+      DowngradeErrorMessage="Phien ban moi hon da duoc cai. Vui long go cai dat truoc."
+      Schedule="afterInstallInitialize" />
+
+    <!-- Giao dien wizard gon (Welcome -> Install -> Finish) -->
+    <ui:WixUI Id="WixUI_Minimal" />
+    <WixVariable Id="WixUIDialogBmp"  Value="Assets\Dialog.bmp" />
+
+
+
+    <!-- ============================================================
+         Cau truc thu muc cai dat
+         C:\ProgramData\Autodesk\ApplicationPlugins\JNNTool.bundle\
+         ============================================================ -->
+    <StandardDirectory Id="CommonAppDataFolder">
+      <Directory Id="AutodeskDir"   Name="Autodesk">
+        <Directory Id="PluginsDir"  Name="ApplicationPlugins">
+          <Directory Id="INSTALLFOLDER" Name="JNNTool.bundle">
+            <Directory Id="ContentsDir" Name="Contents">
+              <Directory Id="Dir2022" Name="2022" />
+              <Directory Id="Dir2023" Name="2023" />
+              <Directory Id="Dir2024" Name="2024" />
+              <Directory Id="Dir2025" Name="2025" />
+              <Directory Id="Dir2026" Name="2026" />
+              <Directory Id="ResourcesDir" Name="Resources" />
+            </Directory>
+          </Directory>
+        </Directory>
+      </Directory>
+    </StandardDirectory>
+
+    <!-- Shortcut trong Start Menu -->
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="AppMenuFolder" Name="JNNTool" />
+    </StandardDirectory>
+
+    <!-- Thu muc cai dat JNNToolInstaller.exe -->
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="JNNDir" Name="JNN">
+        <Directory Id="AppDir" Name="JNNTool" />
+      </Directory>
+    </StandardDirectory>
+
+    <!-- ============================================================
+         Cac component
+         ============================================================ -->
+    <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+
+      <!-- JNNToolInstaller.exe cai vao Program Files -->
+      <Component Id="CmpUpdaterExe" Guid="*" Directory="AppDir">
+        <File Id="UpdaterExe"
+              Source="publish\JNNToolInstaller.exe"
+              KeyPath="yes" />
+      </Component>
+
+      <!-- icon.ico cai vao Program Files (dung cho shortcut) -->
+      <Component Id="CmpUpdaterIcon" Guid="*" Directory="AppDir">
+        <File Id="UpdaterIconFile"
+              Source="JNNToolInstaller\icon.ico"
+              KeyPath="yes" />
+      </Component>
+
+      <Component Id="CmpUpdaterVersion" Guid="*" Directory="AppDir">
+        <File Id="UpdaterVersionJson"
+              Source="JNNToolInstaller\version.json"
+              KeyPath="yes" />
+      </Component>
+
+      <!-- Start Menu shortcuts -->
+      <Component Id="StartMenuShortcut" Guid="85873994-3754-4a57-8894-394875489754"
+                 Directory="AppMenuFolder">
+        <!-- Shortcut mo JNNTool Updater -->
+        <Shortcut Id="UpdaterShortcut"
+                  Name="JNNTool Updater"
+                  Target="[AppDir]JNNToolInstaller.exe"
+                  WorkingDirectory="AppDir"
+                  Description="Quan ly va cap nhat JNNTool Revit Plugin" />
+        <!-- Shortcut go cai dat -->
+        <Shortcut Id="UninstallShortcut"
+                  Name="Uninstall JNNTool"
+                  Target="[SystemFolder]msiexec.exe"
+                  Arguments="/x [ProductCode]"
+                  Description="Go cai dat JNNTool Revit Plugin" />
+        <RemoveFolder Id="AppMenuFolder" On="uninstall" />
+        <RegistryValue Root="HKCU" Key="Software\JNN\JNNTool"
+                       Name="installed" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+
+      <!-- Bundle root: PackageContents.xml + version.json -->
+      <Component Id="CmpPackageContents" Guid="*">
+        <File Id="PackageContentsXml"
+              Source="..\JNNTool.bundle\PackageContents.xml" KeyPath="yes" />
+      </Component>
+
+      <Component Id="CmpVersionJson" Guid="*">
+        <File Id="VersionJson"
+              Source="..\JNNTool.bundle\version.json" KeyPath="yes" />
+      </Component>
+
+      <!-- Revit 2022 / 2023 / 2024 (net48) -->
+      <Component Id="Cmp2022" Guid="*" Directory="Dir2022">
+        <File Id="Dll2022"   Source="..\JNNTool.bundle\Contents\2022\JNNTool.dll"   KeyPath="yes" />
+        <File Id="Addin2022" Source="..\JNNTool.bundle\Contents\2022\JNNTool.addin" />
+      </Component>
+
+      <Component Id="Cmp2023" Guid="*" Directory="Dir2023">
+        <File Id="Dll2023"   Source="..\JNNTool.bundle\Contents\2023\JNNTool.dll"   KeyPath="yes" />
+        <File Id="Addin2023" Source="..\JNNTool.bundle\Contents\2023\JNNTool.addin" />
+      </Component>
+
+      <Component Id="Cmp2024" Guid="*" Directory="Dir2024">
+        <File Id="Dll2024"   Source="..\JNNTool.bundle\Contents\2024\JNNTool.dll"   KeyPath="yes" />
+        <File Id="Addin2024" Source="..\JNNTool.bundle\Contents\2024\JNNTool.addin" />
+      </Component>
+
+      <!-- Revit 2025 / 2026 (net8) -->
+      <Component Id="Cmp2025" Guid="*" Directory="Dir2025">
+        <File Id="Dll2025"   Source="..\JNNTool.bundle\Contents\2025\JNNTool.dll"   KeyPath="yes" />
+        <File Id="Addin2025" Source="..\JNNTool.bundle\Contents\2025\JNNTool.addin" />
+      </Component>
+
+      <Component Id="Cmp2026" Guid="*" Directory="Dir2026">
+        <File Id="Dll2026"   Source="..\JNNTool.bundle\Contents\2026\JNNTool.dll"   KeyPath="yes" />
+        <File Id="Addin2026" Source="..\JNNTool.bundle\Contents\2026\JNNTool.addin" />
+      </Component>
+
+      <!-- Resources (icons) - moi icon la 1 component de WiX tu sinh GUID -->
+      <Component Id="IcoClashDetection"  Guid="*" Directory="ResourcesDir">
+        <File Source="..\JNNTool.bundle\Contents\Resources\ClashDetection.png"          KeyPath="yes" />
+      </Component>
+      <Component Id="IcoConnection"      Guid="*" Directory="ResourcesDir">
+        <File Source="..\JNNTool.bundle\Contents\Resources\Connection.png"              KeyPath="yes" />
+      </Component>
+      <Component Id="IcoCreateFilter"    Guid="*" Directory="ResourcesDir">
+        <File Source="..\JNNTool.bundle\Contents\Resources\CreateFilter.png"            KeyPath="yes" />
+      </Component>
+      <Component Id="IcoCreateSection"   Guid="*" Directory="ResourcesDir">
+        <File Source="..\JNNTool.bundle\Contents\Resources\CreateSection.png"           KeyPath="yes" />
+      </Component>
+      <Component Id="IcoDisallowJoin"    Guid="*" Directory="ResourcesDir">
+        <File Source="..\JNNTool.bundle\Contents\Resources\DisallowJoinBeam.png"        KeyPath="yes" />
+      </Component>
+      <Component Id="IcoFloorByRoom"     Guid="*" Directory="ResourcesDir">
+        <File Source="..\JNNTool.bundle\Contents\Resources\FloorByRoom.png"             KeyPath="yes" />
+      </Component>
+      <Component Id="IcoImportE2K"       Guid="*" Directory="ResourcesDir">
+        <File Source="..\JNNTool.bundle\Contents\Resources\ImportE2K.png"               KeyPath="yes" />
+      </Component>
+      <Component Id="IcoPileLocation"    Guid="*" Directory="ResourcesDir">
+        <File Source="..\JNNTool.bundle\Contents\Resources\PileLocation.png"            KeyPath="yes" />
+      </Component>
+      <Component Id="IcoRebarBeam"       Guid="*" Directory="ResourcesDir">
+        <File Source="..\JNNTool.bundle\Contents\Resources\RebarBeam.png"               KeyPath="yes" />
+      </Component>
+      <Component Id="IcoRebarColumn"     Guid="*" Directory="ResourcesDir">
+        <File Source="..\JNNTool.bundle\Contents\Resources\RebarColumn.png"             KeyPath="yes" />
+      </Component>
+      <Component Id="IcoSpeedOverrider"  Guid="*" Directory="ResourcesDir">
+        <File Source="..\JNNTool.bundle\Contents\Resources\SpeedOverrider.png"          KeyPath="yes" />
+      </Component>
+      <Component Id="IcoSplitBeam"       Guid="*" Directory="ResourcesDir">
+        <File Source="..\JNNTool.bundle\Contents\Resources\SplitBeam.png"               KeyPath="yes" />
+      </Component>
+      <Component Id="IcoStairDetail"     Guid="*" Directory="ResourcesDir">
+        <File Source="..\JNNTool.bundle\Contents\Resources\StairDetail.png"             KeyPath="yes" />
+      </Component>
+      <Component Id="IcoSteelConnection" Guid="*" Directory="ResourcesDir">
+        <File Source="..\JNNTool.bundle\Contents\Resources\SteelConnectionDefault.png"  KeyPath="yes" />
+      </Component>
+
+    </ComponentGroup>
+
+    <Feature Id="Main" Title="JNNTool Revit Plugin" Level="1">
+      <ComponentGroupRef Id="ProductComponents" />
+    </Feature>
+
+  </Package>
+</Wix>

@@ -1,0 +1,13 @@
+{
+  "version": "1.0.0",
+  "releaseDate": "2026-09-13",
+  "manifestUrl": "https://raw.githubusercontent.com/john-cpu25/JNNTool/main/version.json",
+  "downloadUrl": "https://github.com/john-cpu25/JNNTool/releases/download/v1.0.0/JNNTool_v1.0.0.zip",
+  "changelog": [
+    "Fix crash Speed Overrider Element (ShowDialog + race condition)",
+    "Fix crash Create Filter (ShowDialog + race condition + deprecated API)",
+    "Fix deprecated ElementId API cho Revit 2025+",
+    "Thêm icon cho tất cả tools",
+    "Hỗ trợ Revit 2022 - 2026"
+  ]
+}

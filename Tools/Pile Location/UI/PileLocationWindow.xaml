@@ -1,0 +1,403 @@
+﻿<Window x:Class="JNNTool.Tools.PileLocation.UI.PileLocationWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="clr-namespace:JNNTool.Tools.PileLocation.UI"
+        mc:Ignorable="d"
+        Title="Pile Location"
+        Height="500" Width="480"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        Topmost="True"
+        Background="#1E1E2E"
+        FontFamily="Segoe UI">
+
+    <Window.Resources>
+        <ui:InverseBoolConverter x:Key="InverseBool"/>
+        <!-- ── Colors ── -->
+        <SolidColorBrush x:Key="Surface0"   Color="#313244"/>
+        <SolidColorBrush x:Key="Surface1"   Color="#45475A"/>
+        <SolidColorBrush x:Key="Overlay0"   Color="#6C7086"/>
+        <SolidColorBrush x:Key="Text"       Color="#CDD6F4"/>
+        <SolidColorBrush x:Key="Subtext"    Color="#A6ADC8"/>
+        <SolidColorBrush x:Key="Accent"     Color="#89B4FA"/>
+        <SolidColorBrush x:Key="Green"      Color="#A6E3A1"/>
+        <SolidColorBrush x:Key="Mauve"      Color="#CBA6F7"/>
+        <SolidColorBrush x:Key="Yellow"     Color="#F9E2AF"/>
+
+        <!-- ── Label ── -->
+        <Style x:Key="Lbl" TargetType="TextBlock">
+            <Setter Property="Foreground"  Value="{StaticResource Subtext}"/>
+            <Setter Property="FontSize"    Value="11"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- ── Value ── -->
+        <Style x:Key="Val" TargetType="TextBlock">
+            <Setter Property="Foreground"  Value="{StaticResource Text}"/>
+            <Setter Property="FontSize"    Value="12"/>
+            <Setter Property="FontWeight"  Value="SemiBold"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- ── Section header ── -->
+        <Style x:Key="SectionHeader" TargetType="TextBlock">
+            <Setter Property="Foreground"  Value="{StaticResource Mauve}"/>
+            <Setter Property="FontSize"    Value="11"/>
+            <Setter Property="FontWeight"  Value="SemiBold"/>
+            <Setter Property="Margin"      Value="0,0,0,6"/>
+        </Style>
+
+        <!-- ── Card border ── -->
+        <Style x:Key="Card" TargetType="Border">
+            <Setter Property="Background"     Value="{StaticResource Surface0}"/>
+            <Setter Property="CornerRadius"   Value="6"/>
+            <Setter Property="BorderBrush"    Value="{StaticResource Surface1}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding"        Value="12,10"/>
+        </Style>
+
+        <!-- ── Primary button ── -->
+        <Style x:Key="BtnPrimary" TargetType="Button">
+            <Setter Property="Background"   Value="#89B4FA"/>
+            <Setter Property="Foreground"   Value="#1E1E2E"/>
+            <Setter Property="FontSize"     Value="12"/>
+            <Setter Property="FontWeight"   Value="Bold"/>
+            <Setter Property="Height"       Value="36"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor"       Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="4" Padding="12,0">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#B4D0F7"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Background" Value="#45475A"/>
+                                <Setter Property="Foreground" Value="#6C7086"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ── Secondary button ── -->
+        <Style x:Key="BtnSecondary" TargetType="Button">
+            <Setter Property="Background"   Value="#313244"/>
+            <Setter Property="Foreground"   Value="#CDD6F4"/>
+            <Setter Property="FontSize"     Value="12"/>
+            <Setter Property="Height"       Value="36"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor"       Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="4" Padding="12,0"
+                                BorderBrush="#45475A" BorderThickness="1">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#45475A"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ── TabControl style ── -->
+        <Style TargetType="TabControl">
+            <Setter Property="Background"   Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
+        <!-- ── TabItem style ── -->
+        <Style TargetType="TabItem">
+            <Setter Property="Foreground"   Value="#A6ADC8"/>
+            <Setter Property="FontSize"     Value="12"/>
+            <Setter Property="Padding"      Value="16,8"/>
+            <Setter Property="Background"   Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="Border"
+                                Padding="16,8"
+                                BorderThickness="0,0,0,2"
+                                BorderBrush="Transparent"
+                                Background="Transparent"
+                                Cursor="Hand">
+                            <TextBlock Text="{TemplateBinding Header}"
+                                       x:Name="HeaderText"
+                                       Foreground="#6C7086"
+                                       FontSize="12"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Border"      Property="BorderBrush" Value="#89B4FA"/>
+                                <Setter TargetName="HeaderText"  Property="Foreground"  Value="#89B4FA"/>
+                                <Setter TargetName="HeaderText"  Property="FontWeight"  Value="SemiBold"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="HeaderText" Property="Foreground" Value="#CDD6F4"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>   <!-- Header -->
+            <RowDefinition Height="10"/>
+            <RowDefinition Height="*"/>      <!-- TabControl -->
+            <RowDefinition Height="10"/>
+            <RowDefinition Height="Auto"/>   <!-- Status + Close -->
+        </Grid.RowDefinitions>
+
+        <!-- ══ Header ══════════════════════════════════════════════════════ -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal">
+            <Border Width="28" Height="28" CornerRadius="14"
+                    Background="#313244" Margin="0,0,8,0"
+                    VerticalAlignment="Center">
+                <TextBlock Text="PL" Foreground="#89B4FA"
+                           FontSize="9" FontWeight="Bold"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"/>
+            </Border>
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="Pile Location"
+                           Foreground="{StaticResource Accent}"
+                           FontSize="16" FontWeight="Bold"/>
+                <TextBlock Text="Cập nhật toạ độ cọc (VN2000 · mét)"
+                           Foreground="{StaticResource Overlay0}"
+                           FontSize="10" Margin="0,1,0,0"/>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- ══ TabControl ══════════════════════════════════════════════════ -->
+        <TabControl Grid.Row="2">
+
+            <!-- ─────────────────────────────────────────────────────────── -->
+            <!-- TAB 1 – Cọc Mẫu                                            -->
+            <!-- ─────────────────────────────────────────────────────────── -->
+            <TabItem Header="Coc Mau">
+                <Grid Margin="0,14,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="10"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="10"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Family / Type -->
+                    <Border Grid.Row="0" Style="{StaticResource Card}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="90"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="16"/>
+                                <ColumnDefinition Width="90"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Family" Style="{StaticResource Lbl}"/>
+                            <TextBlock Grid.Column="1" Text="{Binding RefFamilyName}"
+                                       Style="{StaticResource Val}" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock Grid.Column="3" Text="Type" Style="{StaticResource Lbl}"/>
+                            <TextBlock Grid.Column="4" Text="{Binding RefTypeName}"
+                                       Style="{StaticResource Val}" TextTrimming="CharacterEllipsis"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Toạ độ so sánh -->
+                    <Border Grid.Row="2" Style="{StaticResource Card}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="8"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="8"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Header row -->
+                            <TextBlock Grid.Row="0" Grid.Column="0"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="X (Northing)"
+                                       Style="{StaticResource SectionHeader}" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Y (Easting)"
+                                       Style="{StaticResource SectionHeader}" HorizontalAlignment="Center"/>
+
+                            <!-- Current param values -->
+                            <TextBlock Grid.Row="2" Grid.Column="0"
+                                       Text="Hiện tại (param)"
+                                       Style="{StaticResource Lbl}"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1"
+                                       Text="{Binding RefParamX}"
+                                       Style="{StaticResource Val}"
+                                       HorizontalAlignment="Center"
+                                       Foreground="{StaticResource Yellow}"/>
+                            <TextBlock Grid.Row="2" Grid.Column="2"
+                                       Text="{Binding RefParamY}"
+                                       Style="{StaticResource Val}"
+                                       HorizontalAlignment="Center"
+                                       Foreground="{StaticResource Yellow}"/>
+
+                            <!-- Survey coords from model -->
+                            <TextBlock Grid.Row="4" Grid.Column="0"
+                                       Text="Khảo sát (model)"
+                                       Style="{StaticResource Lbl}"/>
+                            <TextBlock Grid.Row="4" Grid.Column="1"
+                                       Text="{Binding SurveyX}"
+                                       Style="{StaticResource Val}"
+                                       HorizontalAlignment="Center"
+                                       Foreground="{StaticResource Green}"/>
+                            <TextBlock Grid.Row="4" Grid.Column="2"
+                                       Text="{Binding SurveyY}"
+                                       Style="{StaticResource Val}"
+                                       HorizontalAlignment="Center"
+                                       Foreground="{StaticResource Green}"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Action button -->
+                    <Button Grid.Row="4"
+                            Content=">> Ghi toa do khao sat vao coc mau"
+                            Command="{Binding WriteReferencePileCommand}"
+                            Style="{StaticResource BtnPrimary}"
+                            IsEnabled="{Binding IsBusy,
+                                        Converter={StaticResource InverseBool}}"/>
+                </Grid>
+            </TabItem>
+
+            <!-- ─────────────────────────────────────────────────────────── -->
+            <!-- TAB 2 – Cập nhật tất cả                                    -->
+            <!-- ─────────────────────────────────────────────────────────── -->
+            <TabItem Header="Cap nhat View">
+                <Grid Margin="0,14,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>   <!-- Info card -->
+                        <RowDefinition Height="10"/>    <!-- spacer -->
+                        <RowDefinition Height="Auto"/>   <!-- Result card -->
+                        <RowDefinition Height="10"/>    <!-- spacer -->
+                        <RowDefinition Height="Auto"/>   <!-- Note -->
+                        <RowDefinition Height="10"/>    <!-- spacer -->
+                        <RowDefinition Height="Auto"/>   <!-- Button -->
+                    </Grid.RowDefinitions>
+
+                    <!-- Info card -->
+                    <Border Grid.Row="0" Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="Thông tin thực thi" Style="{StaticResource SectionHeader}"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Cọc tham chiếu" Style="{StaticResource Lbl}"/>
+                                    <TextBlock Text="{Binding RefTypeName}"
+                                               Style="{StaticResource Val}"
+                                               Foreground="{StaticResource Mauve}"
+                                               Margin="0,3,0,0"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Lọc" Style="{StaticResource Lbl}"/>
+                                    <TextBlock Text="Family / Type chứa &quot;Pile&quot;"
+                                               Style="{StaticResource Val}"
+                                               Margin="0,3,0,0"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Result card -->
+                    <Border Grid.Row="2" Style="{StaticResource Card}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="16"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                                <TextBlock Text="Đã cập nhật" Style="{StaticResource Lbl}"
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock Text="{Binding UpdatedCount}"
+                                           Foreground="{StaticResource Green}"
+                                           FontSize="28" FontWeight="Bold"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,4,0,0"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                                <TextBlock Text="Tổng cọc trong view" Style="{StaticResource Lbl}"
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock Text="{Binding TotalCount}"
+                                           Foreground="{StaticResource Accent}"
+                                           FontSize="28" FontWeight="Bold"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Note -->
+                    <Border Grid.Row="4" Background="#1a2744" CornerRadius="4" Padding="10,8">
+                        <TextBlock TextWrapping="Wrap" FontSize="11"
+                                   Foreground="#7AA2F7"
+                                   Text="[i] Coc mau se duoc bo qua. Dung Tab 1 truoc neu coc mau chua co toa do chinh xac."/>
+                    </Border>
+
+                    <!-- Action button -->
+                    <Button Grid.Row="6"
+                            Content=">> Cap nhat tat ca coc trong view"
+                            Command="{Binding UpdateAllPilesCommand}"
+                            Style="{StaticResource BtnPrimary}"
+                            IsEnabled="{Binding IsBusy,
+                                        Converter={StaticResource InverseBool}}"/>
+                </Grid>
+            </TabItem>
+
+        </TabControl>
+
+        <!-- ══ Status + Close ══════════════════════════════════════════════ -->
+        <Grid Grid.Row="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="12"/>
+                <ColumnDefinition Width="90"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="0"
+                       Text="{Binding StatusMessage}"
+                       Foreground="{Binding StatusColor}"
+                       FontSize="11"
+                       TextWrapping="Wrap"
+                       VerticalAlignment="Center"/>
+
+            <Button Grid.Column="2"
+                    Content="Đóng"
+                    Command="{Binding CloseCommand}"
+                    Style="{StaticResource BtnSecondary}"/>
+        </Grid>
+    </Grid>
+
+</Window>

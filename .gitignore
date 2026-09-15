@@ -1,0 +1,26 @@
+# Visual Studio / Build Artifacts
+bin/
+obj/
+publish/
+[Bb]uild/
+Installer/dist/
+*.user
+*.userosscache
+*.sln.docstates
+.vs/
+
+# WiX toolset build artifacts
+.wix/
+*.wixobj
+*.wixpdb
+
+# Large archives / Binaries
+*.msi
+*.zip
+*.nupkg
+
+# Temporary files
+*.tmp
+*.log
+*.DS_Store
+Thumbs.db
