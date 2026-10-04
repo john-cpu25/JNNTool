@@ -1,4 +1,4 @@
-﻿
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -445,9 +445,9 @@ public class StairDetailLogic
         curves1.Add((Curve)(object)Line.CreateBound(pt1, pt2));
         curves1.Add((Curve)(object)Line.CreateBound(pt2, pt2_ext));
 
-        Rebar rb1 = Rebar.CreateFromCurves(doc, RebarStyle.Standard, info.ThepChu,
+        Rebar rb1 = JNNTool.Core.Compat.RebarCompat.CreateFromCurves(doc, RebarStyle.Standard, info.ThepChu,
             null, null, info.Host, info.Rebar_Direction,
-            (IList<Curve>)curves1, (RebarHookOrientation)(-1), (RebarHookOrientation)(-1), true, true);
+            (IList<Curve>)curves1, JNNTool.Core.Compat.JnnHookOrientation.Right, JNNTool.Core.Compat.JnnHookOrientation.Right, true, true);
         ((Element)rb1).LookupParameter("Partition").Set(info.Partition);
         rb1.GetShapeDrivenAccessor().SetLayoutAsMaximumSpacing(info.ThepChu_KhoangRai, info.Rebar_range, true, true, true);
 
@@ -466,9 +466,9 @@ public class StairDetailLogic
         curves2.Add((Curve)(object)Line.CreateBound(pt3, pt4));
         curves2.Add((Curve)(object)Line.CreateBound(pt4, pt4_ext));
 
-        Rebar rb2 = Rebar.CreateFromCurves(doc, RebarStyle.Standard, info.ThepChu,
+        Rebar rb2 = JNNTool.Core.Compat.RebarCompat.CreateFromCurves(doc, RebarStyle.Standard, info.ThepChu,
             null, null, info.Host, info.Rebar_Direction,
-            (IList<Curve>)curves2, (RebarHookOrientation)(-1), (RebarHookOrientation)(-1), true, true);
+            (IList<Curve>)curves2, JNNTool.Core.Compat.JnnHookOrientation.Right, JNNTool.Core.Compat.JnnHookOrientation.Right, true, true);
         ((Element)rb2).LookupParameter("Partition").Set(info.Partition);
         rb2.GetShapeDrivenAccessor().SetLayoutAsMaximumSpacing(info.ThepChu_KhoangRai, info.Rebar_range, true, true, true);
 
@@ -498,10 +498,10 @@ public class StairDetailLogic
         XYZ gcStart = TinhToan.ProjectOnPlane(gcPt1, startPlane);
         XYZ gcEnd = TinhToan.ProjectOnPlane(gcPt1, endPlane);
 
-        Rebar gcRb1 = Rebar.CreateFromCurves(doc, RebarStyle.Standard, info.ThepGiaCuong,
+        Rebar gcRb1 = JNNTool.Core.Compat.RebarCompat.CreateFromCurves(doc, RebarStyle.Standard, info.ThepGiaCuong,
             null, null, info.Host, doc.ActiveView.UpDirection,
             (IList<Curve>)new List<Curve> { (Curve)(object)Line.CreateBound(gcStart, gcEnd) },
-            (RebarHookOrientation)(-1), (RebarHookOrientation)(-1), true, true);
+            JNNTool.Core.Compat.JnnHookOrientation.Right, JNNTool.Core.Compat.JnnHookOrientation.Right, true, true);
         ((Element)gcRb1).LookupParameter("Partition").Set(info.Partition);
         gcRb1.GetShapeDrivenAccessor().SetLayoutAsMaximumSpacing(info.ThepGiaCuong_KhoangRai,
             GeomUtil.KhoangCach(gcPt1, gcPt2), true, true, true);
@@ -742,9 +742,9 @@ public class StairDetailLogic
         topCurves.Add((Curve)(object)Line.CreateBound(ptRiser, ptUpTop));
         topCurves.Add((Curve)(object)Line.CreateBound(ptUpTop, ptExtended));
 
-        Rebar topRb = Rebar.CreateFromCurves(doc, RebarStyle.Standard, info.ThepChu,
+        Rebar topRb = JNNTool.Core.Compat.RebarCompat.CreateFromCurves(doc, RebarStyle.Standard, info.ThepChu,
             null, null, info.Host, info.Rebar_Direction,
-            (IList<Curve>)topCurves, (RebarHookOrientation)(-1), (RebarHookOrientation)(-1), true, true);
+            (IList<Curve>)topCurves, JNNTool.Core.Compat.JnnHookOrientation.Right, JNNTool.Core.Compat.JnnHookOrientation.Right, true, true);
         ((Element)topRb).LookupParameter("Partition").Set(info.Partition);
         topRb.GetShapeDrivenAccessor().SetLayoutAsMaximumSpacing(info.ThepChu_KhoangRai, info.Rebar_range, true, true, true);
 
@@ -771,9 +771,9 @@ public class StairDetailLogic
         botCurves.Add((Curve)(object)Line.CreateBound(ptBotVert, ptBotDeck));
         botCurves.Add((Curve)(object)Line.CreateBound(ptBotDeck, ptBotNeo));
 
-        Rebar botRb = Rebar.CreateFromCurves(doc, RebarStyle.Standard, info.ThepChu,
+        Rebar botRb = JNNTool.Core.Compat.RebarCompat.CreateFromCurves(doc, RebarStyle.Standard, info.ThepChu,
             null, null, info.Host, info.Rebar_Direction,
-            (IList<Curve>)botCurves, (RebarHookOrientation)(-1), (RebarHookOrientation)(-1), true, true);
+            (IList<Curve>)botCurves, JNNTool.Core.Compat.JnnHookOrientation.Right, JNNTool.Core.Compat.JnnHookOrientation.Right, true, true);
         ((Element)botRb).LookupParameter("Partition").Set(info.Partition);
         botRb.GetShapeDrivenAccessor().SetLayoutAsMaximumSpacing(info.ThepChu_KhoangRai, info.Rebar_range, true, true, true);
 
@@ -843,9 +843,9 @@ public class StairDetailLogic
         topCurves.Add((Curve)(object)Line.CreateBound(ptTopRef, ptTopVert));
         topCurves.Add((Curve)(object)Line.CreateBound(ptTopVert, ptTopVertExt));
 
-        Rebar topRb = Rebar.CreateFromCurves(doc, RebarStyle.Standard, info.ThepChu,
+        Rebar topRb = JNNTool.Core.Compat.RebarCompat.CreateFromCurves(doc, RebarStyle.Standard, info.ThepChu,
             null, null, info.Host, info.Rebar_Direction,
-            (IList<Curve>)topCurves, (RebarHookOrientation)(-1), (RebarHookOrientation)(-1), true, true);
+            (IList<Curve>)topCurves, JNNTool.Core.Compat.JnnHookOrientation.Right, JNNTool.Core.Compat.JnnHookOrientation.Right, true, true);
         ((Element)topRb).LookupParameter("Partition").Set(info.Partition);
         topRb.GetShapeDrivenAccessor().SetLayoutAsMaximumSpacing(info.ThepChu_KhoangRai, info.Rebar_range, true, true, true);
 
@@ -865,9 +865,9 @@ public class StairDetailLogic
         botCurves.Add((Curve)(object)Line.CreateBound(ptBotVert, ptBotRef));
         botCurves.Add((Curve)(object)Line.CreateBound(ptBotRef, ptBotRefExt));
 
-        Rebar botRb = Rebar.CreateFromCurves(doc, RebarStyle.Standard, info.ThepChu,
+        Rebar botRb = JNNTool.Core.Compat.RebarCompat.CreateFromCurves(doc, RebarStyle.Standard, info.ThepChu,
             null, null, info.Host, info.Rebar_Direction,
-            (IList<Curve>)botCurves, (RebarHookOrientation)(-1), (RebarHookOrientation)(-1), true, true);
+            (IList<Curve>)botCurves, JNNTool.Core.Compat.JnnHookOrientation.Right, JNNTool.Core.Compat.JnnHookOrientation.Right, true, true);
         ((Element)botRb).LookupParameter("Partition").Set(info.Partition);
         botRb.GetShapeDrivenAccessor().SetLayoutAsMaximumSpacing(info.ThepChu_KhoangRai, info.Rebar_range, true, true, true);
 
@@ -941,10 +941,10 @@ public class StairDetailLogic
         ptRiser = GeomUtil.AddXYZ(ptRiser, GeomUtil.MultiplyVector(offsetVector, -1.0));
 
         // Create gia cuong rebars
-        Rebar gcRb1 = Rebar.CreateFromCurves(doc, RebarStyle.Standard, info.ThepGiaCuong,
+        Rebar gcRb1 = JNNTool.Core.Compat.RebarCompat.CreateFromCurves(doc, RebarStyle.Standard, info.ThepGiaCuong,
             null, null, info.Host, deckBotLine.Direction,
             (IList<Curve>)new List<Curve> { (Curve)(object)Line.CreateBound(ptTopStart, ptTopEnd) },
-            (RebarHookOrientation)(-1), (RebarHookOrientation)(-1), true, true);
+            JNNTool.Core.Compat.JnnHookOrientation.Right, JNNTool.Core.Compat.JnnHookOrientation.Right, true, true);
         ((Element)gcRb1).LookupParameter("Partition").Set(info.Partition);
         gcRb1.GetShapeDrivenAccessor().SetLayoutAsMaximumSpacing(info.ThepGiaCuong_KhoangRai,
             GeomUtil.KhoangCach(ptRiser, ptTop), false, true, true);
@@ -1101,9 +1101,9 @@ public class StairDetailLogic
         XYZ lastTagCenter = XYZ.Zero;
         foreach (List<Curve> curveSet in allCurveSets)
         {
-            Rebar rb = Rebar.CreateFromCurves(doc, RebarStyle.Standard, info.ThepChu,
+            Rebar rb = JNNTool.Core.Compat.RebarCompat.CreateFromCurves(doc, RebarStyle.Standard, info.ThepChu,
                 null, null, info.Host, info.Rebar_Direction,
-                (IList<Curve>)curveSet, (RebarHookOrientation)(-1), (RebarHookOrientation)(-1), true, true);
+                (IList<Curve>)curveSet, JNNTool.Core.Compat.JnnHookOrientation.Right, JNNTool.Core.Compat.JnnHookOrientation.Right, true, true);
             ((Element)rb).LookupParameter("Partition").Set(info.Partition);
             rb.GetShapeDrivenAccessor().SetLayoutAsMaximumSpacing(info.ThepChu_KhoangRai, info.Rebar_range, true, true, true);
             rebarList.Add(rb);
@@ -1122,9 +1122,9 @@ public class StairDetailLogic
         botChordCurves.Add((Curve)(object)Line.CreateBound(ptBotBot, ptBotTop2));
         botChordCurves.Add((Curve)(object)Line.CreateBound(ptBotTop2, ptBotTopExt2));
 
-        Rebar botChordRb = Rebar.CreateFromCurves(doc, RebarStyle.Standard, info.ThepChu,
+        Rebar botChordRb = JNNTool.Core.Compat.RebarCompat.CreateFromCurves(doc, RebarStyle.Standard, info.ThepChu,
             null, null, info.Host, info.Rebar_Direction,
-            (IList<Curve>)botChordCurves, (RebarHookOrientation)(-1), (RebarHookOrientation)(-1), true, true);
+            (IList<Curve>)botChordCurves, JNNTool.Core.Compat.JnnHookOrientation.Right, JNNTool.Core.Compat.JnnHookOrientation.Right, true, true);
         ((Element)botChordRb).LookupParameter("Partition").Set(info.Partition);
         botChordRb.GetShapeDrivenAccessor().SetLayoutAsMaximumSpacing(info.ThepChu_KhoangRai, info.Rebar_range, true, true, true);
 
@@ -1457,10 +1457,10 @@ public class StairDetailLogic
     private XYZ FindLandingBreakPoint(Document doc, StairInfo info, ReferenceIntersector refIntersector,
         XYZ origin, XYZ last, double proximity, out Reference start_ref, out Reference end_ref)
     {
-        Rebar tempRb = Rebar.CreateFromCurves(doc, RebarStyle.Standard, info.ThepGiaCuong,
+        Rebar tempRb = JNNTool.Core.Compat.RebarCompat.CreateFromCurves(doc, RebarStyle.Standard, info.ThepGiaCuong,
             null, null, info.Host, GeomUtil.SubXYZ(last, origin),
             (IList<Curve>)new List<Curve> { (Curve)(object)Line.CreateBound(origin, GeomUtil.AddXYZ(origin, doc.ActiveView.ViewDirection)) },
-            (RebarHookOrientation)(-1), (RebarHookOrientation)(-1), true, true);
+            JNNTool.Core.Compat.JnnHookOrientation.Right, JNNTool.Core.Compat.JnnHookOrientation.Right, true, true);
         tempRb.GetShapeDrivenAccessor().SetLayoutAsMaximumSpacing(info.ThepGiaCuong_KhoangRai, GeomUtil.KhoangCach(origin, last), true, true, true);
         doc.Regenerate();
 
@@ -1504,10 +1504,10 @@ public class StairDetailLogic
 
         XYZ offset = GeomUtil.SubXYZ(TinhToan.ProjectOnPlane(origin, topPlane), origin);
 
-        Rebar rb1 = Rebar.CreateFromCurves(doc, RebarStyle.Standard, info.ThepGiaCuong,
+        Rebar rb1 = JNNTool.Core.Compat.RebarCompat.CreateFromCurves(doc, RebarStyle.Standard, info.ThepGiaCuong,
             null, null, info.Host, GeomUtil.SubXYZ(last, origin),
             (IList<Curve>)new List<Curve> { (Curve)(object)Line.CreateBound(projStart, projEnd) },
-            (RebarHookOrientation)(-1), (RebarHookOrientation)(-1), true, true);
+            JNNTool.Core.Compat.JnnHookOrientation.Right, JNNTool.Core.Compat.JnnHookOrientation.Right, true, true);
         ((Element)rb1).LookupParameter("Partition").Set(info.Partition);
         rb1.GetShapeDrivenAccessor().SetLayoutAsMaximumSpacing(info.ThepGiaCuong_KhoangRai, GeomUtil.KhoangCach(origin, last), true, true, true);
 

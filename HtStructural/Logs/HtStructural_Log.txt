@@ -1,0 +1,37 @@
+2026-10-03 23:22:03.844: [Command] Bat dau thuc thi lenh Ve Thep Cot.
+2026-10-03 23:22:03.844: [Command] Dang kiem tra ban quyen...
+2026-10-03 23:22:03.910: [Command] Kiem tra ban quyen thanh cong.
+2026-10-03 23:22:03.912: [Command] Kich hoat chon cot tren man hinh Revit.
+2026-10-03 23:22:09.022: [Command] Da chon 1 tham chieu cot.
+2026-10-03 23:22:09.023: [Command] Dang sap xep cac cot theo cao do...
+2026-10-03 23:22:09.031: [Command] Da sap xep thanh chuoi gom 1 cot.
+2026-10-03 23:22:09.031: [Command] Kich hoat chon dam giao cat tren man hinh Revit.
+2026-10-03 23:22:14.256: [Command] Da chon thu cong 0 dam giao cat.
+2026-10-03 23:22:14.258: [Command] Khong co dam nao duoc chon/tim thay. Quet lai tu dong...
+2026-10-03 23:22:14.270: [Command] Quet lai tu dong tim thay 0 dam.
+2026-10-03 23:22:14.271: [Command] Bat dau xay dung ColumnDetailModel...
+2026-10-03 23:22:14.290: [Command]   Tang 1: Level=T2, H=3300.0mm, BxH=300x220mm, BeamDepth=0mm
+2026-10-03 23:22:14.290: [Command] Xay dung ColumnDetailModel hoan tat.
+2026-10-03 23:22:14.290: [Command] Bat dau khoi tao ViewModel cho UI...
+03/10/2026 23:22:14: VM: Khoi tao ColumnDetailingViewModel.
+03/10/2026 23:22:14: VM: Dang tai cai dat toan cuc...
+03/10/2026 23:22:14: VM: Dang tai du lieu tu Revit (AllRebarTypes, Hooks...)...
+03/10/2026 23:22:14: VM: Dang khoi tao cac bien tu danh sach chon...
+03/10/2026 23:22:14: VM: Bat dau tao danh sach tang (Stories) cho cot: C1
+03/10/2026 23:22:14: VM: Bat dau LoadAllColumnConfigs...
+03/10/2026 23:22:14: VM: LoadAllColumnConfigs hoan tat.
+2026-10-03 23:22:14.431: [Command] Khoi tao ViewModel hoan tat. Bat dau tao cua so Window...
+2026-10-03 23:22:14.442: [ColumnWindow] Window ctor: bat dau InitializeComponent...
+2026-10-03 23:22:14.475: [ColumnWindow] Window ctor: InitializeComponent xong.
+2026-10-03 23:22:14.477: [Command] Hien thi cua so Window (Modeless).
+2026-10-03 23:22:14.505: [ColumnWindow] Window LayoutUpdated lan dau (Measure/Arrange xong).
+2026-10-03 23:22:14.514: [ColumnWindow] Update3DScene: model=C1, stories=1
+2026-10-03 23:22:14.540: [ColumnWindow] Update3DScene: scene built with 3 children
+2026-10-03 23:22:14.604: [ColumnWindow] Window SourceInitialized (HWND da tao xong).
+2026-10-03 23:22:14.682: [ColumnWindow] Update3DScene: model=C1, stories=1
+2026-10-03 23:22:14.683: [ColumnWindow] Update3DScene: scene built with 3 children
+2026-10-03 23:22:14.692: [ColumnWindow] Update3DScene: model=C1, stories=1
+2026-10-03 23:22:14.693: [ColumnWindow] Update3DScene: scene built with 3 children
+2026-10-03 23:22:14.694: [ColumnWindow] Window_Loaded: RenderTier=2
+2026-10-03 23:22:14.877: [ColumnWindow] Window ContentRendered OK (render thanh cong).
+2026-10-03 23:22:47.828: [ColumnWindow] Window Closed: da dispose ExternalEvent + go DataContext.

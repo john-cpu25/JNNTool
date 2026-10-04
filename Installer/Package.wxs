@@ -9,7 +9,7 @@
 
   <Package Name="JNNTool Revit Plugin"
            Manufacturer="JNN"
-           Version="1.0.0"
+           Version="2.0.0"
            UpgradeCode="7f04a601-5e26-4b8c-8f4b-57f920f92b7c"
            Compressed="yes">
 
@@ -44,6 +44,7 @@
               <Directory Id="Dir2024" Name="2024" />
               <Directory Id="Dir2025" Name="2025" />
               <Directory Id="Dir2026" Name="2026" />
+              <Directory Id="Dir2027" Name="2027" />
               <Directory Id="ResourcesDir" Name="Resources" />
             </Directory>
           </Directory>
@@ -147,6 +148,12 @@
         <File Id="Addin2026" Source="..\JNNTool.bundle\Contents\2026\JNNTool.addin" />
       </Component>
 
+      <!-- Revit 2027 (net10) -->
+      <Component Id="Cmp2027" Guid="*" Directory="Dir2027">
+        <File Id="Dll2027"   Source="..\JNNTool.bundle\Contents\2027\JNNTool.dll"   KeyPath="yes" />
+        <File Id="Addin2027" Source="..\JNNTool.bundle\Contents\2027\JNNTool.addin" />
+      </Component>
+
       <!-- Resources (icons) - moi icon la 1 component de WiX tu sinh GUID -->
       <Component Id="IcoClashDetection"  Guid="*" Directory="ResourcesDir">
         <File Source="..\JNNTool.bundle\Contents\Resources\ClashDetection.png"          KeyPath="yes" />
@@ -189,6 +196,24 @@
       </Component>
       <Component Id="IcoSteelConnection" Guid="*" Directory="ResourcesDir">
         <File Source="..\JNNTool.bundle\Contents\Resources\SteelConnectionDefault.png"  KeyPath="yes" />
+      </Component>
+      <Component Id="IcoRebarSlab"       Guid="*" Directory="ResourcesDir">
+        <File Source="..\JNNTool.bundle\Contents\Resources\RebarSlab.png"              KeyPath="yes" />
+      </Component>
+      <Component Id="IcoRebarWall"       Guid="*" Directory="ResourcesDir">
+        <File Source="..\JNNTool.bundle\Contents\Resources\RebarWall.png"              KeyPath="yes" />
+      </Component>
+      <Component Id="IcoRebarFoundation" Guid="*" Directory="ResourcesDir">
+        <File Source="..\JNNTool.bundle\Contents\Resources\RebarFoundation.png"        KeyPath="yes" />
+      </Component>
+      <Component Id="IcoRebarPile"       Guid="*" Directory="ResourcesDir">
+        <File Source="..\JNNTool.bundle\Contents\Resources\RebarPile.png"              KeyPath="yes" />
+      </Component>
+      <Component Id="IcoRebarStair"      Guid="*" Directory="ResourcesDir">
+        <File Source="..\JNNTool.bundle\Contents\Resources\RebarStair.png"             KeyPath="yes" />
+      </Component>
+      <Component Id="IcoRebarUtils"      Guid="*" Directory="ResourcesDir">
+        <File Source="..\JNNTool.bundle\Contents\Resources\RebarUtils.png"             KeyPath="yes" />
       </Component>
 
     </ComponentGroup>

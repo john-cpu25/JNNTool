@@ -80,7 +80,7 @@ public partial class MainWindow : Window
         // Revit versions
         RevitVersionsPanel.Children.Clear();
         var detected = _svc.GetInstalledRevitVersions();
-        foreach (var year in new[] { "2022", "2023", "2024", "2025", "2026" })
+        foreach (var year in new[] { "2022", "2023", "2024", "2025", "2026", "2027" })
         {
             bool found = detected.Contains(year);
             RevitVersionsPanel.Children.Add(MakeVersionBadge(year, found));

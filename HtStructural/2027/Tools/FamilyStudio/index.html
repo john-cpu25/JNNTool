@@ -1,0 +1,2829 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HT BIM Family Studio - Universal SketchUp-Style 3D Modeler</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Three.js & Controls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; background-color: #0d1117; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #f3f4f6; }
+    #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
+    .glass-panel { background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(16px); border: 1px solid rgba(51, 65, 85, 0.6); }
+    .tool-btn { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 10px; transition: all 0.15s ease; color: #94a3b8; }
+    .tool-btn:hover { background-color: rgba(51, 65, 85, 0.8); color: #f8fafc; }
+    .tool-btn.active { background-color: #0284c7; color: #ffffff; box-shadow: 0 0 12px rgba(2, 132, 199, 0.5); }
+    .sketchup-axis-badge { font-family: monospace; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+    #rightSidebar {
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+      transform: translateX(0);
+    }
+    #rightSidebar.collapsed {
+      transform: translateX(calc(100% + 24px));
+    }
+    #btnToggleSidebar {
+      transition: all 0.2s ease;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+    ::-webkit-scrollbar-thumb { background: rgba(71, 85, 105, 0.8); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 1); }
+  </style>
+</head>
+<body class="select-none">
+
+  <!-- 3D CANVAS -->
+  <div id="canvas-container"></div>
+
+  <!-- UI OVERLAY -->
+  <div class="relative z-10 w-full h-full pointer-events-none">
+
+    <!-- 1. TOP APP BAR (COMPACT MINIMALIST) -->
+    <header class="absolute top-3 left-3 right-3 flex items-center justify-between glass-panel px-3 py-1.5 rounded-2xl shadow-2xl pointer-events-auto border border-slate-700/60 gap-2">
+      <!-- Left: Logo & Status -->
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <div class="w-7 h-7 rounded-xl bg-gradient-to-tr from-cyan-500 to-emerald-400 flex items-center justify-center font-black text-slate-950 text-xs shadow-md shadow-cyan-500/20 flex-shrink-0">HT</div>
+        <h1 class="font-bold text-xs sm:text-sm text-white tracking-wide whitespace-nowrap">Family Studio</h1>
+        <span id="mcpStatusBadge" class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400/60 animate-pulse flex-shrink-0 cursor-pointer" title="Revit MCP Ready (Port 7777)"></span>
+        <span id="txtSubTitle" class="hidden"></span>
+      </div>
+
+      <!-- Right: Compact Actions -->
+      <div class="flex items-center gap-1.5 flex-shrink-0">
+        <!-- Preset Selector (Compact) -->
+        <div class="flex items-center gap-1 bg-slate-900/90 px-2 py-1 rounded-xl border border-slate-700 text-xs text-slate-300 max-w-[150px] sm:max-w-[200px]">
+          <svg class="w-3.5 h-3.5 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+          <select id="selPreset" class="bg-transparent text-white font-bold focus:outline-none cursor-pointer truncate w-full text-xs">
+            <option value="door_2leaves_transom" class="bg-slate-900 text-white" selected>Cửa đi 2 cánh ô thoáng (Gắn tường)</option>
+            <option value="door_4leaves_transom" class="bg-slate-900 text-white">Cửa đi 4 cánh ô thoáng (CAD 3.6m)</option>
+            <option value="daybed_sofa" class="bg-slate-900 text-white">Giường sofa 3 ngăn kéo (Daybed)</option>
+            <option value="tu_ao_xam_xanh" class="bg-slate-900 text-white">Tủ áo xám xanh 1.8m (Mẫu mới)</option>
+            <option value="luxury_shoe_cabinet" class="bg-slate-900 text-white">Tủ sảnh & tủ giày cánh kính 1.6m</option>
+            <option value="dining_table_set" class="bg-slate-900 text-white">Bàn ăn 6 ghế nan S</option>
+            <option value="bull_horn_dining_set" class="bg-slate-900 text-white">Bàn tròn 6 ghế sừng bò</option>
+            <option value="kitchen_l" class="bg-slate-900 text-white">Tủ bếp chữ L</option>
+            <option value="wardrobe_4doors" class="bg-slate-900 text-white">Tủ áo 4 cánh</option>
+            <option value="kitchen_straight" class="bg-slate-900 text-white">Tủ bếp chữ I 2.4m</option>
+            <option value="tv_shelf" class="bg-slate-900 text-white">Kệ Tivi treo</option>
+          </select>
+        </div>
+
+        <!-- Import / Export JSON (Icon only) -->
+        <input type="file" id="fileInputJSON" accept=".json" class="hidden">
+        <button id="btnImportJSON" class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center justify-center transition flex-shrink-0" title="Mở file JSON (hoặc kéo thả vào màn hình)">
+          <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+        </button>
+        <button id="btnExportJSON" class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center justify-center transition flex-shrink-0" title="Lưu file JSON về máy">
+          <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        </button>
+
+        <!-- PUSH TO REVIT MCP (Compact & Always Visible) -->
+        <button id="btnPushRevit" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 text-xs font-black flex items-center gap-1.5 shadow-md shadow-emerald-500/25 transition flex-shrink-0 whitespace-nowrap" title="Bắn toàn bộ mô hình 3D sang Revit MCP (Port 7777)">
+          <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <span>Bắn Revit</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toastNotification" class="fixed top-16 left-1/2 -translate-x-1/2 glass-panel px-4 py-2 rounded-xl text-xs font-bold text-cyan-300 border border-cyan-500/40 shadow-2xl z-50 pointer-events-none transition-all duration-300 opacity-0 -translate-y-4">
+      <span id="toastMessage">Thông báo</span>
+    </div>
+
+    <!-- 2. LEFT SKETCHUP TOOLBAR -->
+    <div class="absolute top-20 left-3 glass-panel p-1.5 rounded-2xl shadow-2xl flex flex-col gap-1 pointer-events-auto border border-slate-700/60 z-20">
+      
+      <!-- Tool 1: SELECT (Phím Space) -->
+      <button id="toolSelect" class="tool-btn active" title="Select (Space) - Chọn đối tượng & Xem thuộc tính">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg>
+      </button>
+
+      <!-- Tool 2: PUSH / PULL (Phím P) -->
+      <button id="toolPushPull" class="tool-btn" title="Push/Pull (P) - Đẩy/Kéo chiều dày hoặc khoét rỗng">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M7 11l5-5m0 0l5 5m-5-5v12M4 19h16"/></svg>
+      </button>
+
+      <!-- Tool 3: MOVE / TRANSLATE (Phím M) -->
+      <button id="toolMove" class="tool-btn" title="Move (M) - Di chuyển cấu kiện theo trục X, Y, Z">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 7l4-4m0 0l4 4m-4-4v18m0 0l-4-4m4 4l4-4M7 8l-4 4m0 0l4 4m-4-4h18m0 0l-4-4m4 4l-4 4"/></svg>
+      </button>
+
+      <!-- Tool 4: SCALE / RESIZE (Phím S) -->
+      <button id="toolScale" class="tool-btn" title="Scale (S) - Co giãn kích thước trực quan">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+      </button>
+
+      <!-- Tool 5: ROTATE (Phím Q) -->
+      <button id="toolRotate" class="tool-btn" title="Rotate (Q) - Xoay cấu kiện quanh trục">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+      </button>
+
+      <div class="w-full h-px bg-slate-700/80 my-0.5"></div>
+
+      <!-- Tool 6: TAPE MEASURE (Phím T) -->
+      <button id="toolTape" class="tool-btn" title="Tape Measure (T) - Thước đo khoảng cách giữa 2 điểm">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+      </button>
+
+      <!-- Tool 7: DIMENSIONS (Phím D) -->
+      <button id="toolDimensions" class="tool-btn" title="Dimensions (D) - Bật/Tắt đường đo kích thước tổng thể">
+        <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 7v10M16 7v10M3 12h18M3 12l2-2m-2 2l2 2m16-2l-2-2m2 2l-2 2"/></svg>
+      </button>
+
+      <!-- Tool 8: SECTION PLANE (Phím X) -->
+      <button id="toolSection" class="tool-btn" title="Section Plane (X) - Mặt phẳng cắt soi ruột tủ">
+        <svg class="w-5 h-5 text-rose-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879a3 3 0 11-4.242-4.242L12 12m0 0l2.879-2.879a3 3 0 114.242 4.242L12 12z"/></svg>
+      </button>
+
+      <div class="w-full h-px bg-slate-700/80 my-0.5"></div>
+
+      <!-- Tool 9: INTERACT TOOL (Phím I) -->
+      <button id="toolInteract" class="tool-btn active" title="Interact (I) - Click mở cánh tủ 90° hoặc kéo ngăn kéo">
+        <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/></svg>
+      </button>
+
+      <!-- Tool 10: TOGGLE ALL DOORS -->
+      <button id="btnToggleAllDoors" class="tool-btn" title="Mở / Đóng toàn bộ cánh tủ (95°)">
+        <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 7v10M16 7v10M4 5h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg>
+      </button>
+
+      <!-- Tool 11: TOGGLE ALL DRAWERS -->
+      <button id="btnToggleAllDrawers" class="tool-btn" title="Kéo / Đóng toàn bộ các ngăn kéo">
+        <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+
+      <!-- Tool 12: HIDE DOORS (Xem trọn ruột) -->
+      <button id="btnHideDoors" class="tool-btn" title="Ẩn / Hiện Cánh Tủ (Xem Ruột Phụ Kiện)">
+        <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"/></svg>
+      </button>
+
+      <!-- Tool 13: RESET CAMERA -->
+      <button id="btnResetView" class="tool-btn" title="Đặt lại Camera (Góc nhìn chuẩn)">
+        <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      </button>
+    </div>
+
+    <!-- 3. CAMERA & VIEW MODES (COMPACT) -->
+    <div class="absolute top-16 left-16 glass-panel px-2.5 py-1 rounded-xl flex items-center gap-1.5 pointer-events-auto text-xs font-semibold text-slate-300 border border-slate-800/80">
+      <button id="btnView3D" class="px-2 py-0.5 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">3D</button>
+      <button id="btnViewFront" class="px-2 py-0.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200">Trước</button>
+      <button id="btnViewTop" class="px-2 py-0.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200">Bằng</button>
+      <button id="btnViewSide" class="px-2 py-0.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200">Bên</button>
+      <div class="w-px h-3 bg-slate-700 mx-0.5"></div>
+      <div class="flex items-center gap-1.5 font-mono text-[10px]" title="Hệ trục tọa độ: Đỏ (X), Xanh lục (Y), Lam (Z)">
+        <span class="w-2 h-2 rounded-full bg-rose-500" title="X (Đỏ)"></span>
+        <span class="w-2 h-2 rounded-full bg-emerald-500" title="Y (Xanh lục)"></span>
+        <span class="w-2 h-2 rounded-full bg-sky-500" title="Z (Cao độ)"></span>
+      </div>
+    </div>
+
+    <!-- 4. SECTION MINI CONTROL BAR (Appears when Section active) -->
+    <div id="sectionControlBar" class="absolute bottom-6 left-1/2 -translate-x-1/2 glass-panel px-5 py-2.5 rounded-2xl shadow-2xl flex items-center gap-4 pointer-events-auto border border-rose-500/40 text-xs hidden">
+      <div class="flex items-center gap-2 text-rose-400 font-bold">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879a3 3 0 11-4.242-4.242L12 12m0 0l2.879-2.879a3 3 0 114.242 4.242L12 12z"/></svg>
+        <span>Mặt Cắt Section:</span>
+      </div>
+      <div class="flex items-center gap-1 bg-slate-900 p-1 rounded-lg border border-slate-800">
+        <button id="btnSecAxisX" class="px-2.5 py-1 rounded text-slate-400">Trục X</button>
+        <button id="btnSecAxisY" class="px-2.5 py-1 rounded bg-rose-500 text-white font-bold">Trục Y</button>
+        <button id="btnSecAxisZ" class="px-2.5 py-1 rounded text-slate-400">Trục Z</button>
+      </div>
+      <div class="flex items-center gap-2">
+        <input type="range" id="secSlider" min="0" max="3000" value="600" class="w-48 accent-rose-500 cursor-pointer">
+        <span id="secValText" class="font-mono text-slate-200 font-bold w-16">600 mm</span>
+      </div>
+      <button id="btnSecInvert" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 rounded text-slate-300">Đảo Chiều</button>
+    </div>
+
+    <!-- 5. TAPE MEASURE FLOATING HUD -->
+    <div id="tapeHUD" class="absolute bottom-6 left-6 glass-panel px-4 py-2 rounded-xl text-xs font-mono text-cyan-300 border border-cyan-500/40 shadow-xl hidden">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+        <span id="txtTapeResult">Thước Dây: Click chọn 2 điểm trên mô hình để đo khoảng cách...</span>
+      </div>
+    </div>
+
+    <!-- 6. RIGHT SIDEBAR (Entity Info & BOM Tree & AI) - COLLAPSIBLE -->
+    <div id="rightSidebar" class="absolute top-20 right-3 w-[370px] sm:w-[410px] max-w-[calc(100vw-65px)] glass-panel rounded-2xl p-4 z-20 flex flex-col gap-3 shadow-2xl max-h-[calc(100vh-100px)] overflow-visible pointer-events-auto">
+      
+      <!-- NÚT TOGGLE THU GỌN / MỞ RỘNG SIDEBAR -->
+      <button id="btnToggleSidebar" class="absolute -left-9 top-3.5 w-9 h-9 rounded-l-xl glass-panel border-r-0 border border-slate-700/80 flex items-center justify-center text-slate-300 hover:text-cyan-400 hover:bg-slate-800/90 transition shadow-2xl group cursor-pointer" title="Thu gọn / Mở rộng bảng (Phím Tab)">
+        <svg id="iconToggleSidebar" class="w-4 h-4 transition-transform duration-300 group-hover:scale-125" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path d="M9 5l7 7-7 7"/>
+        </svg>
+      </button>
+
+      <!-- TAB SELECTOR -->
+      <div class="grid grid-cols-3 gap-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800 text-xs font-bold text-center">
+        <button id="tabBtnEntity" class="py-1.5 rounded-lg text-cyan-400 bg-slate-800/90 shadow">Thuộc Tính</button>
+        <button id="tabBtnOutliner" class="py-1.5 rounded-lg text-slate-400 hover:text-slate-200">Cây Cấu Kiện</button>
+        <button id="tabBtnMaterials" class="py-1.5 rounded-lg text-slate-400 hover:text-slate-200">Vật Liệu</button>
+      </div>
+
+      <!-- TAB 1: ENTITY INFO (SKETCHUP STYLE) -->
+      <div id="tabContentEntity" class="flex flex-col gap-3 overflow-y-auto flex-1 pr-1 text-xs">
+        <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-200" id="infoPartName">Chưa chọn cấu kiện nào</span>
+            <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-cyan-400 border border-slate-700" id="infoPartId">NONE</span>
+          </div>
+          <p class="text-[11px] text-slate-400 italic" id="infoPartDesc">Click công cụ Select (Space) vào bất kỳ tấm ván, ngăn kéo hoặc thiết bị trên 3D để chỉnh sửa.</p>
+        </div>
+
+        <!-- Coordinates & Dimensions Input -->
+        <div class="grid grid-cols-2 gap-2">
+          <div class="p-2.5 bg-slate-900/80 rounded-xl border border-slate-800 flex flex-col gap-1.5">
+            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Kích Thước (mm)</span>
+            <div class="flex items-center justify-between text-slate-300">
+              <span class="text-slate-400">Rộng (W):</span>
+              <input type="number" id="inpWidth" class="w-20 bg-slate-950 border border-slate-800 rounded px-1.5 py-0.5 text-right font-mono text-cyan-300" value="0">
+            </div>
+            <div class="flex items-center justify-between text-slate-300">
+              <span class="text-slate-400">Cao (H):</span>
+              <input type="number" id="inpHeight" class="w-20 bg-slate-950 border border-slate-800 rounded px-1.5 py-0.5 text-right font-mono text-cyan-300" value="0">
+            </div>
+            <div class="flex items-center justify-between text-slate-300">
+              <span class="text-slate-400">Sâu / Dày (D):</span>
+              <input type="number" id="inpDepth" class="w-20 bg-slate-950 border border-slate-800 rounded px-1.5 py-0.5 text-right font-mono text-cyan-300" value="0">
+            </div>
+          </div>
+
+          <div class="p-2.5 bg-slate-900/80 rounded-xl border border-slate-800 flex flex-col gap-1.5">
+            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Tọa Độ Gốc (mm)</span>
+            <div class="flex items-center justify-between text-slate-300">
+              <span class="text-rose-400 font-bold">X:</span>
+              <input type="number" id="inpPosX" class="w-20 bg-slate-950 border border-slate-800 rounded px-1.5 py-0.5 text-right font-mono text-rose-300" value="0">
+            </div>
+            <div class="flex items-center justify-between text-slate-300">
+              <span class="text-emerald-400 font-bold">Y:</span>
+              <input type="number" id="inpPosY" class="w-20 bg-slate-950 border border-slate-800 rounded px-1.5 py-0.5 text-right font-mono text-emerald-300" value="0">
+            </div>
+            <div class="flex items-center justify-between text-slate-300">
+              <span class="text-sky-400 font-bold">Z:</span>
+              <input type="number" id="inpPosZ" class="w-20 bg-slate-950 border border-slate-800 rounded px-1.5 py-0.5 text-right font-mono text-sky-300" value="0">
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Transform Buttons -->
+        <div class="flex items-center gap-2">
+          <button id="btnApplyParam" class="flex-1 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 font-bold text-white transition flex items-center justify-center gap-1.5 shadow-lg shadow-cyan-600/30">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+            <span>Cập Nhật Thông Số</span>
+          </button>
+          <button id="btnDeletePart" class="p-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/30 transition" title="Xóa Cấu Kiện Này">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          </button>
+        </div>
+
+        <!-- AI Modification Notes -->
+        <div class="flex flex-col gap-1.5 p-3 bg-slate-900/80 rounded-xl border border-slate-800">
+          <span class="font-bold text-slate-300 flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            <span>Ghi Chú Cho AI Tinh Chỉnh Cấu Kiện:</span>
+          </span>
+          <textarea id="txtAiComment" rows="2" placeholder="Ví dụ: Đổi thành ngăn kéo chia 3 khay, mở rộng chiều sâu thêm 50mm..." class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 placeholder-slate-600 text-xs focus:outline-none focus:border-cyan-400"></textarea>
+          <button id="btnCopyPrompt" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 font-semibold flex items-center justify-center gap-1.5 transition">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+            <span>Sao Chép Ghi Chú AI</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB 2: OUTLINER (TREE VIEW) -->
+      <div id="tabContentOutliner" class="flex flex-col gap-2 overflow-y-auto flex-1 pr-1 hidden text-xs">
+        <div class="flex items-center justify-between pb-1 border-b border-slate-800">
+          <span class="text-slate-400 font-bold uppercase text-[10px] tracking-wider">Danh Sách Cấu Kiện</span>
+          <span id="badgePartCount" class="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-800 text-cyan-400">0 Cấu kiện</span>
+        </div>
+        <div id="outlinerTreeList" class="flex flex-col gap-1.5">
+          <!-- Dynamic Tree items -->
+        </div>
+      </div>
+
+      <!-- TAB 3: MATERIALS PALETTE -->
+      <div id="tabContentMaterials" class="flex flex-col gap-2 overflow-y-auto flex-1 pr-1 hidden text-xs">
+        <span class="text-slate-400 font-bold uppercase text-[10px] tracking-wider pb-1 border-b border-slate-800">Thư Viện Vật Liệu Chuẩn</span>
+        <div class="grid grid-cols-2 gap-2" id="materialGrid">
+          <!-- Material swatches -->
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- SCRIPT ENGINE -->
+  <script>
+    // =========================================================================
+    // UNIVERSAL FAMILY STUDIO ENGINE (SketchUp Web Style)
+    // =========================================================================
+
+    const state = {
+      activeTool: 'select', // select, pushpull, move, scale, rotate, tape, dimension, section, interact
+      selectedObject: null,
+      selectedPartId: null,
+      sectionActive: false,
+      sectionAxis: 'Y',
+      sectionVal: 600,
+      sectionInvert: false,
+      tapePoints: [],
+      doorsOpen: false,
+      drawersOpen: false,
+      doorsVisible: true,
+      dimensionsVisible: false,
+      currentPreset: 'kitchen_l'
+    };
+
+    // THREE.JS SCENE SETUP
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0e131f);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 10, 50000);
+    camera.position.set(3400, 2600, 3800);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.localClippingEnabled = true;
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.target.set(1350, 900, -300);
+
+    // TRANSFORM CONTROLS (GIZMO)
+    const transformControl = new THREE.TransformControls(camera, renderer.domElement);
+    transformControl.size = 0.85;
+    transformControl.addEventListener('dragging-changed', (e) => { controls.enabled = !e.value; });
+    transformControl.addEventListener('change', () => {
+      if (state.selectedObject) {
+        syncObjectToInspector(state.selectedObject);
+      }
+    });
+    scene.add(transformControl);
+
+    // LIGHTS
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x1e293b, 0.7);
+    hemiLight.position.set(0, 5000, 0);
+    scene.add(hemiLight);
+
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight1.position.set(4000, 6000, 4000);
+    dirLight1.castShadow = true;
+    dirLight1.shadow.mapSize.width = 2048;
+    dirLight1.shadow.mapSize.height = 2048;
+    scene.add(dirLight1);
+
+    const dirLight2 = new THREE.DirectionalLight(0x94a3b8, 0.4);
+    dirLight2.position.set(-4000, 3000, -4000);
+    scene.add(dirLight2);
+
+    // SKETCHUP AXES & GRID
+    const axesGroup = new THREE.Group();
+    // X (Red), Y (Green), Z (Blue)
+    const axisMatX = new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 2 });
+    const axisMatY = new THREE.LineBasicMaterial({ color: 0x10b981, linewidth: 2 });
+    const axisMatZ = new THREE.LineBasicMaterial({ color: 0x0284c7, linewidth: 2 });
+
+    const axisX = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-1000, 0, 0), new THREE.Vector3(5000, 0, 0)]), axisMatX);
+    const axisY = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, -5000), new THREE.Vector3(0, 0, 3000)]), axisMatY);
+    const axisZ = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, -500, 0), new THREE.Vector3(0, 4000, 0)]), axisMatZ);
+    axesGroup.add(axisX, axisY, axisZ);
+    scene.add(axesGroup);
+
+    const grid = new THREE.GridHelper(8000, 80, 0x334155, 0x1e293b);
+    grid.position.y = -1;
+    scene.add(grid);
+
+    // GROUPS & HELPERS
+    const modelGroup = new THREE.Group();
+    scene.add(modelGroup);
+
+    const interactiveDoors = [];
+    const interactiveDrawers = [];
+    let highlightHelper = null;
+    let clippingPlane = null;
+
+    // MATERIALS DICTIONARY
+    const materials = {
+      wood_light: new THREE.MeshStandardMaterial({ color: 0xd4a373, roughness: 0.65, metalness: 0.05 }),
+      wood_dark: new THREE.MeshStandardMaterial({ color: 0x8d5b4c, roughness: 0.7, metalness: 0.05 }),
+      wood_dining: new THREE.MeshStandardMaterial({ color: 0xc68a58, roughness: 0.55, metalness: 0.02 }),
+      wood_oak: new THREE.MeshStandardMaterial({ color: 0xdeb887, roughness: 0.45, metalness: 0.02 }),
+      fabric_cushion: new THREE.MeshStandardMaterial({ color: 0xf5efe6, roughness: 0.9, metalness: 0.01 }),
+      acrylic_white: new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.2, metalness: 0.1 }),
+      metal_black: new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.4, metalness: 0.8 }),
+      metal_chrome: new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.2, metalness: 0.9 }),
+      glass: new THREE.MeshPhysicalMaterial({ color: 0xebf8ff, transparent: true, opacity: 0.4, roughness: 0.05, transmission: 0.92, ior: 1.5 }),
+      glass_amber: new THREE.MeshPhysicalMaterial({ color: 0xc49a45, transparent: true, opacity: 0.45, roughness: 0.08, transmission: 0.88, ior: 1.52 }),
+      metal_gold: new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.25, metalness: 0.88 }),
+      mirror: new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.04, metalness: 0.96 }),
+      led_light: new THREE.MeshBasicMaterial({ color: 0xffe8a3 }),
+      marble_white: new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.3, metalness: 0.05 }),
+      appliance_black: new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.3, metalness: 0.85 }),
+      mint_green: new THREE.MeshStandardMaterial({ color: 0x6ca89b, roughness: 0.35, metalness: 0.05 }),
+      grey_slate: new THREE.MeshStandardMaterial({ color: 0x8e9398, roughness: 0.4, metalness: 0.05 }),
+      fabric_grey: new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.85, metalness: 0.02 }),
+      fabric_dark: new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.85, metalness: 0.02 }),
+      paper_white: new THREE.MeshStandardMaterial({ color: 0xfafafa, roughness: 0.9, metalness: 0.01 }),
+      wall_concrete: new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.9, transparent: true, opacity: 0.35 }),
+      aluminium_grey: new THREE.MeshStandardMaterial({ color: 0x4a4f55, roughness: 0.45, metalness: 0.65 }),
+      glass_door: new THREE.MeshPhysicalMaterial({ color: 0xe0f2fe, transparent: true, opacity: 0.45, roughness: 0.05, transmission: 0.92, ior: 1.5 })
+    };
+
+    // =========================================================================
+    // PRESET BUILDER: TỦ BẾP CHỮ L (FULL RUỘT & PHỤ KIỆN)
+    // =========================================================================
+    function makeBox(id, name, cat, x1, y1, z1, x2, y2, z2, mat, parent = modelGroup, matParam = null) {
+      const w = Math.abs(x2 - x1);
+      const h = Math.abs(y2 - y1);
+      const d = Math.abs(z2 - z1);
+      const geo = new THREE.BoxGeometry(w, h, d);
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set((x1 + x2) / 2, (y1 + y2) / 2, (z1 + z2) / 2);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      mesh.userData = { id, name, category: cat, materialParam: matParam, w, h, d, x1, y1, z1, x2, y2, z2, matId: 'custom' };
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function makeCylinder(id, name, cat, cx, y1, cz, y2, radius, mat, parent = modelGroup, matParam = null) {
+      const h = Math.abs(y2 - y1);
+      const geo = new THREE.CylinderGeometry(radius, radius, h, 24);
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(cx, (y1 + y2) / 2, cz);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      mesh.userData = { id, name, category: cat, materialParam: matParam, isCylinder: true, radius, cx, cz, y1, y2, matId: 'custom' };
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function makeTaperedLeg(id, name, cat, cx, cz, y1, y2, rTop, rBottom, rotX, rotZ, mat, parent = modelGroup, matParam = null) {
+      const h = Math.abs(y2 - y1);
+      const geo = new THREE.CylinderGeometry(rTop, rBottom, h, 24);
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(cx, (y1 + y2) / 2, cz);
+      mesh.rotation.x = rotX || 0;
+      mesh.rotation.z = rotZ || 0;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      mesh.userData = { id, name, category: cat, materialParam: matParam, isCylinder: true, radius: (rTop + rBottom) / 2, cx, cz, y1, y2, matId: 'custom' };
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function makeBullHornArc(id, name, cat, cx, cz, y1, y2, rCenter, thickness, angleSpanDeg, rotRad, mat, parent = modelGroup, matParam = null) {
+      const h = Math.abs(y2 - y1);
+      const r1 = rCenter - thickness / 2;
+      const r2 = rCenter + thickness / 2;
+      const halfAngle = (angleSpanDeg / 2) * Math.PI / 180;
+
+      const shape = new THREE.Shape();
+      shape.absarc(0, 0, r2, -halfAngle, halfAngle, false);
+      const p2_in_x = r1 * Math.cos(halfAngle);
+      const p2_in_y = r1 * Math.sin(halfAngle);
+      shape.lineTo(p2_in_x, p2_in_y);
+      shape.absarc(0, 0, r1, halfAngle, -halfAngle, true);
+      shape.closePath();
+
+      const extrudeSettings = { depth: h, bevelEnabled: true, bevelSegments: 3, steps: 1, bevelSize: 2.5, bevelThickness: 2.5 };
+      const geo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+      geo.center();
+      geo.rotateX(Math.PI / 2);
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.rotation.y = -rotRad;
+      mesh.position.set(cx, (y1 + y2) / 2, cz);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      mesh.userData = {
+        id, name, category: cat, materialParam: matParam, isBullHornArc: true,
+        cx, cz, y1, y2, rCenter, thickness, angleSpanDeg, rotRad, matId: 'custom'
+      };
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function makeExtrusionYZ(id, name, cat, x1, x2, profileConfig, mat, parent = modelGroup, matParam = null) {
+      const shape = new THREE.Shape();
+      const revitProfile = [];
+
+      const xMin = Math.min(x1, x2);
+      const xMax = Math.max(x1, x2);
+      const thick = Math.max(2, xMax - xMin);
+
+      if (profileConfig && profileConfig.type === 'daybed_armrest') {
+        const d = profileConfig.depth || 850;
+        const hBack = profileConfig.hBack || 450;
+        const hFront = profileConfig.hFront || 370;
+        const r = profileConfig.radius || 80;
+
+        // Shape tren mat phang 2D (u=Z, v=Y):
+        // (0,0) -> (-d,0) -> (-d,hBack) -> (-r,hBack) -> arc R80 -> (0,hFront) -> (0,0)
+        shape.moveTo(0, 0);
+        shape.lineTo(-d, 0);
+        shape.lineTo(-d, hBack);
+        shape.lineTo(-r, hBack);
+        // Cung tron Arc R80mm luon cong xuong (0, hFront):
+        shape.absarc(-r, hFront, r, Math.PI / 2, 0, true);
+        shape.lineTo(0, 0);
+
+        // Revit profile tren sketchPlane normal=[1,0,0], origin=[xMin, 0, 0]:
+        // Toa do 3D trong Revit: [X=xMin, Y=Z_three, Z=Y_three]
+        const midZ = Math.round(-r + r * Math.cos(Math.PI / 4));
+        const midY = Math.round(hFront + r * Math.sin(Math.PI / 4));
+        revitProfile.push({ type: "line", start: [xMin, 0, 0], end: [xMin, -d, 0] });
+        revitProfile.push({ type: "line", start: [xMin, -d, 0], end: [xMin, -d, hBack] });
+        revitProfile.push({ type: "line", start: [xMin, -d, hBack], end: [xMin, -r, hBack] });
+        revitProfile.push({ type: "arc3pt", p1: [xMin, -r, hBack], p2: [xMin, 0, hFront], mid: [xMin, midZ, midY] });
+        revitProfile.push({ type: "line", start: [xMin, 0, hFront], end: [xMin, 0, 0] });
+      } else if (profileConfig && Array.isArray(profileConfig.points)) {
+        const pts = profileConfig.points;
+        shape.moveTo(pts[0][0], pts[0][1]);
+        for (let i = 1; i < pts.length; i++) {
+          shape.lineTo(pts[i][0], pts[i][1]);
+        }
+        shape.closePath();
+      }
+
+      const geo = new THREE.ExtrudeGeometry(shape, { depth: thick, bevelEnabled: false, curveSegments: 32 });
+      geo.rotateY(-Math.PI / 2);
+
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(xMax, 0, 0);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+
+      mesh.userData = {
+        id, name, category: cat, materialParam: matParam,
+        isProfileExtrusionYZ: true,
+        x1: xMin,
+        x2: xMax,
+        profile: revitProfile,
+        matId: 'custom'
+      };
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function buildBullHornDiningSetModel() {
+      // 1. Clear model
+      while (modelGroup.children.length > 0) {
+        modelGroup.remove(modelGroup.children[0]);
+      }
+      interactiveDoors.length = 0;
+      interactiveDrawers.length = 0;
+
+      // -----------------------------------------------------------------------
+      // PHẦN 1: BÀN ĂN TRÒN Ø1200 mm (Gỗ Sồi Tự Nhiên, Cao 750 mm)
+      // -----------------------------------------------------------------------
+      // 1.1. Mặt bàn tròn gỗ sồi dày 28 mm (Y: 722 -> 750 mm)
+      makeCylinder("BanTron_MatBan", "Mặt Bàn Gỗ Sồi Tròn (Ø1200 mm)", "top", 0, 722, 0, 750, 600, materials.wood_oak);
+
+      // 1.2. Khung giằng chữ thập đỡ mặt bàn (Y: 662 -> 722 mm, cao 60 mm, dày 40 mm)
+      makeBox("GiangBan_X", "Thanh Giằng Chữ Thập X", "apron", -400, 665, -20, 400, 722, 20, materials.wood_oak);
+      makeBox("GiangBan_Z", "Thanh Giằng Chữ Thập Z", "apron", -20, 665, -400, 20, 722, 400, materials.wood_oak);
+
+      // 1.3. 4 Chân bàn tròn vuốt thon nghiêng góc (Y: 0 -> 722 mm, Ø64 -> Ø40 mm)
+      const legAngles = [Math.PI / 4, 3 * Math.PI / 4, 5 * Math.PI / 4, 7 * Math.PI / 4];
+      legAngles.forEach((ang, idx) => {
+        const rTop = 360;
+        const rBot = 430;
+        const xt = rTop * Math.cos(ang);
+        const zt = rTop * Math.sin(ang);
+        const xb = rBot * Math.cos(ang);
+        const zb = rBot * Math.sin(ang);
+        const xm = (xt + xb) / 2;
+        const zm = (zt + zb) / 2;
+        const rotX = -(zb - zt) / 722;
+        const rotZ = (xb - xt) / 722;
+        makeTaperedLeg(`ChanBan_Tron_${idx+1}`, `Chân Bàn Tròn Vuốt Thon ${idx+1}`, "leg", xm, zm, 0, 722, 32, 20, rotX, rotZ, materials.wood_oak);
+      });
+
+      // -----------------------------------------------------------------------
+      // PHẦN 2: 6 CHIẾC GHẾ SỪNG BÒ (BULL HORN CHAIR / HANS WEGNER STYLE)
+      // -----------------------------------------------------------------------
+      const R_chair = 720;
+      for (let k = 0; k < 6; k++) {
+        const theta = k * (Math.PI / 3); // 0, 60, 120, 180, 240, 300
+        const chairId = `Ghe_SungBo_${k+1}`;
+        const chairName = `Ghế Sừng Bò Số ${k+1}`;
+
+        const chairGroup = new THREE.Group();
+        chairGroup.userData = {
+          id: chairId,
+          name: chairName,
+          origX: 0,
+          origZ: 0,
+          dirX: Math.cos(theta),
+          dirZ: Math.sin(theta),
+          openRadial: 220,
+          isOpened: false
+        };
+
+        const cx = R_chair * Math.cos(theta);
+        const cz = R_chair * Math.sin(theta);
+        const phi = theta; // Hướng lưng ghế quay ra ngoài bàn
+
+        const ux = Math.cos(phi);
+        const uz = Math.sin(phi);
+        const vx = -Math.sin(phi);
+        const vz = Math.cos(phi);
+
+        // 2.1. Đệm ngồi bọc vải nỉ kem bo tròn êm ái (Y: 420 -> 460 mm, Ø450 mm)
+        makeCylinder(`${chairId}_NemNgoi`, `Đệm Ngồi Nỉ Trắng Kem - ${chairName}`, "cushion", cx, 420, cz, 460, 225, materials.fabric_cushion, chairGroup);
+
+        // 2.2. Khung viền đỡ đệm ngồi gỗ sồi (Y: 380 -> 420 mm, Ø420 mm)
+        makeCylinder(`${chairId}_KhungNgoi`, `Khung Yếm Đỡ Đệm Gỗ Sồi - ${chairName}`, "chair", cx, 380, cz, 420, 210, materials.wood_oak, chairGroup);
+
+        // 2.3. Lưng tựa sừng bò cong chữ U mượt mà (Y: 680 -> 725 mm, R=220 mm, dày 38 mm, góc mở 150°)
+        const c_arc_x = cx + 30 * ux;
+        const c_arc_z = cz + 30 * uz;
+        makeBullHornArc(`${chairId}_TuaSungBo`, `Lưng Tựa Sừng Bò Cong Liền - ${chairName}`, "chair", c_arc_x, c_arc_z, 680, 725, 220, 38, 150, phi, materials.wood_oak, chairGroup);
+
+        // 2.4. Hai chân sau tròn vuốt thon vươn cao đỡ tựa sừng bò (Y: 0 -> 700 mm, Ø30 -> Ø24 mm)
+        const angBL = phi - 40 * Math.PI / 180;
+        const angBR = phi + 40 * Math.PI / 180;
+        const rLegBack = 220;
+        const bl_x = c_arc_x + rLegBack * Math.cos(angBL);
+        const bl_z = c_arc_z + rLegBack * Math.sin(angBL);
+        const br_x = c_arc_x + rLegBack * Math.cos(angBR);
+        const br_z = c_arc_z + rLegBack * Math.sin(angBR);
+
+        makeTaperedLeg(`${chairId}_ChanSau_T`, `Chân Sau Trái Vươn Tựa - ${chairName}`, "chair", bl_x, bl_z, 0, 700, 15, 12, 0.05 * uz, -0.05 * ux, materials.wood_oak, chairGroup);
+        makeTaperedLeg(`${chairId}_ChanSau_P`, `Chân Sau Phải Vươn Tựa - ${chairName}`, "chair", br_x, br_z, 0, 700, 15, 12, 0.05 * uz, -0.05 * ux, materials.wood_oak, chairGroup);
+
+        // 2.5. Hai chân trước tròn vuốt thon (Y: 0 -> 430 mm, Ø32 -> Ø26 mm)
+        const fl_x = cx - 150 * ux - 170 * vx;
+        const fl_z = cz - 150 * uz - 170 * vz;
+        const fr_x = cx - 150 * ux + 170 * vx;
+        const fr_z = cz - 150 * uz + 170 * vz;
+
+        makeTaperedLeg(`${chairId}_ChanTruoc_T`, `Chân Trước Trái - ${chairName}`, "chair", fl_x, fl_z, 0, 430, 16, 13, -0.04 * uz, 0.04 * ux, materials.wood_oak, chairGroup);
+        makeTaperedLeg(`${chairId}_ChanTruoc_P`, `Chân Trước Phải - ${chairName}`, "chair", fr_x, fr_z, 0, 430, 16, 13, -0.04 * uz, 0.04 * ux, materials.wood_oak, chairGroup);
+
+        // 2.6. Thanh giằng chân chữ H (Y: 135 -> 155 mm, Ø20 mm)
+        const mid_l_x = (bl_x + fl_x) / 2, mid_l_z = (bl_z + fl_z) / 2;
+        const mid_r_x = (br_x + fr_x) / 2, mid_r_z = (br_z + fr_z) / 2;
+        makeCylinder(`${chairId}_GiangHong_T`, `Giằng Chân Trái - ${chairName}`, "chair", mid_l_x, 135, mid_l_z, 155, 10, materials.wood_oak, chairGroup);
+        makeCylinder(`${chairId}_GiangHong_P`, `Giằng Chân Phải - ${chairName}`, "chair", mid_r_x, 135, mid_r_z, 155, 10, materials.wood_oak, chairGroup);
+
+        modelGroup.add(chairGroup);
+        interactiveDrawers.push(chairGroup);
+      }
+
+      updateOutlinerTree();
+    }
+
+    // =========================================================================
+    // GHE GO TU NHIEN: HAM DO CONG VI PHAN & HAM DUNG KHOI S-CURVE LIEN KHOI
+    // (Dung 100% mau thuc te: Nga ra sau 55mm, choai sau 28mm, khit mong 100%)
+    // =========================================================================
+    function getBackrestZOffset(y, dir) {
+      if (y <= 430) {
+        const t = Math.max(0, y / 430);
+        return (-28 * (1 - Math.pow(t, 1.2))) * dir;
+      } else {
+        const t = Math.min(1, Math.max(0, (y - 430) / (1000 - 430)));
+        // That eo om nhe ve truoc +8.4mm tai Y=600, nga ra sau -35.9mm tai Y=880, nga ra sau -55mm tai Y=1000
+        const curve = 35 * Math.sin(t * Math.PI) * (1 - t) - 55 * Math.pow(t, 1.3);
+        return curve * dir;
+      }
+    }
+
+    function makeSCurvePart(id, name, cat, xMin, xMax, yMin, yMax, thickZ, dir, zBase, mat, parent = modelGroup, matParam = null) {
+      const N = Math.max(8, Math.round((yMax - yMin) / 25));
+      const vertices = [];
+      const indices = [];
+
+      for (let i = 0; i <= N; i++) {
+        const y = yMin + (yMax - yMin) * (i / N);
+        const zC = zBase + getBackrestZOffset(y, dir);
+        const zBack = zC - thickZ / 2;
+        const zFront = zC + thickZ / 2;
+
+        // 4 vertices per slice
+        vertices.push(xMin, y, zBack);   // 4i + 0
+        vertices.push(xMax, y, zBack);   // 4i + 1
+        vertices.push(xMax, y, zFront);  // 4i + 2
+        vertices.push(xMin, y, zFront);  // 4i + 3
+      }
+
+      for (let i = 0; i < N; i++) {
+        const i0 = 4 * i;
+        const i1 = 4 * (i + 1);
+
+        // Back face (-Z outward)
+        indices.push(i0 + 0, i1 + 0, i1 + 1);
+        indices.push(i0 + 0, i1 + 1, i0 + 1);
+
+        // Right face (+X outward)
+        indices.push(i0 + 1, i1 + 1, i1 + 2);
+        indices.push(i0 + 1, i1 + 2, i0 + 2);
+
+        // Front face (+Z outward)
+        indices.push(i0 + 3, i0 + 2, i1 + 2);
+        indices.push(i0 + 3, i1 + 2, i1 + 3);
+
+        // Left face (-X outward)
+        indices.push(i0 + 0, i0 + 3, i1 + 3);
+        indices.push(i0 + 0, i1 + 3, i1 + 0);
+      }
+
+      // Bottom cap (-Y outward)
+      indices.push(0, 1, 2);
+      indices.push(0, 2, 3);
+
+      // Top cap (+Y outward)
+      const topStart = 4 * N;
+      indices.push(topStart + 0, topStart + 3, topStart + 2);
+      indices.push(topStart + 0, topStart + 2, topStart + 1);
+
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+      geo.setIndex(indices);
+      geo.computeVertexNormals();
+
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      mesh.userData = {
+        id, name, category: cat, materialParam: matParam,
+        isSCurve: true,
+        xMin, xMax, yMin, yMax, thickZ, dir, zBase,
+        matId: 'custom'
+      };
+
+      parent.add(mesh);
+      return mesh;
+    }
+
+    // Helper tương thích ngược
+    function makeSCurveLeg(id, name, cat, posX, cz, dir, mat, parent = modelGroup, matParam = null) {
+      return makeSCurvePart(id, name, cat, posX, posX + 34, 0, 1000, 34, dir, cz, mat, parent, matParam);
+    }
+
+    function makeSCurveSlat(id, name, cat, posX, cz, dir, mat, parent = modelGroup, matParam = null) {
+      return makeSCurvePart(id, name, cat, posX, posX + 28, 470, 885, 14, dir, cz, mat, parent, matParam);
+    }
+
+    function makeRoundedBox(id, name, cat, w, h, d, r, mat, posX, posY, posZ, parent = modelGroup, matParam = null) {
+      const shape = new THREE.Shape();
+      const hw = w / 2, hd = d / 2;
+      shape.moveTo(-hw + r, hd);
+      shape.lineTo(hw - r, hd);
+      shape.absarc(hw - r, hd - r, r, Math.PI / 2, 0, true);
+      shape.lineTo(hw, -hd + r);
+      shape.absarc(hw - r, -hd + r, r, 0, -Math.PI / 2, true);
+      shape.lineTo(-hw + r, -hd);
+      shape.absarc(-hw + r, -hd + r, r, -Math.PI / 2, Math.PI, true);
+      shape.lineTo(-hw, hd - r);
+      shape.absarc(-hw + r, hd - r, r, Math.PI, Math.PI / 2, true);
+
+      const extrudeSettings = { depth: h, bevelEnabled: false };
+      const geo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+      geo.rotateX(Math.PI / 2);
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(posX, posY + h / 2, posZ);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      mesh.userData = { id, name, category: cat, materialParam: matParam, isRoundedRect: true, w, h, d, r, posX, posY, posZ, matId: 'custom' };
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function buildKitchenLModel() {
+      // Clear
+      while (modelGroup.children.length > 0) {
+        modelGroup.remove(modelGroup.children[0]);
+      }
+      interactiveDoors.length = 0;
+      interactiveDrawers.length = 0;
+
+      // 1. Len chân tủ
+      makeBox("LenChan_CanhDai", "Len Chân Bếp Nấu", "top", 50, 0, -570, 2700, 100, -552, materials.metal_chrome);
+      makeBox("LenChan_CanhNgan", "Len Chân Chậu Rửa", "top", 2152, 0, -1380, 2170, 100, -570, materials.metal_chrome);
+
+      // 2. Mặt đá bếp chữ L (Countertop)
+      makeBox("MatDa_CanhDai", "Mặt Đá Bếp Nấu (2720 mm)", "top", 0, 840, -600, 2720, 870, 0, materials.marble_white);
+      makeBox("MatDa_CanhNgan", "Mặt Đá Chậu Rửa (1400 mm)", "top", 2120, 840, -1400, 2720, 870, -600, materials.marble_white);
+
+      // 3. THÙNG TỦ DƯỚI & PHỤ KIỆN RUỘT TỦ
+      // Module 1: 4 Ngăn Kéo (X 0 -> 600)
+      makeBox("ThungTu_Mod1", "Thùng Module 1 (4 Ngăn Kéo)", "lower", 0, 100, -580, 600, 840, -20, materials.wood_light);
+      for (let i = 0; i < 4; i++) {
+        const z1 = 105 + i * 184;
+        const z2 = z1 + 177;
+        const drwGroup = new THREE.Group();
+        drwGroup.userData = { id: `NganKeo_Mod1_${i+1}`, name: `Cụm Ngăn Kéo Tầng ${i+1}`, origZ: 0, openZ: 400 };
+
+        // Mặt ngăn kéo
+        makeBox(`MatKeo_Mod1_${i+1}`, `Mặt Kéo Tầng ${i+1}`, "lower", 4, z1, -600, 596, z2, -582, materials.acrylic_white, drwGroup);
+        // Tay nắm
+        makeBox(`TayNam_Mod1_${i+1}`, `Tay Nắm Kéo ${i+1}`, "lower", 220, (z1+z2)/2 - 8, -622, 380, (z1+z2)/2 + 8, -600, materials.metal_black, drwGroup);
+        // LÒNG HỘP NGĂN KÉO (Đáy, 2 Hông, Hậu)
+        makeBox(`DayKeo_Mod1_${i+1}`, `Đáy Hộp Kéo ${i+1}`, "lower", 30, z1 + 10, -570, 570, z1 + 22, -120, materials.wood_dark, drwGroup);
+        makeBox(`HongKeoT_Mod1_${i+1}`, `Hông Trái Hộp Kéo ${i+1}`, "lower", 20, z1 + 10, -570, 32, z1 + 130, -120, materials.wood_dark, drwGroup);
+        makeBox(`HongKeoP_Mod1_${i+1}`, `Hông Phải Hộp Kéo ${i+1}`, "lower", 568, z1 + 10, -570, 580, z1 + 130, -120, materials.wood_dark, drwGroup);
+        makeBox(`HauKeo_Mod1_${i+1}`, `Hậu Hộp Kéo ${i+1}`, "lower", 30, z1 + 10, -132, 570, z1 + 130, -120, materials.wood_dark, drwGroup);
+        // Ray trượt kim loại 2 bên
+        makeBox(`RayTruotT_Mod1_${i+1}`, `Ray Trượt Trái ${i+1}`, "lower", 8, z1 + 40, -560, 18, z1 + 70, -130, materials.metal_chrome, drwGroup);
+        makeBox(`RayTruotP_Mod1_${i+1}`, `Ray Trượt Phải ${i+1}`, "lower", 582, z1 + 40, -560, 592, z1 + 70, -130, materials.metal_chrome, drwGroup);
+
+        // Khay chia thìa dĩa tầng 1
+        if (i === 3) {
+          makeBox("KhayThiaDia", "Khay Chia Thìa Dĩa Inox", "lower", 50, z1 + 25, -540, 550, z1 + 70, -150, materials.metal_chrome, drwGroup);
+        }
+
+        modelGroup.add(drwGroup);
+        interactiveDrawers.push(drwGroup);
+      }
+
+      // Module 2: Cánh Mở & Kệ Dao Thớt Inox (X 600 -> 1050)
+      makeBox("ThungTu_Mod2", "Thùng Module 2 (Giá Dao Thớt)", "lower", 600, 100, -580, 1050, 840, -20, materials.wood_light);
+      // Kệ dao thớt gia vị inox bên trong
+      makeBox("KeDaoThot_Khung", "Giá Dao Thớt Inox 2 Tầng", "lower", 640, 130, -540, 1010, 750, -100, materials.metal_chrome);
+      // Cụm Cánh Mở xoay bản lề
+      const doorMod2 = new THREE.Group();
+      doorMod2.position.set(604, 0, -590);
+      doorMod2.userData = { id: "CanhMo_Mod2", name: "Cánh Mở Module 2", origRotY: 0, openRotY: -Math.PI / 2 };
+      makeBox("CanhMo_Mod2_Mesh", "Cánh Mở Mod 2", "lower", 0, 105, -10, 442, 835, 8, materials.acrylic_white, doorMod2);
+      makeBox("TayNam_Mod2", "Tay Nắm Dọc Mod 2", "lower", 410, 680, -32, 425, 810, -10, materials.metal_black, doorMod2);
+      modelGroup.add(doorMod2);
+      interactiveDoors.push(doorMod2);
+
+      // Module 3: Bếp Nấu & 2 Ngăn Kéo Lớn Xoong Nồi (X 1050 -> 1650)
+      makeBox("ThungTu_Mod3", "Thùng Module 3 (Bếp Nấu)", "lower", 1050, 100, -580, 1650, 840, -20, materials.wood_light);
+      for (let j = 0; j < 2; j++) {
+        const z1 = 105 + j * 368;
+        const z2 = z1 + 360;
+        const bigDrw = new THREE.Group();
+        bigDrw.userData = { id: `NganKeoLon_Mod3_${j+1}`, name: `Ngăn Kéo Xoong Nồi Tầng ${j+1}`, origZ: 0, openZ: 400 };
+
+        makeBox(`MatKeoLon_Mod3_${j+1}`, `Mặt Kéo Xoong Nồi ${j+1}`, "lower", 1054, z1, -600, 1646, z2, -582, materials.acrylic_white, bigDrw);
+        makeBox(`TayNamLon_Mod3_${j+1}`, `Tay Nắm Ngang Lớn ${j+1}`, "lower", 1250, (z1+z2)/2 - 8, -622, 1450, (z1+z2)/2 + 8, -600, materials.metal_black, bigDrw);
+        // Hộp ngăn kéo lớn + Nan chắn xoong nồi
+        makeBox(`DayKeoLon_${j+1}`, `Đáy Kéo Xoong Nồi ${j+1}`, "lower", 1080, z1 + 10, -570, 1620, z1 + 25, -100, materials.wood_dark, bigDrw);
+        makeBox(`HongKeoLonT_${j+1}`, `Hông Trái Hộp Kéo ${j+1}`, "lower", 1070, z1 + 10, -570, 1082, z1 + 220, -100, materials.wood_dark, bigDrw);
+        makeBox(`HongKeoLonP_${j+1}`, `Hông Phải Hộp Kéo ${j+1}`, "lower", 1618, z1 + 10, -570, 1630, z1 + 220, -100, materials.wood_dark, bigDrw);
+        makeBox(`NanInox_${j+1}`, `Nan Inox Bảo Vệ Xoong Nồi`, "lower", 1090, z1 + 180, -560, 1610, z1 + 200, -120, materials.metal_chrome, bigDrw);
+
+        modelGroup.add(bigDrw);
+        interactiveDrawers.push(bigDrw);
+      }
+
+      // Bếp Gas / Từ Âm 4 Vùng Nấu
+      makeBox("MatKinh_BepAm", "Bếp Gas / Từ Âm 4 Vùng Nấu", "appliance", 1100, 870, -530, 1600, 878, -70, materials.appliance_black);
+      makeBox("VungNau_1", "Mâm Nhiệt Vùng Nấu 1", "appliance", 1150, 878, -260, 1310, 882, -110, materials.metal_chrome);
+      makeBox("VungNau_2", "Mâm Nhiệt Vùng Nấu 2", "appliance", 1390, 878, -260, 1550, 882, -110, materials.metal_chrome);
+      makeBox("VungNau_3", "Mâm Nhiệt Vùng Nấu 3", "appliance", 1150, 878, -470, 1310, 882, -320, materials.metal_chrome);
+      makeBox("VungNau_4", "Mâm Nhiệt Vùng Nấu 4", "appliance", 1390, 878, -470, 1550, 882, -320, materials.metal_chrome);
+
+      // Module 4: Cánh Mở & Đợt Chia 2 Tầng (X 1650 -> 2100)
+      makeBox("ThungTu_Mod4", "Thùng Module 4 (Đồ Gia Dụng)", "lower", 1650, 100, -580, 2100, 840, -20, materials.wood_light);
+      makeBox("DotTu_Mod4", "Đợt Gỗ 18mm Chia 2 Tầng", "lower", 1668, 470, -560, 2082, 488, -40, materials.wood_dark);
+      const doorMod4 = new THREE.Group();
+      doorMod4.position.set(2096, 0, -590);
+      doorMod4.userData = { id: "CanhMo_Mod4", name: "Cánh Mở Module 4", origRotY: 0, openRotY: Math.PI / 2 };
+      makeBox("CanhMo_Mod4_Mesh", "Cánh Mở Mod 4", "lower", -442, 105, -10, 0, 835, 8, materials.acrylic_white, doorMod4);
+      makeBox("TayNam_Mod4", "Tay Nắm Dọc Mod 4", "lower", -425, 680, -32, -410, 810, -10, materials.metal_black, doorMod4);
+      modelGroup.add(doorMod4);
+      interactiveDoors.push(doorMod4);
+
+      // Khoang Chậu Rửa (X 2100 -> 2720, Y -1400 -> -600)
+      makeBox("ThungTu_ChauRua", "Thùng Khoang Chậu Rửa WPB", "lower", 2140, 100, -1380, 2700, 840, -600, materials.wood_light);
+      // Chậu rửa đôi 2 hố âm bàn + Xi-phông
+      makeBox("VienChauRua", "Viền Chậu Rửa Inox 304", "appliance", 2240, 868, -1320, 2640, 874, -840, materials.metal_chrome);
+      makeBox("HoChau_1", "Hố Chậu Rửa Lớn 1", "appliance", 2260, 680, -1300, 2430, 868, -860, materials.metal_chrome);
+      makeBox("HoChau_2", "Hố Chậu Rửa Lớn 2", "appliance", 2450, 680, -1300, 2620, 868, -860, materials.metal_chrome);
+      makeBox("XiPhong_1", "Bộ Xi-Phông Ruột Gà Thoát Nước", "appliance", 2320, 250, -1100, 2560, 680, -1060, materials.metal_black);
+      // Vòi nước cổ ngỗng
+      makeBox("DeVoiNuoc", "Chân Đế Vòi Nước Xoay 360°", "appliance", 2425, 870, -820, 2455, 920, -790, materials.metal_chrome);
+      makeBox("ThanVoiDung", "Thân Vòi Nước Đứng", "appliance", 2432, 920, -813, 2448, 1160, -797, materials.metal_chrome);
+      makeBox("CoNgongUon", "Cổ Ngỗng Vòi Xoay", "appliance", 2432, 1110, -920, 2448, 1170, -813, materials.metal_chrome);
+
+      // 2 Cánh mở chậu rửa
+      const doorSink1 = new THREE.Group();
+      doorSink1.position.set(2110, 0, -615);
+      doorSink1.userData = { id: "CanhChauRua_1", name: "Cánh Chậu Rửa Trái", origRotY: 0, openRotY: -Math.PI / 2 };
+      makeBox("CanhChauRua_1_Mesh", "Cánh Chậu 1", "lower", -10, 105, -370, 8, 835, 0, materials.acrylic_white, doorSink1);
+      makeBox("TayNam_ChauRua_1", "Tay Nắm Chậu 1", "lower", -30, 680, -360, -10, 810, -345, materials.metal_black, doorSink1);
+      modelGroup.add(doorSink1);
+      interactiveDoors.push(doorSink1);
+
+      const doorSink2 = new THREE.Group();
+      doorSink2.position.set(2110, 0, -1375);
+      doorSink2.userData = { id: "CanhChauRua_2", name: "Cánh Chậu Rửa Phải", origRotY: 0, openRotY: Math.PI / 2 };
+      makeBox("CanhChauRua_2_Mesh", "Cánh Chậu 2", "lower", -10, 105, 0, 8, 835, 370, materials.acrylic_white, doorSink2);
+      makeBox("TayNam_ChauRua_2", "Tay Nắm Chậu 2", "lower", -30, 680, 345, -10, 810, 360, materials.metal_black, doorSink2);
+      modelGroup.add(doorSink2);
+      interactiveDoors.push(doorSink2);
+
+      // 4. HỆ TỦ BẾP TRÊN (SÂU 350 mm, Y -350 -> 0)
+      // Khoang 1: Lò vi sóng âm tủ (X 0 -> 600, Z 1240 -> 2050, Cao 810mm)
+      makeBox("ThungTuTren_Mod1", "Thùng Khoang 1 Lò Vi Sóng", "upper", 0, 1240, -350, 600, 2050, -20, materials.wood_light);
+      makeBox("LoViSong_Than", "Lò Vi Sóng Âm Tủ Cao Cấp", "appliance", 25, 1250, -355, 575, 1630, -30, materials.appliance_black);
+      makeBox("LoViSong_MatKinh", "Mặt Kính & Bảng Điều Khiển Lò Vi Sóng", "appliance", 40, 1270, -370, 560, 1610, -355, materials.metal_chrome);
+      // Cánh mở trên lò vi sóng
+      const doorUp1 = new THREE.Group();
+      doorUp1.position.set(4, 0, -360);
+      doorUp1.userData = { id: "CanhTuTren_Mod1", name: "Cánh Tủ Trên Khoang 1", origRotY: 0, openRotY: -Math.PI / 2 };
+      makeBox("CanhTuTren_Mod1_Mesh", "Cánh Khoang 1", "upper", 0, 1648, -8, 592, 2045, 10, materials.acrylic_white, doorUp1);
+      makeBox("TayNam_TuTren_Mod1", "Tay Nắm Khoang 1", "upper", 560, 1670, -28, 575, 1790, -8, materials.metal_black, doorUp1);
+      modelGroup.add(doorUp1);
+      interactiveDoors.push(doorUp1);
+
+      // Khoang 2: Bát Đĩa Cánh Kính (X 600 -> 1050, Z 1450 -> 2050)
+      makeBox("ThungTuTren_Mod2", "Thùng Khoang 2 Bát Đĩa", "upper", 600, 1450, -350, 1050, 2050, -20, materials.wood_light);
+      // GIÁ ÚP BÁT ĐĨA INOX 304 HAI TẦNG KÈM KHAY NƯỚC
+      makeBox("GiaBatDia_Tang1", "Giá Úp Đĩa Inox Tầng 1", "upper", 630, 1490, -330, 1020, 1550, -50, materials.metal_chrome);
+      makeBox("KhayHungNuoc", "Khay Hứng Nước Inox Dưới Đáy", "upper", 620, 1460, -335, 1030, 1475, -45, materials.metal_chrome);
+      makeBox("GiaBatDia_Tang2", "Giá Úp Bát Chén Inox Tầng 2", "upper", 630, 1740, -330, 1020, 1790, -50, materials.metal_chrome);
+      // Cánh Kính Khung Nhôm
+      const doorUp2 = new THREE.Group();
+      doorUp2.position.set(604, 0, -360);
+      doorUp2.userData = { id: "CanhKinh_Mod2", name: "Cánh Kính Khung Nhôm Khoang 2", origRotY: 0, openRotY: -Math.PI / 2 };
+      makeBox("CanhKinh_Mod2_Mesh", "Cánh Kính Khoang 2", "upper", 0, 1455, -8, 442, 2045, 10, materials.glass, doorUp2);
+      makeBox("TayNam_TuTren_Mod2", "Tay Nắm Khoang 2", "upper", 410, 1475, -28, 425, 1600, -8, materials.metal_black, doorUp2);
+      modelGroup.add(doorUp2);
+      interactiveDoors.push(doorUp2);
+
+      // Khoang 3: Máy Hút Mùi Inox Chữ T (X 1050 -> 1670)
+      makeBox("ThungCheOngGio_Mod3", "Thùng Tủ Che Ống Gió Hút Mùi", "upper", 1050, 1750, -350, 1670, 2050, -20, materials.wood_light);
+      makeBox("TumInox_HutMui", "Tum Ống Inox Máy Hút Mùi", "appliance", 1260, 1600, -300, 1460, 2050, -50, materials.metal_chrome);
+      makeBox("MatInox_HutMui", "Mặt Phẳng Hút Mùi Inox Chữ T", "appliance", 1060, 1550, -480, 1660, 1600, 0, materials.metal_chrome);
+      makeBox("LuoiLocMo_HutMui", "Lưới Lọc Mỡ Nhôm Bạc", "appliance", 1120, 1545, -440, 1600, 1550, -40, materials.appliance_black);
+
+      // Khoang 4: Bát Đĩa Cánh Kính (X 1670 -> 2120)
+      makeBox("ThungTuTren_Mod4", "Thùng Khoang 4 Bát Đĩa", "upper", 1670, 1450, -350, 2120, 2050, -20, materials.wood_light);
+      makeBox("GiaBatDia_Khoang4_1", "Giá Úp Đĩa Inox Khoang 4 Tầng 1", "upper", 1700, 1490, -330, 2090, 1550, -50, materials.metal_chrome);
+      makeBox("GiaBatDia_Khoang4_2", "Giá Úp Bát Inox Khoang 4 Tầng 2", "upper", 1700, 1740, -330, 2090, 1790, -50, materials.metal_chrome);
+      const doorUp4 = new THREE.Group();
+      doorUp4.position.set(2116, 0, -360);
+      doorUp4.userData = { id: "CanhKinh_Mod4", name: "Cánh Kính Khung Nhôm Khoang 4", origRotY: 0, openRotY: Math.PI / 2 };
+      makeBox("CanhKinh_Mod4_Mesh", "Cánh Kính Khoang 4", "upper", -442, 1455, -8, 0, 2045, 10, materials.glass, doorUp4);
+      makeBox("TayNam_TuTren_Mod4", "Tay Nắm Khoang 4", "upper", -425, 1475, -28, -410, 1600, -8, materials.metal_black, doorUp4);
+      modelGroup.add(doorUp4);
+      interactiveDoors.push(doorUp4);
+
+      // Khoang 5: Đồ Khô & 2 Đợt Gỗ 3 Tầng (X 2120 -> 2720)
+      makeBox("ThungTuTren_Mod5", "Thùng Khoang 5 Đồ Khô", "upper", 2120, 1450, -350, 2720, 2050, -20, materials.wood_light);
+      makeBox("DotGo_Mod5_Tang1", "Đợt Gỗ Khoang 5 Tầng 1", "upper", 2138, 1650, -335, 2702, 1668, -40, materials.wood_dark);
+      makeBox("DotGo_Mod5_Tang2", "Đợt Gỗ Khoang 5 Tầng 2", "upper", 2138, 1850, -335, 2702, 1868, -40, materials.wood_dark);
+      const doorUp5 = new THREE.Group();
+      doorUp5.position.set(2124, 0, -360);
+      doorUp5.userData = { id: "CanhTuTren_Mod5", name: "Cánh Tủ Trên Khoang 5", origRotY: 0, openRotY: -Math.PI / 2 };
+      makeBox("CanhTuTren_Mod5_Mesh", "Cánh Khoang 5", "upper", 0, 1455, -8, 592, 2045, 10, materials.acrylic_white, doorUp5);
+      makeBox("TayNam_TuTren_Mod5", "Tay Nắm Khoang 5", "upper", 560, 1475, -28, 575, 1600, -8, materials.metal_black, doorUp5);
+      modelGroup.add(doorUp5);
+      interactiveDoors.push(doorUp5);
+
+      updateOutlinerTree();
+    }
+
+    // =========================================================================
+    // PRESET BUILDER: TỦ ÁO 4 CÁNH BO CONG R180
+    // =========================================================================
+    function buildWardrobeModel() {
+      while (modelGroup.children.length > 0) {
+        modelGroup.remove(modelGroup.children[0]);
+      }
+      interactiveDoors.length = 0;
+      interactiveDrawers.length = 0;
+
+      const W = 2530, H = 2400, D = 600, T = 18, H_chan = 80, W_corner = 450;
+      const W_main = W - W_corner; // 2080 mm
+      const W_side = W_main / 2;   // 1040 mm
+
+      // 1. Len chân tủ
+      makeBox("LenChanTuAo", "Len Chân Tủ Áo", "top", 20, 0, -D + 20, W - 20, H_chan, -20, materials.wood_dark);
+      // 2. Đáy & Nóc
+      makeBox("DayTuAo", "Tấm Đáy Tủ Áo", "lower", 0, H_chan, -D, W, H_chan + T, 0, materials.wood_light);
+      makeBox("NocTuAo", "Tấm Nóc Tủ Áo", "upper", 0, H - T, -D, W, H, 0, materials.wood_light);
+      // 3. Hồi Trái & Hậu
+      makeBox("HoiTrai", "Hồi Trái Tủ Áo", "lower", 0, H_chan + T, -D, T, H - T, 0, materials.wood_light);
+      makeBox("HauTuAo", "Hậu Tủ Áo 9mm", "lower", T, H_chan + T, -19, W, H - T, -10, materials.wood_dark);
+      // 4. Vách Ngăn
+      makeBox("VachNgan1", "Vách Giữa Khoang 1 & 2", "lower", W_side - T/2, H_chan + T, -D, W_side + T/2, H - T, -19, materials.wood_light);
+      makeBox("VachNgan2", "Vách Giữa K2 & Kệ Góc", "lower", W_main - T, H_chan + T, -D, W_main, H - T, -19, materials.wood_light);
+
+      // 5. Suốt treo & Đợt ngăn
+      makeBox("DotChanMan_K1", "Đợt Chăn Màn K1", "upper", T, 1900, -D, W_side - T/2, 1918, -19, materials.wood_light);
+      makeBox("DotChanMan_K2", "Đợt Chăn Màn K2", "upper", W_side + T/2, 1900, -D, W_main - T, 1918, -19, materials.wood_light);
+      makeBox("SuotTreo_K1", "Suốt Treo Quần Áo K1", "lower", T + 30, 1820, -320, W_side - T/2 - 30, 1845, -300, materials.metal_chrome);
+      makeBox("SuotTreo_K2", "Suốt Treo Quần Áo K2", "lower", W_side + T/2 + 30, 1820, -320, W_main - T - 30, 1845, -300, materials.metal_chrome);
+
+      // 6. Kệ góc 3 đợt
+      [1185, 1565, 1945].forEach((z, idx) => {
+        makeBox(`DotKeGoc_${idx+1}`, `Đợt Kệ Góc Bo R180 Tầng ${idx+1}`, "top", W_main, z, -D, W, z + T, -19, materials.wood_light);
+      });
+
+      // 7. 3 Ngăn Kéo Góc (Phủ Kín 450 mm)
+      for (let k = 0; k < 3; k++) {
+        const z1 = H_chan + T + 5 + k * 228;
+        const z2 = z1 + 220;
+        const drwG = new THREE.Group();
+        drwG.userData = { id: `NganKeoGoc_${k+1}`, name: `Ngăn Kéo Kệ Góc Tầng ${k+1}`, origZ: 0, openZ: 380 };
+        makeBox(`MatKeoGoc_${k+1}`, `Mặt Kéo Kệ Góc ${k+1}`, "lower", W_main + 4, z1, -618, W - 4, z2, -600, materials.acrylic_white, drwG);
+        makeBox(`TayNamGoc_${k+1}`, `Tay Nắm Kệ Góc ${k+1}`, "lower", W_main + 165, (z1+z2)/2 - 8, -638, W_main + 285, (z1+z2)/2 + 8, -618, materials.metal_black, drwG);
+        makeBox(`HopKeoGoc_${k+1}`, `Lòng Hộp Ngăn Kéo Góc ${k+1}`, "lower", W_main + 25, z1 + 10, -580, W - 25, z1 + 160, -120, materials.wood_dark, drwG);
+        modelGroup.add(drwG);
+        interactiveDrawers.push(drwG);
+      }
+
+      // 8. 4 Cánh Tủ Mở
+      const doorW = W_main / 4;
+      for (let d = 0; d < 4; d++) {
+        const pivotX = d < 2 ? d * doorW + 2 : (d + 1) * doorW - 2;
+        const openRot = d < 2 ? -Math.PI / 2 : Math.PI / 2;
+        const doorG = new THREE.Group();
+        doorG.position.set(pivotX, 0, -600);
+        doorG.userData = { id: `CanhTuAo_${d+1}`, name: `Cánh Tủ Áo Số ${d+1}`, origRotY: 0, openRotY: openRot };
+
+        const meshX1 = d < 2 ? 0 : -doorW + 4;
+        const meshX2 = d < 2 ? doorW - 4 : 0;
+        makeBox(`CanhTuAo_${d+1}_Mesh`, `Cánh Tủ ${d+1}`, "lower", meshX1, H_chan + 3, -18, meshX2, H - 3, 0, materials.acrylic_white, doorG);
+        const handleX = d < 2 ? doorW - 35 : -35;
+        makeBox(`TayNamDoc_${d+1}`, `Tay Nắm Dọc Cánh ${d+1}`, "lower", handleX, 975, -40, handleX + 15, 1425, -18, materials.metal_black, doorG);
+
+        modelGroup.add(doorG);
+        interactiveDoors.push(doorG);
+      }
+
+      updateOutlinerTree();
+    }
+
+    // =========================================================================
+    // PRESET BUILDER: TỦ SẢNH & TỦ GIÀY CÁNH KÍNH CAO CẤP (1600 x 520 x 2600 mm)
+    // =========================================================================
+    function buildLuxuryShoeCabinetModel() {
+      while (modelGroup.children.length > 0) {
+        modelGroup.remove(modelGroup.children[0]);
+      }
+      interactiveDoors.length = 0;
+      interactiveDrawers.length = 0;
+
+      const W = 1600;       // Tổng rộng: 1600 mm
+      const D = 520;        // Tổng sâu: 520 mm (Z: -520 -> 0)
+      const H = 2600;       // Tổng cao: 2600 mm
+      const H_chan = 60;    // Len chân tủ
+      const T = 18;         // Độ dày ván MDF 18mm
+      const W_left = 400;   // Khoang gương và ngăn kéo bên trái (X: 0 -> 400)
+      const W_right = 1200; // Khoang tủ kính bên phải (X: 400 -> 1600)
+      const H_lower = 2100; // Thân dưới
+      const H_upper = 500;  // Tầng nóc trên
+
+      // -----------------------------------------------------------------------
+      // PHẦN 1: MODULE TRÁI - GƯƠNG SOI & 2 NGĂN KÉO (X: 0 -> 400 mm)
+      // -----------------------------------------------------------------------
+      // 1.1. Len chân và đáy
+      makeBox("TG_LenChan_Trai", "Len Chân Module Trái", "cabinet", 0, 0, -480, W_left, H_chan, -40, materials.acrylic_white);
+      makeBox("TG_Day_Trai", "Đáy Khoang Ngăn Kéo", "cabinet", 0, H_chan, -D, W_left, H_chan + T, 0, materials.acrylic_white);
+
+      // 1.2. Hồi trái ngoài cùng (X: 0 -> 18, Y: H_chan -> H)
+      makeBox("TG_HoiTrai", "Hồi Trái Ngoài Cùng", "cabinet", 0, H_chan + T, -D, T, H - T, 0, materials.acrylic_white);
+
+      // 1.3. Hồi giữa ngăn cách Module 400 và Module 1200 (X: 382 -> 400, Y: H_chan -> H)
+      makeBox("TG_HoiGiua", "Vách Ngăn Giữa Tủ", "cabinet", W_left - T, H_chan + T, -D, W_left, H - T, 0, materials.acrylic_white);
+
+      // 1.4. Nóc bàn phấn / Khối ngăn kéo (Y: 450 -> 468 mm)
+      const H_keo = 450;
+      makeBox("TG_NocBanKeo", "Mặt Nóc Bàn Ngăn Kéo", "cabinet", T, H_keo - T, -D, W_left - T, H_keo, 0, materials.acrylic_white);
+
+      // 1.5. Khối 2 Ngăn Kéo Ray Trượt
+      const hKeoSingle = (H_keo - H_chan - T - 15) / 2; // ~178 mm mỗi ngăn kéo
+      for (let k = 0; k < 2; k++) {
+        const y1 = H_chan + T + 5 + k * (hKeoSingle + 5);
+        const y2 = y1 + hKeoSingle;
+        const drwG = new THREE.Group();
+        drwG.userData = { id: `TG_NganKeo_${k+1}`, name: `Ngăn Kéo Số ${k+1}`, origZ: 0, openZ: 320 };
+
+        // Mặt ngăn kéo sơn trắng acrylic
+        makeBox(`TG_MatKeo_${k+1}`, `Mặt Ngăn Kéo ${k+1}`, "drawer_front", T + 3, y1, -20, W_left - T - 3, y2, -2, materials.acrylic_white, drwG);
+        // Tay nắm kim loại mạ vàng
+        makeBox(`TG_TayNamKeo_${k+1}`, `Tay Nắm Vàng Ngăn Kéo ${k+1}`, "gold", W_left/2 - 60, (y1 + y2)/2 - 5, -2, W_left/2 + 60, (y1 + y2)/2 + 5, 12, materials.metal_gold, drwG);
+        // Hộp ngăn kéo lòng trong
+        makeBox(`TG_HopKeo_${k+1}`, `Hộp Lòng Ngăn Kéo ${k+1}`, "cabinet", T + 20, y1 + 10, -D + 30, W_left - T - 20, y1 + hKeoSingle - 15, -30, materials.wood_light, drwG);
+
+        modelGroup.add(drwG);
+        interactiveDrawers.push(drwG);
+      }
+
+      // 1.6. Tấm hậu khoang gương soi (Z: -D -> -D + T)
+      makeBox("TG_HauKhoangGuong", "Hậu Sau Gương Soi", "cabinet", T, H_keo, -D, W_left - T, H_lower, -D + T, materials.acrylic_white);
+
+      // 1.7. Gương Soi Đứng Bầu Dục / Chữ Nhật Bo Góc Viền Vàng
+      const mirrorW = 310;
+      const mirrorH = 1520;
+      const mirrorX1 = (W_left - mirrorW) / 2;
+      const mirrorX2 = mirrorX1 + mirrorW;
+      const mirrorY1 = H_keo + 35;
+      const mirrorY2 = mirrorY1 + mirrorH;
+      // Khung viền mạ vàng
+      makeBox("TG_KhungGuong", "Khung Viền Gương Mạ Vàng", "gold", mirrorX1 - 4, mirrorY1 - 4, -280, mirrorX2 + 4, mirrorY2 + 4, -266, materials.metal_gold);
+      // Mặt gương soi tráng bạc phản chiếu
+      makeBox("TG_MatGuong", "Mặt Gương Soi Tráng Bạc", "mirror", mirrorX1, mirrorY1, -266, mirrorX2, mirrorY2, -262, materials.mirror);
+
+      // 1.8. Đợt trang trí hở tầng trên nóc module trái (Y: 2100 -> 2600 mm)
+      makeBox("TG_DotKeTren_Trai", "Đợt Kệ Trang Trí Trên Gương", "cabinet", T, H_lower - T, -D, W_left - T, H_lower, 0, materials.acrylic_white);
+      makeBox("TG_Noc_Trai", "Tấm Nóc Module Trái", "cabinet", 0, H - T, -D, W_left, H, 0, materials.acrylic_white);
+      makeBox("TG_HauNoc_Trai", "Hậu Nóc Module Trái", "cabinet", T, H_lower, -D, W_left - T, H - T, -D + T, materials.acrylic_white);
+
+      // Khung ảnh decor trên đợt
+      makeBox("TG_KhungAnhDecor", "Khung Ảnh Trang Trí Decor", "gold", 150, H_lower + 20, -320, 270, H_lower + 220, -300, materials.metal_gold);
+
+      // -----------------------------------------------------------------------
+      // PHẦN 2: MODULE PHẢI - TỦ GIÀY & ÁO CÁNH KÍNH (X: 400 -> 1600 mm)
+      // -----------------------------------------------------------------------
+      // 2.1. Len chân và đáy tủ phải
+      makeBox("TG_LenChan_Phai", "Len Chân Module Phải", "cabinet", W_left, 0, -480, W, H_chan, -40, materials.acrylic_white);
+      makeBox("TG_Day_Phai", "Đáy Khoang Tủ Kính Phải", "cabinet", W_left, H_chan, -D, W, H_chan + T, 0, materials.acrylic_white);
+
+      // 2.2. Hồi phải ngoài cùng (X: 1582 -> 1600)
+      makeBox("TG_HoiPhai", "Hồi Phải Ngoài Cùng", "cabinet", W - T, H_chan + T, -D, W, H - T, 0, materials.acrylic_white);
+
+      // 2.3. Tấm đợt ngăn chia thân dưới và tầng nóc (Y: 2100 -> 2118 mm)
+      makeBox("TG_DotChiaTangNoc", "Đợt Ngăn Thân Dưới & Tầng Nóc", "cabinet", W_left, H_lower - T, -D + T, W - T, H_lower, 0, materials.acrylic_white);
+
+      // 2.4. Tấm nóc tủ phải (Y: 2582 -> 2600 mm)
+      makeBox("TG_Noc_Phai", "Tấm Nóc Module Phải", "cabinet", W_left, H - T, -D, W, H, 0, materials.acrylic_white);
+
+      // 2.5. Tấm hậu tủ phải (Z: -D -> -D + T)
+      makeBox("TG_Hau_Phai", "Tấm Hậu Tủ Kính", "cabinet", W_left, H_chan + T, -D, W - T, H - T, -D + T, materials.acrylic_white);
+
+      // 2.6. Vách đứng chia 3 khoang (mỗi khoang ~382 mm)
+      const bayW = (W_right - 2 * T) / 3; // ~388 mm
+      const xSep1 = W_left + bayW;
+      const xSep2 = W_left + 2 * bayW + T;
+
+      makeBox("TG_VachDung_1", "Vách Đứng Phân Khoang 1-2", "cabinet", xSep1, H_chan + T, -D + T, xSep1 + T, H_lower - T, -20, materials.acrylic_white);
+      makeBox("TG_VachDung_2", "Vách Đứng Phân Khoang 2-3", "cabinet", xSep2, H_chan + T, -D + T, xSep2 + T, H_lower - T, -20, materials.acrylic_white);
+
+      // Vách đứng tầng nóc trên
+      makeBox("TG_VachNoc_1", "Vách Đứng Tầng Nóc 1", "cabinet", xSep1, H_lower, -D + T, xSep1 + T, H - T, -20, materials.acrylic_white);
+      makeBox("TG_VachNoc_2", "Vách Đứng Tầng Nóc 2", "cabinet", xSep2, H_lower, -D + T, xSep2 + T, H - T, -20, materials.acrylic_white);
+
+      // 2.7. BỐ TRÍ CÔNG NĂNG BÊN TRONG CÁC KHOANG
+      // --- Khoang 1 (X: W_left -> xSep1): Tầng để giày dép dưới + Suốt treo áo trên ---
+      // 2 đợt để giày dép dưới
+      makeBox("TG_DotGiay_1_1", "Đợt Để Giày Tầng 1 (Khoang 1)", "cabinet", W_left, 240, -D + T, xSep1, 240 + T, -40, materials.acrylic_white);
+      makeBox("TG_DotGiay_1_2", "Đợt Để Giày Tầng 2 (Khoang 1)", "cabinet", W_left, 420, -D + T, xSep1, 420 + T, -40, materials.acrylic_white);
+      makeBox("TG_DotNganAo_1", "Đợt Ngăn Giày & Áo (Khoang 1)", "cabinet", W_left, 600, -D + T, xSep1, 600 + T, -40, materials.acrylic_white);
+
+      // Suốt treo quần áo mạ vàng
+      makeCylinder("TG_SuotTreo_1", "Suốt Treo Áo Khoang 1", "gold", (W_left + xSep1)/2, 1980, -260, 2000, 12, materials.metal_gold);
+
+      // --- Khoang 2 (X: xSep1 + T -> xSep2): Tầng để giày dép dưới + Suốt treo áo trên ---
+      makeBox("TG_DotGiay_2_1", "Đợt Để Giày Tầng 1 (Khoang 2)", "cabinet", xSep1 + T, 240, -D + T, xSep2, 240 + T, -40, materials.acrylic_white);
+      makeBox("TG_DotGiay_2_2", "Đợt Để Giày Tầng 2 (Khoang 2)", "cabinet", xSep1 + T, 420, -D + T, xSep2, 420 + T, -40, materials.acrylic_white);
+      makeBox("TG_DotNganAo_2", "Đợt Ngăn Giày & Áo (Khoang 2)", "cabinet", xSep1 + T, 600, -D + T, xSep2, 600 + T, -40, materials.acrylic_white);
+      makeCylinder("TG_SuotTreo_2", "Suốt Treo Áo Khoang 2", "gold", (xSep1 + T + xSep2)/2, 1980, -260, 2000, 12, materials.metal_gold);
+
+      // --- Khoang 3 (X: xSep2 + T -> W - T): Đợt để bốt cao cổ + Đợt trưng bày túi xách ---
+      makeBox("TG_DotBot_3_1", "Đợt Để Giày Bốt Tầng 1 (Khoang 3)", "cabinet", xSep2 + T, 280, -D + T, W - T, 280 + T, -40, materials.acrylic_white);
+      makeBox("TG_DotBot_3_2", "Đợt Để Giày Bốt Tầng 2 (Khoang 3)", "cabinet", xSep2 + T, 560, -D + T, W - T, 560 + T, -40, materials.acrylic_white);
+      makeBox("TG_DotTui_3_1", "Đợt Để Túi Xách 1 (Khoang 3)", "glass", xSep2 + T, 1050, -D + T, W - T, 1050 + 8, -40, materials.glass_amber);
+      makeBox("TG_DotTui_3_2", "Đợt Để Túi Xách 2 (Khoang 3)", "glass", xSep2 + T, 1550, -D + T, W - T, 1550 + 8, -40, materials.glass_amber);
+
+      // 2.8. Hệ Thống Đèn LED Hắt Khe Vàng Ấm
+      makeBox("TG_LedNoc_Phai", "Thanh Đèn LED Hắt Nóc Kính", "accessory", W_left + 10, H_lower - T - 12, -60, W - T - 10, H_lower - T - 4, -40, materials.led_light);
+      makeBox("TG_LedGiay_1", "Đèn LED Hắt Tầng Giày Khoang 1", "accessory", W_left + 10, 588, -60, xSep1 - 10, 596, -40, materials.led_light);
+      makeBox("TG_LedGiay_2", "Đèn LED Hắt Tầng Giày Khoang 2", "accessory", xSep1 + T + 10, 588, -60, xSep2 - 10, 596, -40, materials.led_light);
+
+      // 2.9. Phụ Kiện Giày Dép 3D Đặt Trên Đợt (Mỗi đôi gồm 2 chiếc giày sinh động)
+      function makeShoePair(id, name, cx, y, cz) {
+        // Chiếc trái
+        makeBox(`${id}_L_Sole`, `${name} - Đế Trái`, "shoe", cx - 45, y, cz - 110, cx - 10, y + 14, cz + 110, materials.acrylic_white);
+        makeBox(`${id}_L_Body`, `${name} - Thân Trái`, "shoe", cx - 43, y + 14, cz - 105, cx - 12, y + 55, cz + 95, materials.metal_black);
+        // Chiếc phải
+        makeBox(`${id}_R_Sole`, `${name} - Đế Phải`, "shoe", cx + 10, y, cz - 110, cx + 45, y + 14, cz + 110, materials.acrylic_white);
+        makeBox(`${id}_R_Body`, `${name} - Thân Phải`, "shoe", cx + 12, y + 14, cz - 105, cx + 43, y + 55, cz + 95, materials.metal_black);
+      }
+      makeShoePair("TG_DoiGiay_1", "Đôi Giày Sneaker Thể Thao 1", (W_left + xSep1)/2 - 80, H_chan + T, -260);
+      makeShoePair("TG_DoiGiay_2", "Đôi Giày Da Công Sở 2", (W_left + xSep1)/2 + 80, H_chan + T, -260);
+      makeShoePair("TG_DoiGiay_3", "Đôi Giày Thể Thao 3", (W_left + xSep1)/2, 240 + T, -260);
+
+      makeShoePair("TG_DoiGiay_4", "Đôi Giày Lười Da Nâu 4", (xSep1 + T + xSep2)/2 - 80, H_chan + T, -260);
+      makeShoePair("TG_DoiGiay_5", "Đôi Giày Thể Thao Trắng 5", (xSep1 + T + xSep2)/2 + 80, H_chan + T, -260);
+      makeShoePair("TG_DoiGiay_6", "Đôi Giày Cao Gót 6", (xSep1 + T + xSep2)/2, 240 + T, -260);
+
+      // 2.10. Hệ Thống 3 Cánh Kính Cường Lực Viền Vàng Thân Dưới (Interact mở 90°)
+      const doorGlassW = (W_right - 4) / 3; // ~398 mm
+      for (let c = 0; c < 3; c++) {
+        const pivotX = W_left + c * doorGlassW + 2;
+        const doorG = new THREE.Group();
+        doorG.position.set(pivotX, 0, -10);
+        doorG.userData = { id: `TG_CanhKinhDuoi_${c+1}`, name: `Cánh Kính Thân Dưới Số ${c+1}`, origRotY: 0, openRotY: -Math.PI / 2 };
+
+        const dW = doorGlassW - 4;
+        const dH = H_lower - H_chan - T - 6;
+        const dY1 = H_chan + T + 3;
+        const dY2 = dY1 + dH;
+        const fThick = 20;
+        const fWidth = 22;
+
+        // Khung nhôm viền 4 cạnh
+        makeBox(`TG_KhungNhom_${c+1}_Trai`, `Khung Nhôm Trái Cánh ${c+1}`, "gold", 0, dY1, -fThick, fWidth, dY2, 0, materials.metal_gold, doorG);
+        makeBox(`TG_KhungNhom_${c+1}_Phai`, `Khung Nhôm Phải Cánh ${c+1}`, "gold", dW - fWidth, dY1, -fThick, dW, dY2, 0, materials.metal_gold, doorG);
+        makeBox(`TG_KhungNhom_${c+1}_Duoi`, `Khung Nhôm Dưới Cánh ${c+1}`, "gold", fWidth, dY1, -fThick, dW - fWidth, dY1 + fWidth, 0, materials.metal_gold, doorG);
+        makeBox(`TG_KhungNhom_${c+1}_Tren`, `Khung Nhôm Trên Cánh ${c+1}`, "gold", fWidth, dY2 - fWidth, -fThick, dW - fWidth, dY2, 0, materials.metal_gold, doorG);
+
+        // Kính cường lực màu trà
+        makeBox(`TG_KinhMauTra_${c+1}`, `Kính Cường Lực Cánh ${c+1}`, "glass", fWidth, dY1 + fWidth, -14, dW - fWidth, dY2 - fWidth, -6, materials.glass_amber, doorG);
+
+        // Tay nắm thanh dọc mạ vàng cao 1000mm
+        makeBox(`TG_TayNamKinh_${c+1}`, `Tay Nắm Cánh Kính ${c+1}`, "gold", dW - 14, (dY1 + dY2)/2 - 500, -2, dW - 2, (dY1 + dY2)/2 + 500, 10, materials.metal_gold, doorG);
+
+        modelGroup.add(doorG);
+        interactiveDoors.push(doorG);
+      }
+
+      // 2.11. Hệ Thống 3 Cánh Kính Cường Lực Tầng Nóc Trên (Interact mở 90°)
+      for (let c = 0; c < 3; c++) {
+        const pivotX = W_left + c * doorGlassW + 2;
+        const doorG = new THREE.Group();
+        doorG.position.set(pivotX, 0, -10);
+        doorG.userData = { id: `TG_CanhKinhNoc_${c+1}`, name: `Cánh Kính Tầng Nóc Số ${c+1}`, origRotY: 0, openRotY: -Math.PI / 2 };
+
+        const dW = doorGlassW - 4;
+        const dY1 = H_lower + 3;
+        const dY2 = H - T - 3;
+        const fThick = 20;
+        const fWidth = 22;
+
+        makeBox(`TG_KhungNoc_${c+1}_Trai`, `Khung Nhôm Nóc Trái ${c+1}`, "gold", 0, dY1, -fThick, fWidth, dY2, 0, materials.metal_gold, doorG);
+        makeBox(`TG_KhungNoc_${c+1}_Phai`, `Khung Nhôm Nóc Phải ${c+1}`, "gold", dW - fWidth, dY1, -fThick, dW, dY2, 0, materials.metal_gold, doorG);
+        makeBox(`TG_KhungNoc_${c+1}_Duoi`, `Khung Nhôm Nóc Dưới ${c+1}`, "gold", fWidth, dY1, -fThick, dW - fWidth, dY1 + fWidth, 0, materials.metal_gold, doorG);
+        makeBox(`TG_KhungNoc_${c+1}_Tren`, `Khung Nhôm Nóc Trên ${c+1}`, "gold", fWidth, dY2 - fWidth, -fThick, dW - fWidth, dY2, 0, materials.metal_gold, doorG);
+        makeBox(`TG_KinhNoc_${c+1}`, `Kính Cường Lực Nóc ${c+1}`, "glass", fWidth, dY1 + fWidth, -14, dW - fWidth, dY2 - fWidth, -6, materials.glass_amber, doorG);
+
+        modelGroup.add(doorG);
+        interactiveDoors.push(doorG);
+      }
+
+      updateOutlinerTree();
+    }
+
+    // =========================================================================
+    // PRESET BUILDER: BỘ BÀN ĂN GỖ TỰ NHIÊN 6 GHẾ (MẶT KÍNH CƯỜNG LỰC)
+    // =========================================================================
+    function buildDiningTableSetModel() {
+      while (modelGroup.children.length > 0) {
+        modelGroup.remove(modelGroup.children[0]);
+      }
+      interactiveDoors.length = 0;
+      interactiveDrawers.length = 0;
+
+      // -----------------------------------------------------------------------
+      // PHẦN 1: BÀN ĂN 2 TẦNG (1600 x 800 x 750 mm)
+      // -----------------------------------------------------------------------
+      const W_ban = 1600; // Chiều dài theo trục X: -800 -> 800
+      const D_ban = 800;  // Chiều rộng theo trục Z: -400 -> 400
+      const H_ban = 750;  // Cao độ tổng thể: 0 -> 750 mm
+      const W_vien = 70;  // Bản rộng khung viền gỗ: 70mm
+      const chan_size = 75; // Tiết diện chân bàn: 75x75 mm
+      const chan_inset = 15; // Thụt lề chân bàn so với mép: 15mm
+      const r_goc = 60; // Bán kính bo tròn 4 góc mặt bàn & kính: 60mm
+
+      // 1.1. Bốn Chân Bàn Tầng Dưới (Y: 0 -> 640 mm)
+      const x_c_tt = -W_ban/2 + chan_inset + chan_size/2;
+      const z_c_tt = -D_ban/2 + chan_inset + chan_size/2;
+      makeBox("ChanBan_TT", "Chân Bàn Trái - Trước", "leg", x_c_tt - chan_size/2, 0, z_c_tt - chan_size/2, x_c_tt + chan_size/2, 640, z_c_tt + chan_size/2, materials.wood_dining);
+
+      const x_c_pt = W_ban/2 - chan_inset - chan_size/2;
+      const z_c_pt = -D_ban/2 + chan_inset + chan_size/2;
+      makeBox("ChanBan_PT", "Chân Bàn Phải - Trước", "leg", x_c_pt - chan_size/2, 0, z_c_pt - chan_size/2, x_c_pt + chan_size/2, 640, z_c_pt + chan_size/2, materials.wood_dining);
+
+      const x_c_ts = -W_ban/2 + chan_inset + chan_size/2;
+      const z_c_ts = D_ban/2 - chan_inset - chan_size/2;
+      makeBox("ChanBan_TS", "Chân Bàn Trái - Sau", "leg", x_c_ts - chan_size/2, 0, z_c_ts - chan_size/2, x_c_ts + chan_size/2, 640, z_c_ts + chan_size/2, materials.wood_dining);
+
+      const x_c_ps = W_ban/2 - chan_inset - chan_size/2;
+      const z_c_ps = D_ban/2 - chan_inset - chan_size/2;
+      makeBox("ChanBan_PS", "Chân Bàn Phải - Sau", "leg", x_c_ps - chan_size/2, 0, z_c_ps - chan_size/2, x_c_ps + chan_size/2, 640, z_c_ps + chan_size/2, materials.wood_dining);
+
+      // 1.2. Bốn Yếm Bàn Tầng Dưới (Y: 555 -> 640 mm, cao 85 mm, dày 22 mm)
+      const x_leg_min = x_c_tt + chan_size/2;
+      const x_leg_max = x_c_pt - chan_size/2;
+      const z_leg_min = z_c_tt + chan_size/2;
+      const z_leg_max = z_c_ts - chan_size/2;
+
+      makeBox("YemBan_DaiTruoc", "Yếm Bàn Dài Trước", "apron", x_leg_min, 555, z_c_tt - 11, x_leg_max, 640, z_c_tt + 11, materials.wood_dining);
+      makeBox("YemBan_DaiSau", "Yếm Bàn Dài Sau", "apron", x_leg_min, 555, z_c_ts - 11, x_leg_max, 640, z_c_ts + 11, materials.wood_dining);
+      makeBox("YemBan_NganTrai", "Yếm Bàn Ngắn Trái", "apron", x_c_tt - 11, 555, z_leg_min, x_c_tt + 11, 640, z_leg_max, materials.wood_dining);
+      makeBox("YemBan_NganPhai", "Yếm Bàn Ngắn Phải", "apron", x_c_pt - 11, 555, z_leg_min, x_c_pt + 11, 640, z_leg_max, materials.wood_dining);
+
+      // 1.3. Hệ Nan Gỗ Thoáng Trang Trí Tầng Dưới (Y: 622 -> 640 mm, dày 18 mm, bản rộng 28 mm)
+      const numNan = 13;
+      const x_nan_start = -600;
+      const x_nan_step = 100;
+      for (let n = 0; n < numNan; n++) {
+        const x_c = x_nan_start + n * x_nan_step;
+        makeBox(`NanGo_Ban_${n+1}`, `Nan Gỗ Trang Trí Số ${n+1}`, "slat", x_c - 14, 622, z_leg_min, x_c + 14, 640, z_leg_max, materials.wood_dining);
+      }
+      makeBox("XaDoNan_1", "Thanh Đỡ Nan Gỗ Trước", "slat", x_leg_min, 604, -120, x_leg_max, 622, -96, materials.wood_dining);
+      makeBox("XaDoNan_2", "Thanh Đỡ Nan Gỗ Sau", "slat", x_leg_min, 604, 96, x_leg_max, 622, 120, materials.wood_dining);
+
+      // 1.4. Bốn Củ Tiện Tròn Cổ Bồng Kê Đỡ 4 Góc (Y: 640 -> 720 mm, cao 80 mm)
+      const corners = [
+        { id: "CuTien_TT", name: "Củ Tiện Góc Trái - Trước", cx: x_c_tt, cz: z_c_tt },
+        { id: "CuTien_PT", name: "Củ Tiện Góc Phải - Trước", cx: x_c_pt, cz: z_c_pt },
+        { id: "CuTien_TS", name: "Củ Tiện Góc Trái - Sau",   cx: x_c_ts, cz: z_c_ts },
+        { id: "CuTien_PS", name: "Củ Tiện Góc Phải - Sau",   cx: x_c_ps, cz: z_c_ps }
+      ];
+      corners.forEach(cn => {
+        makeCylinder(`${cn.id}_De`, `${cn.name} (Đế Tiện)`, "leg", cn.cx, 640, cn.cz, 655, 31, materials.wood_dining);
+        makeCylinder(`${cn.id}_Than`, `${cn.name} (Thân Tiện Bầu)`, "leg", cn.cx, 655, cn.cz, 700, 36, materials.wood_dining);
+        makeCylinder(`${cn.id}_Co`, `${cn.name} (Bát Đỡ Trên)`, "leg", cn.cx, 700, cn.cz, 720, 32, materials.wood_dining);
+      });
+
+      // 1.5. Khung Viền Gỗ Mặt Bàn Bo Tròn 4 Góc (Y: 720 -> 740 mm, dày 20 mm, bo R=60mm)
+      makeRoundedBox("KhungVien_MatBan", "Khung Viền Gỗ Bo Tròn 4 Góc (R60mm)", "frame", W_ban, 20, D_ban, r_goc, materials.wood_dining, 0, 720, 0);
+
+      // 1.6. Mặt Kính Cường Lực Bo Tròn 4 Góc (Y: 740 -> 750 mm, dày 10 mm, bo R=60mm)
+      makeRoundedBox("MatKinh_CuongLuc", "Mặt Kính Cường Lực 10mm Bo Góc (R60mm)", "glass", W_ban, 10, D_ban, r_goc, materials.glass, 0, 740, 0);
+
+      // -----------------------------------------------------------------------
+      // PHẦN 2: 6 CHIẾC GHẾ ĂN CHÂN CONG CHỮ S (420 x 420 x 1000 mm, Mặt ngồi cao 450 mm)
+      // -----------------------------------------------------------------------
+      const chairConfigs = [
+        { id: "Ghe_Truoc_1", name: "Ghế Ăn Trước - Trái", x: -500, z: -580, dir: 1 },
+        { id: "Ghe_Truoc_2", name: "Ghế Ăn Trước - Giữa", x: 0,    z: -580, dir: 1 },
+        { id: "Ghe_Truoc_3", name: "Ghế Ăn Trước - Phải", x: 500,  z: -580, dir: 1 },
+        { id: "Ghe_Sau_1",   name: "Ghế Ăn Sau - Trái",   x: -500, z: 580,  dir: -1 },
+        { id: "Ghe_Sau_2",   name: "Ghế Ăn Sau - Giữa",   x: 0,    z: 580,  dir: -1 },
+        { id: "Ghe_Sau_3",   name: "Ghế Ăn Sau - Phải",   x: 500,  z: 580,  dir: -1 }
+      ];
+
+      chairConfigs.forEach((cfg) => {
+        const chairGroup = new THREE.Group();
+        chairGroup.position.set(0, 0, 0);
+        chairGroup.userData = {
+          id: cfg.id,
+          name: cfg.name,
+          origZ: 0,
+          openZ: cfg.dir > 0 ? -160 : 160
+        };
+
+        const cx = cfg.x;
+        const cz = cfg.z;
+        const c_w = 420;
+        const c_d = 420;
+        const c_leg = 36;
+
+        const x_left = cx - c_w / 2;
+        const x_right = cx + c_w / 2;
+        const z_front = cfg.dir > 0 ? cz + c_d / 2 : cz - c_d / 2;
+        const z_back_base = cfg.dir > 0 ? cz - c_d / 2 : cz + c_d / 2;
+
+        const z_f_min = Math.min(z_front, z_front - cfg.dir * c_leg);
+        const z_f_max = Math.max(z_front, z_front - cfg.dir * c_leg);
+
+        // 2.1. Hai Chân Trước Đứng Thẳng (Y: 0 -> 430 mm)
+        makeBox(`${cfg.id}_ChanTruoc_T`, `Chân Trước Trái - ${cfg.name}`, "chair", x_left + 10, 0, z_f_min, x_left + 10 + c_leg, 430, z_f_max, materials.wood_dining, chairGroup);
+        makeBox(`${cfg.id}_ChanTruoc_P`, `Chân Trước Phải - ${cfg.name}`, "chair", x_right - 10 - c_leg, 0, z_f_min, x_right - 10, 430, z_f_max, materials.wood_dining, chairGroup);
+
+        // 2.2. Hai Cột Chân Sau Liền Tựa Lưng Uốn Cong Chữ S Liền Mạch (100% Trơn Mượt Chuẩn Mẫu)
+        makeSCurvePart(`${cfg.id}_CotSau_T`, `Cột Sau Trái Chữ S - ${cfg.name}`, "chair", x_left + 10, x_left + 10 + 34, 0, 1000, 34, cfg.dir, z_back_base, materials.wood_dining, chairGroup);
+        makeSCurvePart(`${cfg.id}_CotSau_P`, `Cột Sau Phải Chữ S - ${cfg.name}`, "chair", x_right - 10 - 34, x_right - 10, 0, 1000, 34, cfg.dir, z_back_base, materials.wood_dining, chairGroup);
+
+        // 2.3. Hai Thanh Giằng Chân Bên Hông (Y: 130 -> 155 mm, nối chân trước & chân sau)
+        const z_side_front = (z_f_min + z_f_max) / 2;
+        const z_side_back = z_back_base + getBackrestZOffset(142, cfg.dir);
+        const z_giang_min = Math.min(z_side_front, z_side_back);
+        const z_giang_max = Math.max(z_side_front, z_side_back);
+
+        makeBox(`${cfg.id}_GiangHong_T`, `Giằng Hông Trái - ${cfg.name}`, "chair", x_left + 17, 130, z_giang_min, x_left + 39, 155, z_giang_max, materials.wood_dining, chairGroup);
+        makeBox(`${cfg.id}_GiangHong_P`, `Giằng Hông Phải - ${cfg.name}`, "chair", x_right - 39, 130, z_giang_min, x_right - 17, 155, z_giang_max, materials.wood_dining, chairGroup);
+        makeBox(`${cfg.id}_GiangSau`, `Giằng Sau - ${cfg.name}`, "chair", x_left + 10 + 34, 110, z_side_back - 10, x_right - 10 - 34, 135, z_side_back + 10, materials.wood_dining, chairGroup);
+
+        // 2.4. Bốn Thanh Yếm Đỡ Mặt Ngồi (Y: 370 -> 430 mm, cao 60 mm, dày 20 mm)
+        const z_back_seat = z_back_base + getBackrestZOffset(400, cfg.dir);
+        makeBox(`${cfg.id}_YemNgoi_Truoc`, `Yếm Mặt Ngồi Trước - ${cfg.name}`, "chair", x_left + 10 + c_leg, 370, (z_f_min+z_f_max)/2 - 10, x_right - 10 - c_leg, 430, (z_f_min+z_f_max)/2 + 10, materials.wood_dining, chairGroup);
+        makeBox(`${cfg.id}_YemNgoi_Sau`, `Yếm Mặt Ngồi Sau - ${cfg.name}`, "chair", x_left + 10 + 34, 370, z_back_seat - 10, x_right - 10 - 34, 430, z_back_seat + 10, materials.wood_dining, chairGroup);
+        makeBox(`${cfg.id}_YemNgoi_Trai`, `Yếm Mặt Ngồi Trái - ${cfg.name}`, "chair", x_left + 18, 370, Math.min(z_side_front, z_back_seat), x_left + 38, 430, Math.max(z_side_front, z_back_seat), materials.wood_dining, chairGroup);
+        makeBox(`${cfg.id}_YemNgoi_Phai`, `Yếm Mặt Ngồi Phải - ${cfg.name}`, "chair", x_right - 38, 370, Math.min(z_side_front, z_back_seat), x_right - 18, 430, Math.max(z_side_front, z_back_seat), materials.wood_dining, chairGroup);
+
+        // 2.5. Mặt Ngồi Gỗ Tự Nhiên Bo Góc (Y: 430 -> 450 mm, dày 20 mm)
+        const z_seat_top = z_back_base + getBackrestZOffset(440, cfg.dir);
+        makeBox(`${cfg.id}_MatNgoi`, `Mặt Ngồi Gỗ Tự Nhiên - ${cfg.name}`, "chair", x_left, 430, Math.min(z_front, z_seat_top), x_right, 450, Math.max(z_front, z_seat_top), materials.wood_dining, chairGroup);
+
+        // 2.6. Bản Đỉnh Tựa Lưng Cao 120mm Uốn Cong Liền Cột (Y: 880 -> 1000 mm, dày 22 mm)
+        makeSCurvePart(`${cfg.id}_DinhTua`, `Bản Đỉnh Tựa Lưng Cao 120mm - ${cfg.name}`, "chair", x_left + 10, x_right - 10, 880, 1000, 22, cfg.dir, z_back_base, materials.wood_dining, chairGroup);
+
+        // 2.7. Bản Ngang Đáy Tựa Lưng Uốn Cong Liền Cột (Y: 445 -> 475 mm, cao 30 mm, dày 22 mm)
+        makeSCurvePart(`${cfg.id}_DayTua`, `Bản Ngang Đáy Tựa - ${cfg.name}`, "chair", x_left + 10, x_right - 10, 445, 475, 22, cfg.dir, z_back_base, materials.wood_dining, chairGroup);
+
+        // 2.8. Hệ 4 Nan Dọc Uốn Cong Chữ S Ôm Lưng Cắm Mộng Chìm (Y: 470 -> 885 mm)
+        const slatOffsets = [-105, -35, 35, 105];
+        slatOffsets.forEach((xOff, slIdx) => {
+          const sl_cx = cx + xOff;
+          makeSCurvePart(`${cfg.id}_NanTua_${slIdx+1}`, `Nan Tựa Chữ S Số ${slIdx+1} - ${cfg.name}`, "chair", sl_cx - 14, sl_cx + 14, 470, 885, 14, cfg.dir, z_back_base, materials.wood_dining, chairGroup);
+        });
+
+        // 2.9. Tấm Pano Trang Trí Chìm Ở Giữa Lưng Ghế Uốn Cong Đồng Bộ (Y: 580 -> 770 mm, rộng 66 mm)
+        makeSCurvePart(`${cfg.id}_PanoTrangTri`, `Pano Gỗ Trang Trí Chìm - ${cfg.name}`, "chair", cx - 33, cx + 33, 580, 770, 10, cfg.dir, z_back_base, materials.wood_dining, chairGroup);
+
+        modelGroup.add(chairGroup);
+        interactiveDrawers.push(chairGroup);
+      });
+
+      updateOutlinerTree();
+    }
+
+    function setSubTitle(text) {
+      const el = document.getElementById('txtSubTitle');
+      if (el) el.innerText = text;
+    }
+
+    // =========================================================================
+    // UNIVERSAL DATA-DRIVEN ENGINE: TOAST, LOAD/EXPORT JSON, DRAG & DROP, MCP
+    // =========================================================================
+    function showToast(msg, duration = 3000) {
+      const toast = document.getElementById('toastNotification');
+      const txt = document.getElementById('toastMessage');
+      if (!toast || !txt) return;
+      txt.innerText = msg;
+      toast.classList.remove('opacity-0', '-translate-y-4');
+      toast.classList.add('opacity-100', 'translate-y-0');
+      setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', '-translate-y-4');
+      }, duration);
+    }
+
+    function loadModelFromJSON(data) {
+      if (!data) return;
+
+      // 1. Clear existing model
+      while (modelGroup.children.length > 0) {
+        modelGroup.remove(modelGroup.children[0]);
+      }
+      interactiveDoors.length = 0;
+      interactiveDrawers.length = 0;
+      deselectObject();
+
+      // 2. Set title & subtitle
+      if (data.name) {
+        const sub = data.subtitle ? ` • ${data.subtitle}` : '';
+        setSubTitle(data.name + sub);
+      }
+
+      // 3. Save metadata for Revit export
+      state.currentModelMeta = {
+        name: data.name || "HT_Model",
+        category: data.category || "OST_Casework",
+        defaultTypeName: data.defaultTypeName || (data.name ? "HT_" + data.name.replace(/\s+/g, '_') : "HT_CustomModel"),
+        parameters: data.parameters || []
+      };
+      state.currentModelData = data;
+
+      // 4. Recursive Part Builder
+      function buildParts(partsList, parentGroup) {
+        if (!partsList || !Array.isArray(partsList)) return;
+
+        partsList.forEach(p => {
+          const mat = materials[p.material] || (p.color ? new THREE.MeshStandardMaterial({ color: p.color, roughness: 0.4 }) : materials.wood_light);
+          const cat = p.category || "cabinet";
+          const id = p.id || `part_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+          const name = p.name || id;
+          const matParam = p.materialParam || null;
+
+          if (p.type === 'box') {
+            const b = p.box || (p.min && p.max ? [p.min[0], p.min[1], p.min[2], p.max[0], p.max[1], p.max[2]] : [0,0,0,100,100,100]);
+            const mesh = makeBox(id, name, cat, b[0], b[1], b[2], b[3], b[4], b[5], mat, parentGroup, matParam);
+            if (p.isWallHost) mesh.userData.isWallHost = true;
+          }
+          else if (p.type === 'cylinder') {
+            makeCylinder(id, name, cat, p.cx, p.y1, p.cz, p.y2, p.radius, mat, parentGroup, matParam);
+          }
+          else if (p.type === 'tapered_leg') {
+            makeTaperedLeg(id, name, cat, p.cx, p.cz, p.y1, p.y2, p.rTop, p.rBottom, p.rotX || 0, p.rotZ || 0, mat, parentGroup, matParam);
+          }
+          else if (p.type === 'arc' || p.type === 'bull_horn_arc') {
+            makeBullHornArc(id, name, cat, p.cx, p.cz, p.y1, p.y2, p.rCenter, p.thickness, p.angleSpanDeg, p.rotRad, mat, parentGroup, matParam);
+          }
+          else if (p.type === 's_curve') {
+            makeSCurvePart(id, name, cat, p.xMin, p.xMax, p.yMin, p.yMax, p.thickZ, p.dir, p.zBase, mat, parentGroup, matParam);
+          }
+          else if (p.type === 'rounded_box' || p.type === 'rounded_rect') {
+            makeRoundedBox(id, name, cat, p.w, p.h, p.d, p.r, mat, p.x || 0, p.y || 0, p.z || 0, parentGroup, matParam);
+          }
+          else if (p.type === 'extrude_yz' || p.type === 'profile_extrusion_yz') {
+            makeExtrusionYZ(id, name, cat, p.x1, p.x2, p.profileConfig || p, mat, parentGroup, matParam);
+          }
+          else if (p.type === 'door' || p.type === 'interactive_door') {
+            const doorG = new THREE.Group();
+            if (p.pivot) doorG.position.set(...p.pivot);
+            doorG.userData = {
+              id: id,
+              name: name,
+              origRotY: p.origRotY !== undefined ? p.origRotY : 0,
+              openRotY: p.openRotY !== undefined ? p.openRotY : -Math.PI / 2
+            };
+            buildParts(p.children, doorG);
+            parentGroup.add(doorG);
+            interactiveDoors.push(doorG);
+          }
+          else if (p.type === 'drawer' || p.type === 'interactive_drawer') {
+            const drwG = new THREE.Group();
+            drwG.userData = {
+              id: id,
+              name: name,
+              origZ: p.origZ !== undefined ? p.origZ : 0,
+              openZ: p.openZ !== undefined ? p.openZ : 300,
+              openRadial: p.openRadial,
+              dirX: p.dirX,
+              dirZ: p.dirZ,
+              origX: p.origX,
+              isOpened: false
+            };
+            buildParts(p.children, drwG);
+            parentGroup.add(drwG);
+            interactiveDrawers.push(drwG);
+          }
+          else if (p.type === 'group') {
+            const g = new THREE.Group();
+            g.userData = { id, name };
+            buildParts(p.children, g);
+            parentGroup.add(g);
+          }
+        });
+      }
+
+      buildParts(data.parts, modelGroup);
+
+      // 5. Camera positioning
+      if (data.camera && data.camera.position) {
+        camera.position.set(...data.camera.position);
+        if (data.camera.target) controls.target.set(...data.camera.target);
+      } else {
+        const box = new THREE.Box3().setFromObject(modelGroup);
+        if (!box.isEmpty()) {
+          const center = new THREE.Vector3();
+          const size = new THREE.Vector3();
+          box.getCenter(center);
+          box.getSize(size);
+          const maxDim = Math.max(size.x, size.y, size.z);
+          controls.target.copy(center);
+          camera.position.set(center.x + maxDim * 1.2, center.y + maxDim * 0.8, center.z + maxDim * 1.4);
+        }
+      }
+
+      updateOutlinerTree();
+    }
+
+    function exportModelToJSON() {
+      const meta = state.currentModelMeta || {};
+      let exportData = state.currentModelData ? JSON.parse(JSON.stringify(state.currentModelData)) : {
+        name: meta.name || "HT_CustomModel",
+        category: meta.category || "OST_Casework",
+        defaultTypeName: meta.defaultTypeName || "HT_CustomModel",
+        parameters: meta.parameters || [],
+        parts: []
+      };
+
+      if (!exportData.parts || exportData.parts.length === 0) {
+        exportData.parts = [];
+        modelGroup.traverse(obj => {
+          if (obj.isMesh && obj.userData && obj.userData.id) {
+            const u = obj.userData;
+            const box = new THREE.Box3().setFromObject(obj);
+            exportData.parts.push({
+              id: u.id,
+              name: u.name || u.id,
+              type: u.isCylinder ? "cylinder" : u.isSCurve ? "s_curve" : u.isBullHornArc ? "bull_horn_arc" : u.isProfileExtrusionYZ ? "extrude_yz" : u.isRoundedRect ? "rounded_box" : "box",
+              category: u.category || "cabinet",
+              materialParam: u.materialParam || "VatLieu_ThungTu",
+              box: [Math.round(box.min.x), Math.round(box.min.y), Math.round(box.min.z), Math.round(box.max.x), Math.round(box.max.y), Math.round(box.max.z)]
+            });
+          }
+        });
+      }
+
+      const jsonStr = JSON.stringify(exportData, null, 2);
+      const blob = new Blob([jsonStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const fileName = (meta.defaultTypeName || meta.name || "HT_Model").replace(/[^a-zA-Z0-9_\-]/g, '_') + ".json";
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast(`Đã xuất file: ${fileName}`);
+    }
+
+    // JSON FILE PICKER & DRAG-AND-DROP
+    const fileInputJSON = document.getElementById('fileInputJSON');
+    if (fileInputJSON) {
+      fileInputJSON.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+          const file = e.target.files[0];
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            try {
+              const data = JSON.parse(evt.target.result);
+              loadModelFromJSON(data);
+              showToast(`Đã nạp mẫu: ${data.name || file.name}`);
+            } catch (err) {
+              alert("Lỗi đọc file JSON: " + err.message);
+            }
+          };
+          reader.readAsText(file);
+        }
+      });
+    }
+
+    document.getElementById('btnImportJSON').addEventListener('click', () => {
+      if (fileInputJSON) fileInputJSON.click();
+    });
+
+    document.getElementById('btnExportJSON').addEventListener('click', () => {
+      exportModelToJSON();
+    });
+
+    // DRAG AND DROP JSON INTO CANVAS
+    window.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+    });
+
+    window.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const files = e.dataTransfer.files;
+      if (files && files.length > 0) {
+        const file = files[0];
+        if (file.name.toLowerCase().endsWith('.json')) {
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            try {
+              const data = JSON.parse(evt.target.result);
+              loadModelFromJSON(data);
+              showToast(`Đã nạp mẫu: ${data.name || file.name}`);
+            } catch (err) {
+              alert("Lỗi đọc file JSON: " + err.message);
+            }
+          };
+          reader.readAsText(file);
+        } else {
+          showToast("Vui lòng thả file định dạng .json!");
+        }
+      }
+    });
+
+    // WEBSOCKET MCP LIVE INJECTION & STATUS LISTENER
+    let mcpLiveSocket = null;
+    function initMcpLiveSocket() {
+      try {
+        mcpLiveSocket = new WebSocket("ws://127.0.0.1:7777");
+        mcpLiveSocket.onopen = () => {
+          const badge = document.getElementById('mcpStatusBadge');
+          if (badge) {
+            badge.classList.remove('bg-rose-500');
+            badge.classList.add('bg-emerald-400');
+            badge.title = "Revit MCP Ready (Port 7777) - Sẵn sàng nhận mô hình từ AI";
+          }
+        };
+        mcpLiveSocket.onmessage = (evt) => {
+          try {
+            const msg = JSON.parse(evt.data);
+            if (msg.action === 'load_model' || msg.action === 'studio_load_model') {
+              const modelData = msg.data || msg.parameters;
+              if (modelData) {
+                loadModelFromJSON(modelData);
+                showToast(`AI đã nạp mô hình: ${modelData.name || 'Mới'}`);
+              }
+            }
+          } catch (e) {}
+        };
+        mcpLiveSocket.onerror = () => {
+          const badge = document.getElementById('mcpStatusBadge');
+          if (badge) {
+            badge.classList.remove('bg-emerald-400');
+            badge.classList.add('bg-rose-500');
+            badge.title = "Chưa kết nối Revit MCP (Port 7777)";
+          }
+        };
+        mcpLiveSocket.onclose = () => {
+          const badge = document.getElementById('mcpStatusBadge');
+          if (badge) {
+            badge.classList.remove('bg-emerald-400');
+            badge.classList.add('bg-rose-500');
+          }
+          setTimeout(initMcpLiveSocket, 5000);
+        };
+      } catch (e) {}
+    }
+    initMcpLiveSocket();
+
+    // EXPOSE GLOBAL API FOR AI / IFRAME / SCRIPTS
+    window.loadModelFromJSON = loadModelFromJSON;
+    window.exportModelToJSON = exportModelToJSON;
+    window.showToast = showToast;
+
+    // DATA PRESET: TU AO 4 CANH XAM XANH 1.8M (UNIVERSAL JSON SPEC)
+    const PRESET_TU_AO_XAM_XANH_DATA = {"name": "Tủ áo 4 cánh xám xanh 1.8m", "subtitle": "Rộng 1800 × Sâu 600 × Cao 2100 mm • Cánh Mint & Xám Pastel, 3 Ngăn Kéo & Khay Chia Phụ Kiện", "category": "OST_Casework", "defaultTypeName": "HT_TuAo_4Canh_XamXanh_1800x600x2100", "camera": {"position": [2500, 1800, 2400], "target": [900, 1050, -300]}, "parameters": [{"name": "VatLieu_ThungTu", "type": "Material", "value": "HT_Go_MDF_TrangSu", "color": [240, 240, 242], "isInstance": false}, {"name": "VatLieu_CanhXanh", "type": "Material", "value": "HT_Son_XanhMint_Pastel", "color": [108, 168, 155], "isInstance": false}, {"name": "VatLieu_CanhGo", "type": "Material", "value": "HT_Go_Soi_Sang", "color": [225, 195, 155], "isInstance": false}, {"name": "VatLieu_NganKeoXam", "type": "Material", "value": "HT_Son_XamGhi_Slate", "color": [142, 147, 152], "isInstance": false}, {"name": "VatLieu_NganKeoTrang", "type": "Material", "value": "HT_SonTrang_Acrylic", "color": [250, 250, 250], "isInstance": false}, {"name": "VatLieu_GuongSoi", "type": "Material", "value": "HT_Guong_TrangBac", "color": [230, 240, 250], "isInstance": false}, {"name": "VatLieu_PhuKien", "type": "Material", "value": "HT_Inox_Mo_PhuKien", "color": [60, 64, 70], "isInstance": false}], "parts": [{"id": "TA_LenChanTruoc", "name": "Len Chân Trước", "type": "box", "category": "cabinet", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [18, 0, -50, 1782, 60, -32]}, {"id": "TA_LenChanSau", "name": "Len Chân Sau", "type": "box", "category": "cabinet", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [18, 0, -591, 1782, 60, -573]}, {"id": "TA_GiangChan_Trai", "name": "Giằng Chân Trái", "type": "box", "category": "cabinet", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [18, 0, -573, 36, 60, -50]}, {"id": "TA_GiangChan_Giua", "name": "Giằng Chân Giữa", "type": "box", "category": "cabinet", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [891, 0, -573, 909, 60, -50]}, {"id": "TA_GiangChan_Phai", "name": "Giằng Chân Phải", "type": "box", "category": "cabinet", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [1764, 0, -573, 1782, 60, -50]}, {"id": "TA_HoiTrai", "name": "Hồi Trái Ngoài Cùng", "type": "box", "category": "cabinet", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [0, 60, -600, 18, 2100, 0]}, {"id": "TA_HoiPhai", "name": "Hồi Phải Ngoài Cùng", "type": "box", "category": "cabinet", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [1782, 60, -600, 1800, 2100, 0]}, {"id": "TA_DayTu", "name": "Đáy Tủ Chính", "type": "box", "category": "cabinet", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [18, 60, -591, 1782, 78, 0]}, {"id": "TA_NocTu", "name": "Nóc Tủ Chính", "type": "box", "category": "cabinet", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [18, 2082, -591, 1782, 2100, 0]}, {"id": "TA_HauTu", "name": "Tấm Hậu Tủ Chống Ẩm", "type": "box", "category": "cabinet", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [18, 60, -600, 1782, 2100, -591]}, {"id": "TA_VachDung_1", "name": "Vách Đứng Ngăn Khoang 1 & 2", "type": "box", "category": "cabinet", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [594, 78, -591, 612, 2082, 0]}, {"id": "TA_VachDung_2", "name": "Vách Đứng Ngăn Khoang 2 & 3", "type": "box", "category": "cabinet", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [1188, 78, -591, 1206, 2082, 0]}, {"id": "TA_DotNoc_Khoang1", "name": "Đợt Nóc Để Vali Khoang 1", "type": "box", "category": "shelf", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [18, 1740, -580, 594, 1758, 0]}, {"id": "TA_DotNoc_Khoang2", "name": "Đợt Nóc Để Vali Khoang 2", "type": "box", "category": "shelf", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [612, 1740, -580, 1188, 1758, 0]}, {"id": "TA_DotNoc_Khoang3", "name": "Đợt Nóc Để Vali Khoang 3", "type": "box", "category": "shelf", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [1206, 1740, -580, 1782, 1758, 0]}, {"id": "TA_DotGiua_Khoang1", "name": "Đợt Giữa Phân Tầng Treo Đồ (K1)", "type": "box", "category": "shelf", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [18, 910, -580, 594, 928, 0]}, {"id": "TA_SuotTreo_K1_Tren", "name": "Suốt Treo Áo Tầng Trên (K1)", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_chrome", "box": [18, 1670, -308, 594, 1695, -292]}, {"id": "TA_BatSuot_K1_Tren_Trai", "name": "Bát Đỡ Suốt Trên Trái (K1)", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [18, 1660, -318, 23, 1705, -282]}, {"id": "TA_BatSuot_K1_Tren_Phai", "name": "Bát Đỡ Suốt Trên Phải (K1)", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [589, 1660, -318, 594, 1705, -282]}, {"id": "TA_SuotTreo_K1_Duoi", "name": "Suốt Treo Quần Tầng Dưới (K1)", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_chrome", "box": [18, 840, -308, 594, 865, -292]}, {"id": "TA_BatSuot_K1_Duoi_Trai", "name": "Bát Đỡ Suốt Dưới Trái (K1)", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [18, 830, -318, 23, 875, -282]}, {"id": "TA_BatSuot_K1_Duoi_Phai", "name": "Bát Đỡ Suốt Dưới Phải (K1)", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [589, 830, -318, 594, 875, -282]}, {"id": "TA_DotNocKeo_Khoang2", "name": "Đợt Nóc Cụm Ngăn Kéo (K2)", "type": "box", "category": "shelf", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [612, 580, -580, 1188, 598, 0]}, {"id": "TA_SuotTreo_K2_VayDai", "name": "Suốt Treo Váy Dài & Áo Khoác (K2)", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_chrome", "box": [612, 1670, -308, 1188, 1695, -292]}, {"id": "TA_BatSuot_K2_Trai", "name": "Bát Đỡ Suốt Váy Trái (K2)", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [612, 1660, -318, 617, 1705, -282]}, {"id": "TA_BatSuot_K2_Phai", "name": "Bát Đỡ Suốt Váy Phải (K2)", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [1183, 1660, -318, 1188, 1705, -282]}, {"id": "TA_NganKeo_1", "name": "Ngăn Kéo 1 (Xám Ghi - Khung Phụ Kiện)", "type": "interactive_drawer", "origZ": 0, "openZ": 320, "children": [{"id": "TA_MatKeo_1", "name": "Mặt Ngăn Kéo 1 Xám Ghi", "type": "box", "category": "drawer_front", "materialParam": "VatLieu_NganKeoXam", "material": "grey_slate", "box": [616, 420, 0, 1184, 576, 18]}, {"id": "TA_TayNamKeo_1", "name": "Tay Nắm Thanh Ngăn Kéo 1", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [820, 555, 18, 980, 567, 28]}, {"id": "TA_DayHopKeo_1", "name": "Đáy Hộp Ngăn Kéo 1", "type": "box", "category": "cabinet", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [630, 425, -480, 1170, 437, -20]}, {"id": "TA_VachTraiHopKeo_1", "name": "Vách Trái Hộp Kéo 1", "type": "box", "category": "cabinet", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [630, 437, -480, 642, 540, -20]}, {"id": "TA_VachPhaiHopKeo_1", "name": "Vách Phải Hộp Kéo 1", "type": "box", "category": "cabinet", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [1158, 437, -480, 1170, 540, -20]}, {"id": "TA_VachSauHopKeo_1", "name": "Vách Sau Hộp Kéo 1", "type": "box", "category": "cabinet", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [642, 437, -480, 1158, 540, -468]}, {"id": "TA_NanDoc1_Khay", "name": "Nan Dọc 1 Khay Chia Ô", "type": "box", "category": "accessory", "materialParam": "VatLieu_NganKeoXam", "material": "grey_slate", "box": [810, 437, -460, 818, 500, -40]}, {"id": "TA_NanDoc2_Khay", "name": "Nan Dọc 2 Khay Chia Ô", "type": "box", "category": "accessory", "materialParam": "VatLieu_NganKeoXam", "material": "grey_slate", "box": [990, 437, -460, 998, 500, -40]}, {"id": "TA_NanNgang1_Khay", "name": "Nan Ngang 1 Khay Chia Ô", "type": "box", "category": "accessory", "materialParam": "VatLieu_NganKeoXam", "material": "grey_slate", "box": [642, 437, -360, 1158, 500, -352]}, {"id": "TA_NanNgang2_Khay", "name": "Nan Ngang 2 Khay Chia Ô", "type": "box", "category": "accessory", "materialParam": "VatLieu_NganKeoXam", "material": "grey_slate", "box": [642, 437, -260, 1158, 500, -252]}, {"id": "TA_NanNgang3_Khay", "name": "Nan Ngang 3 Khay Chia Ô", "type": "box", "category": "accessory", "materialParam": "VatLieu_NganKeoXam", "material": "grey_slate", "box": [642, 437, -150, 1158, 500, -142]}]}, {"id": "TA_NganKeo_2", "name": "Ngăn Kéo 2 (Trắng Sứ)", "type": "interactive_drawer", "origZ": 0, "openZ": 320, "children": [{"id": "TA_MatKeo_2", "name": "Mặt Ngăn Kéo 2 Trắng Sứ", "type": "box", "category": "drawer_front", "materialParam": "VatLieu_NganKeoTrang", "material": "acrylic_white", "box": [616, 250, 0, 1184, 406, 18]}, {"id": "TA_TayNamKeo_2", "name": "Tay Nắm Thanh Ngăn Kéo 2", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [820, 385, 18, 980, 397, 28]}, {"id": "TA_DayHopKeo_2", "name": "Đáy Hộp Ngăn Kéo 2", "type": "box", "category": "cabinet", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [630, 255, -480, 1170, 267, -20]}, {"id": "TA_VachTraiHopKeo_2", "name": "Vách Trái Hộp Kéo 2", "type": "box", "category": "cabinet", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [630, 267, -480, 642, 380, -20]}, {"id": "TA_VachPhaiHopKeo_2", "name": "Vách Phải Hộp Kéo 2", "type": "box", "category": "cabinet", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [1158, 267, -480, 1170, 380, -20]}, {"id": "TA_VachSauHopKeo_2", "name": "Vách Sau Hộp Kéo 2", "type": "box", "category": "cabinet", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [642, 267, -480, 1158, 380, -468]}]}, {"id": "TA_NganKeo_3", "name": "Ngăn Kéo 3 (Trắng Sứ)", "type": "interactive_drawer", "origZ": 0, "openZ": 320, "children": [{"id": "TA_MatKeo_3", "name": "Mặt Ngăn Kéo 3 Trắng Sứ", "type": "box", "category": "drawer_front", "materialParam": "VatLieu_NganKeoTrang", "material": "acrylic_white", "box": [616, 80, 0, 1184, 236, 18]}, {"id": "TA_TayNamKeo_3", "name": "Tay Nắm Thanh Ngăn Kéo 3", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [820, 215, 18, 980, 227, 28]}, {"id": "TA_DayHopKeo_3", "name": "Đáy Hộp Ngăn Kéo 3", "type": "box", "category": "cabinet", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [630, 85, -480, 1170, 97, -20]}, {"id": "TA_VachTraiHopKeo_3", "name": "Vách Trái Hộp Kéo 3", "type": "box", "category": "cabinet", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [630, 97, -480, 642, 210, -20]}, {"id": "TA_VachPhaiHopKeo_3", "name": "Vách Phải Hộp Kéo 3", "type": "box", "category": "cabinet", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [1158, 97, -480, 1170, 210, -20]}, {"id": "TA_VachSauHopKeo_3", "name": "Vách Sau Hộp Kéo 3", "type": "box", "category": "cabinet", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [642, 97, -480, 1158, 210, -468]}]}, {"id": "TA_DotDay_TuiXach_K3", "name": "Đợt Đáy Ô Túi Xách (K3)", "type": "box", "category": "shelf", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [1206, 440, -580, 1782, 458, 0]}, {"id": "TA_VachChia_TuiXach_K3", "name": "Vách Chia 2 Ô Túi Xách Đáy (K3)", "type": "box", "category": "cabinet", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [1485, 78, -580, 1503, 440, 0]}, {"id": "TA_VachPhu_Khoang3", "name": "Vách Phụ Chia Cột Xếp Đồ & Suốt Treo (K3)", "type": "box", "category": "cabinet", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [1476, 458, -580, 1494, 1740, 0]}, {"id": "TA_DotXepDo_1_K3", "name": "Đợt Xếp Quần Áo 1 (K3)", "type": "box", "category": "shelf", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [1206, 760, -560, 1476, 778, 0]}, {"id": "TA_DotXepDo_2_K3", "name": "Đợt Xếp Quần Áo 2 (K3)", "type": "box", "category": "shelf", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [1206, 1080, -560, 1476, 1098, 0]}, {"id": "TA_DotXepDo_3_K3", "name": "Đợt Xếp Quần Áo 3 (K3)", "type": "box", "category": "shelf", "materialParam": "VatLieu_ThungTu", "material": "wood_oak", "box": [1206, 1400, -560, 1476, 1418, 0]}, {"id": "TA_SuotTreo_K3", "name": "Suốt Treo Áo Khoác Phải (K3)", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_chrome", "box": [1494, 1670, -308, 1782, 1695, -292]}, {"id": "TA_BatSuot_K3_Trai", "name": "Bát Đỡ Suốt K3 Trái", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [1494, 1660, -318, 1499, 1705, -282]}, {"id": "TA_BatSuot_K3_Phai", "name": "Bát Đỡ Suốt K3 Phải", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [1777, 1660, -318, 1782, 1705, -282]}, {"id": "TA_KhungVienGuong_K3", "name": "Khung Viền Gương Mạ Đen", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [1505, 475, -590, 1771, 1645, -588]}, {"id": "TA_MatGuong_K3", "name": "Mặt Gương Soi Đứng Tráng Bạc", "type": "box", "category": "mirror", "materialParam": "VatLieu_GuongSoi", "material": "mirror", "box": [1510, 480, -588, 1766, 1640, -584]}, {"id": "TA_CanhCua_1", "name": "Cánh Cửa 1 (Trái Ngoài - Vân Gỗ Sồi)", "type": "interactive_door", "pivot": [19, 0, 0], "origRotY": 0, "openRotY": -1.5708, "children": [{"id": "TA_PanCanh_1", "name": "Tấm Cánh Cửa 1", "type": "box", "category": "door", "materialParam": "VatLieu_CanhGo", "material": "wood_oak", "box": [0, 78, 0, 574, 2082, 18]}, {"id": "TA_TayNam_1", "name": "Tay Nắm Thanh Dài Cánh 1", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [545, 950, 18, 557, 1150, 30]}]}, {"id": "TA_CanhCua_2", "name": "Cánh Cửa 2 (Giữa Trái - Xanh Mint Pastel)", "type": "interactive_door", "pivot": [613, 0, 0], "origRotY": 0, "openRotY": -1.5708, "children": [{"id": "TA_PanCanh_2", "name": "Tấm Cánh Cửa 2 Xanh Mint", "type": "box", "category": "door", "materialParam": "VatLieu_CanhXanh", "material": "mint_green", "box": [0, 598, 0, 284, 2082, 18]}, {"id": "TA_TayNam_2", "name": "Tay Nắm Thanh Cánh 2", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [262, 750, 18, 274, 950, 30]}]}, {"id": "TA_CanhCua_3", "name": "Cánh Cửa 3 (Giữa Phải - Xanh Mint Pastel)", "type": "interactive_door", "pivot": [1185, 0, 0], "origRotY": 0, "openRotY": 1.5708, "children": [{"id": "TA_PanCanh_3", "name": "Tấm Cánh Cửa 3 Xanh Mint", "type": "box", "category": "door", "materialParam": "VatLieu_CanhXanh", "material": "mint_green", "box": [-284, 598, 0, 0, 2082, 18]}, {"id": "TA_TayNam_3", "name": "Tay Nắm Thanh Cánh 3", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [-274, 750, 18, -262, 950, 30]}]}, {"id": "TA_CanhCua_4", "name": "Cánh Cửa 4 (Phải Ngoài - Vân Gỗ Sồi)", "type": "interactive_door", "pivot": [1781, 0, 0], "origRotY": 0, "openRotY": 1.5708, "children": [{"id": "TA_PanCanh_4", "name": "Tấm Cánh Cửa 4", "type": "box", "category": "door", "materialParam": "VatLieu_CanhGo", "material": "wood_oak", "box": [-574, 78, 0, 0, 2082, 18]}, {"id": "TA_TayNam_4", "name": "Tay Nắm Thanh Dài Cánh 4", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [-557, 950, 18, -545, 1150, 30]}]}]};
+
+    // DATA PRESET: CUA DI 2 CANH CO O THOANG GAN TUONG (WALL-HOSTED JSON SPEC)
+    const PRESET_DOOR_2LEAVES_TRANSOM_DATA = {"name":"Cửa đi 2 cánh nhôm kính có ô thoáng (Gắn tường)","subtitle":"Rộng 1800 × Cao 2600 mm • Nhôm Xingfa Hệ 55 & Kính Trắng Trong 8.38mm (Wall-Hosted)","category":"OST_Doors","defaultTypeName":"HT_CuaDi_2Canh_OThoang_1800x2600","camera":{"position":[1500,1600,3200],"target":[0,1300,0]},"parameters":[{"name":"Width","type":"Length","value":"1800.0","isInstance":false},{"name":"Height","type":"Length","value":"2600.0","isInstance":false},{"name":"ChieuCao_OThoang","type":"Length","value":"400.0","isInstance":false},{"name":"BanRong_KhungBao","type":"Length","value":"50.0","isInstance":false},{"name":"ChieuSau_KhungBao","type":"Length","value":"55.0","isInstance":false},{"name":"BanRong_KhungCanh","type":"Length","value":"85.0","isInstance":false},{"name":"VatLieu_KhungNhom","type":"Material","value":"HT_Nhom_Xingfa_XamGhi","color":[74,79,85],"isInstance":false},{"name":"VatLieu_Kinh","type":"Material","value":"HT_Kinh_TrangTrong_838","color":[225,245,252],"isInstance":false},{"name":"VatLieu_PhuKien","type":"Material","value":"HT_Inox_Den_Mo","color":[35,38,42],"isInstance":false}],"parts":[{"id":"KB_Dung_Trai","name":"Khung Bao Đứng Trái","type":"box","category":"frame","materialParam":"VatLieu_KhungNhom","material":"aluminium_grey","box":[-900,0,-27.5,-850,2600,27.5]},{"id":"KB_Dung_Phai","name":"Khung Bao Đứng Phải","type":"box","category":"frame","materialParam":"VatLieu_KhungNhom","material":"aluminium_grey","box":[850,0,-27.5,900,2600,27.5]},{"id":"KB_Ngang_Dinh","name":"Khung Bao Ngang Nóc","type":"box","category":"frame","materialParam":"VatLieu_KhungNhom","material":"aluminium_grey","box":[-850,2550,-27.5,850,2600,27.5]},{"id":"Do_Ngang_OThoang","name":"Đố Ngang Phân Tầng Ô Thoáng","type":"box","category":"frame","materialParam":"VatLieu_KhungNhom","material":"aluminium_grey","box":[-850,2150,-27.5,850,2200,27.5]},{"id":"Do_Doc_OThoang","name":"Đố Dọc Chia Đôi Ô Thoáng","type":"box","category":"frame","materialParam":"VatLieu_KhungNhom","material":"aluminium_grey","box":[-25,2200,-27.5,25,2550,27.5]},{"id":"Kinh_OThoang_Trai","name":"Kính Ô Thoáng Cố Định Trái","type":"box","category":"glass","materialParam":"VatLieu_Kinh","material":"glass_door","box":[-850,2200,-4,-25,2550,4]},{"id":"Kinh_OThoang_Phai","name":"Kính Ô Thoáng Cố Định Phải","type":"box","category":"glass","materialParam":"VatLieu_Kinh","material":"glass_door","box":[25,2200,-4,850,2550,4]},{"id":"Canh_Cua_Trai","name":"Cánh Cửa Trái (Mở Quay 90°)","type":"interactive_door","pivot":[-848,0,0],"origRotY":0,"openRotY":-1.5708,"children":[{"id":"CCT_Dung_BanLe","name":"Cột Cánh Trái - Đứng Bản Lề","type":"box","category":"door","materialParam":"VatLieu_KhungNhom","material":"aluminium_grey","box":[0,6,-27.5,85,2144,27.5]},{"id":"CCT_Dung_Khoa","name":"Cột Cánh Trái - Đứng Khóa","type":"box","category":"door","materialParam":"VatLieu_KhungNhom","material":"aluminium_grey","box":[760,6,-27.5,845,2144,27.5]},{"id":"CCT_Ngang_Dinh","name":"Thanh Cánh Trái - Ngang Đỉnh","type":"box","category":"door","materialParam":"VatLieu_KhungNhom","material":"aluminium_grey","box":[85,2059,-27.5,760,2144,27.5]},{"id":"CCT_Ngang_Day","name":"Thanh Cánh Trái - Ngang Đáy (Bản Rộng 120mm)","type":"box","category":"door","materialParam":"VatLieu_KhungNhom","material":"aluminium_grey","box":[85,6,-27.5,760,126,27.5]},{"id":"CCT_Kinh_Canh","name":"Kính Cánh Cửa Trái (8.38mm)","type":"box","category":"glass","materialParam":"VatLieu_Kinh","material":"glass_door","box":[85,126,-4,760,2059,4]},{"id":"CCT_TayNam_Truoc","name":"Tay Nắm Thanh Dài - Mặt Ngoài","type":"box","category":"accessory","materialParam":"VatLieu_PhuKien","material":"metal_black","box":[798,920,27.5,814,1280,58]},{"id":"CCT_TayNam_Sau","name":"Tay Nắm Thanh Dài - Mặt Trong","type":"box","category":"accessory","materialParam":"VatLieu_PhuKien","material":"metal_black","box":[798,920,-58,814,1280,-27.5]},{"id":"CCT_BanLe_1","name":"Bản Lề 3D Cánh Trái - Đáy","type":"box","category":"accessory","materialParam":"VatLieu_PhuKien","material":"metal_black","box":[-10,220,-18,14,320,18]},{"id":"CCT_BanLe_2","name":"Bản Lề 3D Cánh Trái - Giữa","type":"box","category":"accessory","materialParam":"VatLieu_PhuKien","material":"metal_black","box":[-10,1100,-18,14,1200,18]},{"id":"CCT_BanLe_3","name":"Bản Lề 3D Cánh Trái - Đỉnh","type":"box","category":"accessory","materialParam":"VatLieu_PhuKien","material":"metal_black","box":[-10,1920,-18,14,2020,18]}]},{"id":"Canh_Cua_Phai","name":"Cánh Cửa Phải (Mở Quay 90°)","type":"interactive_door","pivot":[848,0,0],"origRotY":0,"openRotY":1.5708,"children":[{"id":"CCP_Dung_BanLe","name":"Cột Cánh Phải - Đứng Bản Lề","type":"box","category":"door","materialParam":"VatLieu_KhungNhom","material":"aluminium_grey","box":[-85,6,-27.5,0,2144,27.5]},{"id":"CCP_Dung_Khoa","name":"Cột Cánh Phải - Đứng Khóa","type":"box","category":"door","materialParam":"VatLieu_KhungNhom","material":"aluminium_grey","box":[-845,6,-27.5,-760,2144,27.5]},{"id":"CCP_Ngang_Dinh","name":"Thanh Cánh Phải - Ngang Đỉnh","type":"box","category":"door","materialParam":"VatLieu_KhungNhom","material":"aluminium_grey","box":[-760,2059,-27.5,-85,2144,27.5]},{"id":"CCP_Ngang_Day","name":"Thanh Cánh Phải - Ngang Đáy (Bản Rộng 120mm)","type":"box","category":"door","materialParam":"VatLieu_KhungNhom","material":"aluminium_grey","box":[-760,6,-27.5,-85,126,27.5]},{"id":"CCP_Kinh_Canh","name":"Kính Cánh Cửa Phải (8.38mm)","type":"box","category":"glass","materialParam":"VatLieu_Kinh","material":"glass_door","box":[-760,126,-4,-85,2059,4]},{"id":"CCP_TayNam_Truoc","name":"Tay Nắm Thanh Dài Phải - Mặt Ngoài","type":"box","category":"accessory","materialParam":"VatLieu_PhuKien","material":"metal_black","box":[-814,920,27.5,-798,1280,58]},{"id":"CCP_TayNam_Sau","name":"Tay Nắm Thanh Dài Phải - Mặt Trong","type":"box","category":"accessory","materialParam":"VatLieu_PhuKien","material":"metal_black","box":[-814,920,-58,-798,1280,-27.5]},{"id":"CCP_BanLe_1","name":"Bản Lề 3D Cánh Phải - Đáy","type":"box","category":"accessory","materialParam":"VatLieu_PhuKien","material":"metal_black","box":[-14,220,-18,10,320,18]},{"id":"CCP_BanLe_2","name":"Bản Lề 3D Cánh Phải - Giữa","type":"box","category":"accessory","materialParam":"VatLieu_PhuKien","material":"metal_black","box":[-14,1100,-18,10,1200,18]},{"id":"CCP_BanLe_3","name":"Bản Lề 3D Cánh Phải - Đỉnh","type":"box","category":"accessory","materialParam":"VatLieu_PhuKien","material":"metal_black","box":[-14,1920,-18,10,2020,18]}]}]};
+
+    // DATA PRESET: CUA DI 4 CANH CO O THOANG (BAN VE CAD 3600x2600)
+    const PRESET_DOOR_4LEAVES_TRANSOM_DATA = {
+      "name": "Cửa đi 4 cánh nhôm kính có ô thoáng (CAD 3.6m)",
+      "subtitle": "Rộng 3600 × Cao 2600 mm • Nhôm Xingfa Hệ 55 & Kính Trắng Trong 8.38mm (Mở quay 4 cánh, Khóa tim 900mm)",
+      "category": "OST_Doors",
+      "defaultTypeName": "HT_CuaDi_4Canh_OThoang_3600x2600",
+      "camera": { "position": [2400, 1800, 4600], "target": [0, 1300, 0] },
+      "parameters": [
+        { "name": "Width", "type": "Length", "value": "3600.0", "isInstance": false },
+        { "name": "Height", "type": "Length", "value": "2600.0", "isInstance": false },
+        { "name": "ChieuCao_OThoang", "type": "Length", "value": "400.0", "isInstance": false },
+        { "name": "ChieuRong_OThoang_Bien", "type": "Length", "value": "885.0", "isInstance": false },
+        { "name": "BanRong_DoOThoang", "type": "Length", "value": "68.0", "isInstance": false },
+        { "name": "BanRong_KhungBao", "type": "Length", "value": "55.0", "isInstance": false },
+        { "name": "ChieuSau_KhungBao", "type": "Length", "value": "55.0", "isInstance": false },
+        { "name": "BanRong_KhungCanh", "type": "Length", "value": "85.0", "isInstance": false },
+        { "name": "BanRong_DayCanh", "type": "Length", "value": "120.0", "isInstance": false },
+        { "name": "DoDay_Kinh", "type": "Length", "value": "8.38", "isInstance": false },
+        { "name": "CaoDo_TayNam", "type": "Length", "value": "900.0", "isInstance": false },
+        { "name": "VatLieu_KhungNhom", "type": "Material", "value": "HT_Nhom_Xingfa_XamGhi", "color": [74, 79, 85], "isInstance": false },
+        { "name": "VatLieu_Kinh", "type": "Material", "value": "HT_Kinh_TrangTrong_838", "color": [225, 245, 252], "isInstance": false },
+        { "name": "VatLieu_PhuKien", "type": "Material", "value": "HT_Inox_Den_Mo", "color": [35, 38, 42], "isInstance": false }
+      ],
+      "parts": [
+        { "id": "KB_Dung_Trai", "name": "Khung Bao Đứng Trái (55×55)", "type": "box", "category": "frame", "materialParam": "VatLieu_KhungNhom", "material": "aluminium_grey", "box": [-1800, 0, -27.5, -1745, 2600, 27.5] },
+        { "id": "KB_Dung_Phai", "name": "Khung Bao Đứng Phải (55×55)", "type": "box", "category": "frame", "materialParam": "VatLieu_KhungNhom", "material": "aluminium_grey", "box": [1745, 0, -27.5, 1800, 2600, 27.5] },
+        { "id": "KB_Ngang_Dinh", "name": "Khung Bao Ngang Nóc (55×55)", "type": "box", "category": "frame", "materialParam": "VatLieu_KhungNhom", "material": "aluminium_grey", "box": [-1745, 2545, -27.5, 1745, 2600, 27.5] },
+        { "id": "Do_Ngang_OThoang", "name": "Đố Ngang Phân Tầng Ô Thoáng (76×55)", "type": "box", "category": "frame", "materialParam": "VatLieu_KhungNhom", "material": "aluminium_grey", "box": [-1745, 2145, -27.5, 1745, 2200, 27.5] },
+        { "id": "Do_Doc_OThoang_Trai", "name": "Đố Dọc Ô Thoáng Trái (Bản Rộng 68mm)", "type": "box", "category": "frame", "materialParam": "VatLieu_KhungNhom", "material": "aluminium_grey", "box": [-949, 2200, -27.5, -881, 2545, 27.5] },
+        { "id": "Do_Doc_OThoang_Phai", "name": "Đố Dọc Ô Thoáng Phải (Bản Rộng 68mm)", "type": "box", "category": "frame", "materialParam": "VatLieu_KhungNhom", "material": "aluminium_grey", "box": [881, 2200, -27.5, 949, 2545, 27.5] },
+        { "id": "Kinh_OThoang_Trai", "name": "Kính Ô Thoáng Trái (859×345)", "type": "box", "category": "glass", "materialParam": "VatLieu_Kinh", "material": "glass_door", "box": [-1745, 2200, -4.19, -949, 2545, 4.19] },
+        { "id": "Kinh_OThoang_Giua", "name": "Kính Ô Thoáng Giữa (1762×345)", "type": "box", "category": "glass", "materialParam": "VatLieu_Kinh", "material": "glass_door", "box": [-881, 2200, -4.19, 881, 2545, 4.19] },
+        { "id": "Kinh_OThoang_Phai", "name": "Kính Ô Thoáng Phải (859×345)", "type": "box", "category": "glass", "materialParam": "VatLieu_Kinh", "material": "glass_door", "box": [949, 2200, -4.19, 1745, 2545, 4.19] },
+        {
+          "id": "Canh_Cua_1", "name": "Cánh 1 (Trái Ngoài - Mở Quay 90°)", "type": "interactive_door", "pivot": [-1741, 0, 0], "origRotY": 0, "openRotY": -1.5708,
+          "children": [
+            { "id": "C1_Dung_BanLe", "name": "C1 - Cột Bản Lề", "type": "box", "category": "door", "materialParam": "VatLieu_KhungNhom", "material": "aluminium_grey", "box": [0, 8, -27.5, 85, 2140, 27.5] },
+            { "id": "C1_Dung_Mep", "name": "C1 - Cột Mép Khóa", "type": "box", "category": "door", "materialParam": "VatLieu_KhungNhom", "material": "aluminium_grey", "box": [783, 8, -27.5, 868, 2140, 27.5] },
+            { "id": "C1_Ngang_Dinh", "name": "C1 - Ngang Đỉnh", "type": "box", "category": "door", "materialParam": "VatLieu_KhungNhom", "material": "aluminium_grey", "box": [85, 2055, -27.5, 783, 2140, 27.5] },
+            { "id": "C1_Ngang_Day", "name": "C1 - Ngang Đáy (120mm)", "type": "box", "category": "door", "materialParam": "VatLieu_KhungNhom", "material": "aluminium_grey", "box": [85, 8, -27.5, 783, 128, 27.5] },
+            { "id": "C1_Kinh", "name": "C1 - Kính Cường Lực (8.38mm)", "type": "box", "category": "glass", "materialParam": "VatLieu_Kinh", "material": "glass_door", "box": [85, 128, -4.19, 783, 2055, 4.19] },
+            { "id": "C1_BL_Day", "name": "C1 - Bản Lề Đáy", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [-10, 200, -18, 14, 300, 18] },
+            { "id": "C1_BL_Giua", "name": "C1 - Bản Lề Giữa", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [-10, 1600, -18, 14, 1700, 18] },
+            { "id": "C1_BL_Dinh", "name": "C1 - Bản Lề Đỉnh", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [-10, 2000, -18, 14, 2100, 18] }
+          ]
+        },
+        {
+          "id": "Canh_Cua_2", "name": "Cánh 2 (Trái Giữa - Khóa Chính 900mm)", "type": "interactive_door", "pivot": [-870, 0, 0], "origRotY": 0, "openRotY": -1.5708,
+          "children": [
+            { "id": "C2_Dung_BanLe", "name": "C2 - Cột Khớp Cánh 1", "type": "box", "category": "door", "materialParam": "VatLieu_KhungNhom", "material": "aluminium_grey", "box": [0, 8, -27.5, 85, 2140, 27.5] },
+            { "id": "C2_Dung_Khoa", "name": "C2 - Cột Khóa Trung Tâm", "type": "box", "category": "door", "materialParam": "VatLieu_KhungNhom", "material": "aluminium_grey", "box": [783, 8, -27.5, 868, 2140, 27.5] },
+            { "id": "C2_Ngang_Dinh", "name": "C2 - Ngang Đỉnh", "type": "box", "category": "door", "materialParam": "VatLieu_KhungNhom", "material": "aluminium_grey", "box": [85, 2055, -27.5, 783, 2140, 27.5] },
+            { "id": "C2_Ngang_Day", "name": "C2 - Ngang Đáy (120mm)", "type": "box", "category": "door", "materialParam": "VatLieu_KhungNhom", "material": "aluminium_grey", "box": [85, 8, -27.5, 783, 128, 27.5] },
+            { "id": "C2_Kinh", "name": "C2 - Kính Cường Lực (8.38mm)", "type": "box", "category": "glass", "materialParam": "VatLieu_Kinh", "material": "glass_door", "box": [85, 128, -4.19, 783, 2055, 4.19] },
+            { "id": "C2_TayNam_Ngoai", "name": "C2 - Tay Nắm Ngoài (Tim 900mm)", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [818, 830, 27.5, 838, 970, 65] },
+            { "id": "C2_TayNam_Trong", "name": "C2 - Tay Nắm Trong (Tim 900mm)", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [818, 830, -65, 838, 970, -27.5] },
+            { "id": "C2_BL_Day", "name": "C2 - Bản Lề Đáy", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [-10, 200, -18, 14, 300, 18] },
+            { "id": "C2_BL_Giua", "name": "C2 - Bản Lề Giữa", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [-10, 1600, -18, 14, 1700, 18] },
+            { "id": "C2_BL_Dinh", "name": "C2 - Bản Lề Đỉnh", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [-10, 2000, -18, 14, 2100, 18] }
+          ]
+        },
+        {
+          "id": "Canh_Cua_3", "name": "Cánh 3 (Phải Giữa - Khóa Đối Xứng 900mm)", "type": "interactive_door", "pivot": [870, 0, 0], "origRotY": 0, "openRotY": 1.5708,
+          "children": [
+            { "id": "C3_Dung_BanLe", "name": "C3 - Cột Khớp Cánh 4", "type": "box", "category": "door", "materialParam": "VatLieu_KhungNhom", "material": "aluminium_grey", "box": [-85, 8, -27.5, 0, 2140, 27.5] },
+            { "id": "C3_Dung_Khoa", "name": "C3 - Cột Khóa Trung Tâm", "type": "box", "category": "door", "materialParam": "VatLieu_KhungNhom", "material": "aluminium_grey", "box": [-868, 8, -27.5, -783, 2140, 27.5] },
+            { "id": "C3_Ngang_Dinh", "name": "C3 - Ngang Đỉnh", "type": "box", "category": "door", "materialParam": "VatLieu_KhungNhom", "material": "aluminium_grey", "box": [-783, 2055, -27.5, -85, 2140, 27.5] },
+            { "id": "C3_Ngang_Day", "name": "C3 - Ngang Đáy (120mm)", "type": "box", "category": "door", "materialParam": "VatLieu_KhungNhom", "material": "aluminium_grey", "box": [-783, 8, -27.5, -85, 128, 27.5] },
+            { "id": "C3_Kinh", "name": "C3 - Kính Cường Lực (8.38mm)", "type": "box", "category": "glass", "materialParam": "VatLieu_Kinh", "material": "glass_door", "box": [-783, 128, -4.19, -85, 2055, 4.19] },
+            { "id": "C3_TayNam_Ngoai", "name": "C3 - Tay Nắm Ngoài (Tim 900mm)", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [-838, 830, 27.5, -818, 970, 65] },
+            { "id": "C3_TayNam_Trong", "name": "C3 - Tay Nắm Trong (Tim 900mm)", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [-838, 830, -65, -818, 970, -27.5] },
+            { "id": "C3_BL_Day", "name": "C3 - Bản Lề Đáy", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [-14, 200, -18, 10, 300, 18] },
+            { "id": "C3_BL_Giua", "name": "C3 - Bản Lề Giữa", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [-14, 1600, -18, 10, 1700, 18] },
+            { "id": "C3_BL_Dinh", "name": "C3 - Bản Lề Đỉnh", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [-14, 2000, -18, 10, 2100, 18] }
+          ]
+        },
+        {
+          "id": "Canh_Cua_4", "name": "Cánh 4 (Phải Ngoài - Mở Quay 90°)", "type": "interactive_door", "pivot": [1741, 0, 0], "origRotY": 0, "openRotY": 1.5708,
+          "children": [
+            { "id": "C4_Dung_BanLe", "name": "C4 - Cột Bản Lề", "type": "box", "category": "door", "materialParam": "VatLieu_KhungNhom", "material": "aluminium_grey", "box": [-85, 8, -27.5, 0, 2140, 27.5] },
+            { "id": "C4_Dung_Mep", "name": "C4 - Cột Mép Khóa", "type": "box", "category": "door", "materialParam": "VatLieu_KhungNhom", "material": "aluminium_grey", "box": [-868, 8, -27.5, -783, 2140, 27.5] },
+            { "id": "C4_Ngang_Dinh", "name": "C4 - Ngang Đỉnh", "type": "box", "category": "door", "materialParam": "VatLieu_KhungNhom", "material": "aluminium_grey", "box": [-783, 2055, -27.5, -85, 2140, 27.5] },
+            { "id": "C4_Ngang_Day", "name": "C4 - Ngang Đáy (120mm)", "type": "box", "category": "door", "materialParam": "VatLieu_KhungNhom", "material": "aluminium_grey", "box": [-783, 8, -27.5, -85, 128, 27.5] },
+            { "id": "C4_Kinh", "name": "C4 - Kính Cường Lực (8.38mm)", "type": "box", "category": "glass", "materialParam": "VatLieu_Kinh", "material": "glass_door", "box": [-783, 128, -4.19, -85, 2055, 4.19] },
+            { "id": "C4_BL_Day", "name": "C4 - Bản Lề Đáy", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [-14, 200, -18, 10, 300, 18] },
+            { "id": "C4_BL_Giua", "name": "C4 - Bản Lề Giữa", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [-14, 1600, -18, 10, 1700, 18] },
+            { "id": "C4_BL_Dinh", "name": "C4 - Bản Lề Đỉnh", "type": "box", "category": "accessory", "materialParam": "VatLieu_PhuKien", "material": "metal_black", "box": [-14, 2000, -18, 10, 2100, 18] }
+          ]
+        }
+      ]
+    };
+
+    // BUILTIN PRESETS DICTIONARY
+    const BUILTIN_PRESETS = {
+      'door_2leaves_transom': {
+        build: () => loadModelFromJSON(PRESET_DOOR_2LEAVES_TRANSOM_DATA),
+        meta: PRESET_DOOR_2LEAVES_TRANSOM_DATA
+      },
+      'door_4leaves_transom': {
+        build: () => loadModelFromJSON(PRESET_DOOR_4LEAVES_TRANSOM_DATA),
+        meta: PRESET_DOOR_4LEAVES_TRANSOM_DATA
+      },
+      'tu_ao_xam_xanh': {
+        build: () => loadModelFromJSON(PRESET_TU_AO_XAM_XANH_DATA),
+        meta: PRESET_TU_AO_XAM_XANH_DATA
+      },
+      'luxury_shoe_cabinet': {
+        build: buildLuxuryShoeCabinetModel,
+        meta: {
+          name: "Tủ sảnh & tủ giày cánh kính 1.6m",
+          subtitle: "Rộng 1600 × Sâu 520 × Cao 2600 mm • Gương Soi Đứng & Cánh Kính Mở 90°",
+          category: "OST_Casework",
+          defaultTypeName: "HT_TuGiay_TuSanh_Luxury_1600x520x2600",
+          camera: { position: [2200, 1900, 2600], target: [800, 1300, -260] },
+          parameters: [
+            { name: "VatLieu_ThungTu", type: "Material", value: "HT_Go_MDF_TrangSu", color: [240, 240, 242], isInstance: false },
+            { name: "VatLieu_CanhKinh", type: "Material", value: "HT_Kinh_MauTra", color: [180, 140, 100], isInstance: false },
+            { name: "VatLieu_KhungNhomVang", type: "Material", value: "HT_Nhom_Anode_Vang", color: [220, 180, 70], isInstance: false },
+            { name: "VatLieu_GuongSoi", type: "Material", value: "HT_Guong_TrangBac", color: [230, 240, 250], isInstance: false },
+            { name: "VatLieu_CanhTu", type: "Material", value: "HT_SonTrang_Acrylic", color: [250, 250, 250], isInstance: false },
+            { name: "VatLieu_PhuKien", type: "Material", value: "HT_PhuKien_TuGiay", color: [50, 50, 55], isInstance: false }
+          ]
+        }
+      },
+      'bull_horn_dining_set': {
+        build: buildBullHornDiningSetModel,
+        meta: {
+          name: "Bộ bàn ăn tròn 6 ghế sừng bò",
+          subtitle: "Mặt Bàn Tròn Ø1200 mm • Tựa Cong Liền Mượt Mà & Nệm Nỉ Kem",
+          category: "OST_Furniture",
+          defaultTypeName: "Bo Ban An Tron 6 Ghe Sung Bo (Universal Studio)",
+          camera: { position: [1900, 1600, 2100], target: [0, 450, 0] },
+          parameters: [
+            { name: "VatLieu_GoTuNhien", type: "Material", value: "HT_Go_Soi_TuNhien", color: [222, 184, 135], isInstance: false },
+            { name: "VatLieu_NemVai", type: "Material", value: "HT_NemVai_KemSang", color: [245, 239, 230], isInstance: false }
+          ]
+        }
+      },
+      'dining_table_set': {
+        build: buildDiningTableSetModel,
+        meta: {
+          name: "Bộ bàn ăn gỗ 6 ghế nan S",
+          subtitle: "Mặt Kính Cường Lực 1600×800 mm • Nan Gỗ Trang Trí & Tựa Cong Chuẩn Mẫu",
+          category: "OST_Furniture",
+          defaultTypeName: "Bo Ban An Go 6 Ghe (Universal Studio)",
+          camera: { position: [2200, 1800, 2400], target: [0, 500, 0] },
+          parameters: [
+            { name: "VatLieu_GoTuNhien", type: "Material", value: "HT_Go_TuNhien", color: [198, 138, 88], isInstance: false },
+            { name: "VatLieu_KinhMatBan", type: "Material", value: "HT_Kinh_MatBan", color: [225, 242, 248], isInstance: false }
+          ]
+        }
+      },
+      'kitchen_l': {
+        build: buildKitchenLModel,
+        meta: {
+          name: "Tủ bếp chữ L",
+          subtitle: "Bếp Nấu 2720 mm × Chậu Rửa 1400 mm • Đầy Đủ Thiết Bị & Ruột Phụ Kiện",
+          category: "OST_Casework",
+          defaultTypeName: "Tu Bep Chu L (Universal Studio)",
+          camera: { position: [3400, 2600, 3800], target: [1350, 900, -300] },
+          parameters: [
+            { name: "VatLieu_MatDa", type: "Material", value: "HT_Da_TrangVanMay", color: [245, 245, 248], isInstance: false },
+            { name: "VatLieu_ThungTu", type: "Material", value: "HT_Go_TuBep", color: [198, 148, 102], isInstance: false },
+            { name: "VatLieu_CanhTu", type: "Material", value: "HT_SonTrang_Acrylic", color: [250, 250, 250], isInstance: false },
+            { name: "VatLieu_KimLoai", type: "Material", value: "HT_Inox_304", color: [210, 215, 220], isInstance: false },
+            { name: "VatLieu_ThietBi", type: "Material", value: "HT_KinhDen_ThietBi", color: [25, 25, 28], isInstance: false }
+          ]
+        }
+      },
+      'wardrobe_4doors': {
+        build: buildWardrobeModel,
+        meta: {
+          name: "Tủ áo 4 cánh",
+          subtitle: "Rộng 2530 mm × Cao 2400 mm • Kệ Góc Bo R180 & 3 Ngăn Kéo",
+          category: "OST_Casework",
+          defaultTypeName: "Tu Ao 4 Canh (Universal Studio)",
+          camera: { position: [3000, 2200, 3200], target: [1250, 1200, -300] },
+          parameters: [
+            { name: "VatLieu_MatDa", type: "Material", value: "HT_Da_TrangVanMay", color: [245, 245, 248], isInstance: false },
+            { name: "VatLieu_ThungTu", type: "Material", value: "HT_Go_TuBep", color: [198, 148, 102], isInstance: false },
+            { name: "VatLieu_CanhTu", type: "Material", value: "HT_SonTrang_Acrylic", color: [250, 250, 250], isInstance: false },
+            { name: "VatLieu_KimLoai", type: "Material", value: "HT_Inox_304", color: [210, 215, 220], isInstance: false },
+            { name: "VatLieu_ThietBi", type: "Material", value: "HT_KinhDen_ThietBi", color: [25, 25, 28], isInstance: false }
+          ]
+        }
+      }
+    };
+
+    // INITIAL MODEL LOAD
+    state.currentPreset = 'door_2leaves_transom';
+    const initPreset = BUILTIN_PRESETS['door_2leaves_transom'];
+    initPreset.build();
+    state.currentModelMeta = initPreset.meta;
+    camera.position.set(...initPreset.meta.camera.position);
+    controls.target.set(...initPreset.meta.camera.target);
+    setSubTitle(initPreset.meta.name + " • " + initPreset.meta.subtitle);
+
+    // =========================================================================
+    // SKETCHUP TOOL SYSTEM & RAYCASTING
+    // =========================================================================
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    function setTool(toolName) {
+      state.activeTool = toolName;
+      document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+
+      if (toolName === 'select') document.getElementById('toolSelect').classList.add('active');
+      else if (toolName === 'pushpull') document.getElementById('toolPushPull').classList.add('active');
+      else if (toolName === 'move') { document.getElementById('toolMove').classList.add('active'); transformControl.setMode('translate'); }
+      else if (toolName === 'scale') { document.getElementById('toolScale').classList.add('active'); transformControl.setMode('scale'); }
+      else if (toolName === 'rotate') { document.getElementById('toolRotate').classList.add('active'); transformControl.setMode('rotate'); }
+      else if (toolName === 'tape') document.getElementById('toolTape').classList.add('active');
+      else if (toolName === 'interact') document.getElementById('toolInteract').classList.add('active');
+
+      if (['move', 'scale', 'rotate'].includes(toolName) && state.selectedObject) {
+        transformControl.attach(state.selectedObject);
+      } else {
+        transformControl.detach();
+      }
+
+      document.getElementById('tapeHUD').style.display = (toolName === 'tape') ? 'block' : 'none';
+    }
+
+    document.getElementById('toolSelect').addEventListener('click', () => setTool('select'));
+    document.getElementById('toolPushPull').addEventListener('click', () => setTool('pushpull'));
+    document.getElementById('toolMove').addEventListener('click', () => setTool('move'));
+    document.getElementById('toolScale').addEventListener('click', () => setTool('scale'));
+    document.getElementById('toolRotate').addEventListener('click', () => setTool('rotate'));
+    document.getElementById('toolTape').addEventListener('click', () => setTool('tape'));
+    document.getElementById('toolInteract').addEventListener('click', () => setTool('interact'));
+
+    // KEYBOARD SHORTCUTS (SKETCHUP STANDARDS)
+    window.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.code === 'Space') { e.preventDefault(); setTool('select'); }
+      else if (e.code === 'KeyP') setTool('pushpull');
+      else if (e.code === 'KeyM') setTool('move');
+      else if (e.code === 'KeyS') setTool('scale');
+      else if (e.code === 'KeyQ') setTool('rotate');
+      else if (e.code === 'KeyT') setTool('tape');
+      else if (e.code === 'KeyI') setTool('interact');
+      else if (e.code === 'KeyX') toggleSectionPlane();
+    });
+
+    // VIEWPORT CLICK INTERACTION
+    window.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('.glass-panel') || e.target.closest('button') || e.target.closest('select')) return;
+
+      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+
+      const intersects = raycaster.intersectObjects(modelGroup.children, true);
+      if (intersects.length > 0) {
+        let hit = intersects[0].object;
+
+        // TOOL: INTERACT (Mở cánh / Kéo ngăn kéo khi click)
+        if (state.activeTool === 'interact') {
+          // Check if inside interactive door
+          let p = hit;
+          while (p && p.parent && p.parent !== modelGroup) {
+            if (p.userData && (p.userData.openRotY !== undefined || p.userData.openZ !== undefined || p.userData.openRadial !== undefined)) break;
+            p = p.parent;
+          }
+          if (p && p.userData) {
+            if (p.userData.openRotY !== undefined) {
+              const isOpen = Math.abs(p.rotation.y - p.userData.openRotY) < 0.1;
+              const targetRot = isOpen ? p.userData.origRotY : p.userData.openRotY;
+              animateRotationY(p, targetRot);
+              return;
+            } else if (p.userData.openZ !== undefined) {
+              const isOpen = Math.abs(p.position.z - p.userData.openZ) < 5;
+              const targetZ = isOpen ? p.userData.origZ : p.userData.openZ;
+              animatePositionZ(p, targetZ);
+              return;
+            } else if (p.userData.openRadial !== undefined) {
+              const isOpen = p.userData.isOpened === true;
+              const targetDist = isOpen ? 0 : p.userData.openRadial;
+              animateRadial(p, targetDist);
+              p.userData.isOpened = !isOpen;
+              return;
+            }
+          }
+        }
+
+        // TOOL: TAPE MEASURE (Click 2 điểm đo khoảng cách)
+        if (state.activeTool === 'tape') {
+          const pt = intersects[0].point;
+          state.tapePoints.push(pt);
+          if (state.tapePoints.length === 2) {
+            const dist = state.tapePoints[0].distanceTo(state.tapePoints[1]);
+            document.getElementById('txtTapeResult').innerText = `Thước Dây: Khoảng cách = ${dist.toFixed(1)} mm`;
+            state.tapePoints = [];
+          } else {
+            document.getElementById('txtTapeResult').innerText = `Thước Dây: Đã chọn Điểm 1 (${pt.x.toFixed(0)}, ${pt.y.toFixed(0)}, ${pt.z.toFixed(0)}). Hãy click Điểm 2...`;
+          }
+          return;
+        }
+
+        // TOOL: SELECT / MOVE / SCALE / PUSH-PULL
+        selectObject(hit);
+      } else {
+        if (state.activeTool === 'select') {
+          deselectObject();
+        }
+      }
+    });
+
+    function selectObject(obj) {
+      state.selectedObject = obj;
+      state.selectedPartId = obj.userData?.id || null;
+
+      if (highlightHelper) scene.remove(highlightHelper);
+      highlightHelper = new THREE.BoxHelper(obj, 0x06b6d4);
+      highlightHelper.material.linewidth = 2;
+      scene.add(highlightHelper);
+
+      if (['move', 'scale', 'rotate'].includes(state.activeTool)) {
+        transformControl.attach(obj);
+      }
+
+      syncObjectToInspector(obj);
+      if (typeof toggleSidebar === 'function' && !state.isSidebarOpen && window.innerWidth >= 900) {
+        toggleSidebar(true);
+      }
+    }
+
+    function deselectObject() {
+      state.selectedObject = null;
+      state.selectedPartId = null;
+      if (highlightHelper) scene.remove(highlightHelper);
+      transformControl.detach();
+      document.getElementById('infoPartName').innerText = "Chưa chọn cấu kiện nào";
+      document.getElementById('infoPartId').innerText = "NONE";
+    }
+
+    function syncObjectToInspector(obj) {
+      if (!obj || !obj.userData) return;
+      document.getElementById('infoPartName').innerText = obj.userData.name || obj.name || "Cấu Kiện 3D";
+      document.getElementById('infoPartId').innerText = obj.userData.id || "PART";
+
+      const box = new THREE.Box3().setFromObject(obj);
+      const size = new THREE.Vector3();
+      box.getSize(size);
+
+      document.getElementById('inpWidth').value = Math.round(size.x);
+      document.getElementById('inpHeight').value = Math.round(size.y);
+      document.getElementById('inpDepth').value = Math.round(size.z);
+
+      document.getElementById('inpPosX').value = Math.round(obj.position.x);
+      document.getElementById('inpPosY').value = Math.round(obj.position.y);
+      document.getElementById('inpPosZ').value = Math.round(obj.position.z);
+    }
+
+    // UPDATE PARAMETERS FROM INPUTS
+    document.getElementById('btnApplyParam').addEventListener('click', () => {
+      if (!state.selectedObject) return;
+      const w = parseFloat(document.getElementById('inpWidth').value);
+      const h = parseFloat(document.getElementById('inpHeight').value);
+      const d = parseFloat(document.getElementById('inpDepth').value);
+      const px = parseFloat(document.getElementById('inpPosX').value);
+      const py = parseFloat(document.getElementById('inpPosY').value);
+      const pz = parseFloat(document.getElementById('inpPosZ').value);
+
+      state.selectedObject.position.set(px, py, pz);
+      if (state.selectedObject.geometry && state.selectedObject.geometry.type === 'BoxGeometry') {
+        state.selectedObject.geometry.dispose();
+        state.selectedObject.geometry = new THREE.BoxGeometry(w, h, d);
+      }
+      if (highlightHelper) highlightHelper.update();
+      syncObjectToInspector(state.selectedObject);
+    });
+
+    // DELETE PART
+    document.getElementById('btnDeletePart').addEventListener('click', () => {
+      if (!state.selectedObject) return;
+      if (confirm(`Bạn có chắc muốn xóa cấu kiện "${state.selectedObject.userData.name}"?`)) {
+        state.selectedObject.parent.remove(state.selectedObject);
+        deselectObject();
+        updateOutlinerTree();
+      }
+    });
+
+    // ANIMATIONS
+    function animateRotationY(obj, target) {
+      let start = obj.rotation.y;
+      let startTime = performance.now();
+      function loop(now) {
+        let p = Math.min((now - startTime) / 350, 1);
+        obj.rotation.y = start + (target - start) * p;
+        if (p < 1) requestAnimationFrame(loop);
+      }
+      requestAnimationFrame(loop);
+    }
+
+    function animatePositionZ(obj, target) {
+      let start = obj.position.z;
+      let startTime = performance.now();
+      function loop(now) {
+        let p = Math.min((now - startTime) / 350, 1);
+        obj.position.z = start + (target - start) * p;
+        if (p < 1) requestAnimationFrame(loop);
+      }
+      requestAnimationFrame(loop);
+    }
+
+    function animateRadial(obj, targetDist) {
+      let startX = obj.position.x;
+      let startZ = obj.position.z;
+      let destX = (obj.userData.origX || 0) + (obj.userData.dirX || 0) * targetDist;
+      let destZ = (obj.userData.origZ || 0) + (obj.userData.dirZ || 0) * targetDist;
+      let startTime = performance.now();
+      function loop(now) {
+        let p = Math.min((now - startTime) / 350, 1);
+        obj.position.x = startX + (destX - startX) * p;
+        obj.position.z = startZ + (destZ - startZ) * p;
+        if (p < 1) requestAnimationFrame(loop);
+      }
+      requestAnimationFrame(loop);
+    }
+
+    // TOGGLE ALL DOORS & DRAWERS
+    document.getElementById('btnToggleAllDoors').addEventListener('click', () => {
+      state.doorsOpen = !state.doorsOpen;
+      interactiveDoors.forEach(d => {
+        const targetRot = state.doorsOpen ? d.userData.openRotY : d.userData.origRotY;
+        animateRotationY(d, targetRot);
+      });
+    });
+
+    document.getElementById('btnToggleAllDrawers').addEventListener('click', () => {
+      state.drawersOpen = !state.drawersOpen;
+      interactiveDrawers.forEach(drw => {
+        if (drw.userData.openRadial !== undefined) {
+          const targetDist = state.drawersOpen ? drw.userData.openRadial : 0;
+          animateRadial(drw, targetDist);
+          drw.userData.isOpened = state.drawersOpen;
+        } else if (drw.userData.openZ !== undefined) {
+          const targetZ = state.drawersOpen ? drw.userData.openZ : drw.userData.origZ;
+          animatePositionZ(drw, targetZ);
+        }
+      });
+    });
+
+    document.getElementById('btnHideDoors').addEventListener('click', () => {
+      state.doorsVisible = !state.doorsVisible;
+      interactiveDoors.forEach(d => { d.visible = state.doorsVisible; });
+      document.getElementById('btnHideDoors').classList.toggle('text-purple-400', state.doorsVisible);
+      document.getElementById('btnHideDoors').classList.toggle('text-slate-500', !state.doorsVisible);
+    });
+
+    // SECTION PLANE
+    function toggleSectionPlane() {
+      state.sectionActive = !state.sectionActive;
+      const bar = document.getElementById('sectionControlBar');
+      bar.style.display = state.sectionActive ? 'flex' : 'none';
+      document.getElementById('toolSection').classList.toggle('active', state.sectionActive);
+      updateSectionClipping();
+    }
+    document.getElementById('toolSection').addEventListener('click', toggleSectionPlane);
+
+    function updateSectionClipping() {
+      if (!state.sectionActive) {
+        renderer.clippingPlanes = [];
+        return;
+      }
+      const normal = (state.sectionAxis === 'X') ? new THREE.Vector3(1, 0, 0)
+                   : (state.sectionAxis === 'Y') ? new THREE.Vector3(0, 1, 0)
+                   : new THREE.Vector3(0, 0, 1);
+      if (state.sectionInvert) normal.negate();
+      const constant = state.sectionInvert ? state.sectionVal : -state.sectionVal;
+      clippingPlane = new THREE.Plane(normal, constant);
+      renderer.clippingPlanes = [clippingPlane];
+    }
+
+    document.getElementById('secSlider').addEventListener('input', (e) => {
+      state.sectionVal = parseFloat(e.target.value);
+      document.getElementById('secValText').innerText = `${state.sectionVal} mm`;
+      updateSectionClipping();
+    });
+    document.getElementById('btnSecInvert').addEventListener('click', () => {
+      state.sectionInvert = !state.sectionInvert;
+      updateSectionClipping();
+    });
+
+    // CAMERA VIEW PRESETS
+    document.getElementById('btnView3D').addEventListener('click', () => {
+      if (state.currentPreset === 'door_2leaves_transom') {
+        camera.position.set(2400, 1600, 3200);
+        controls.target.set(900, 1300, 0);
+      } else if (state.currentPreset === 'tu_ao_xam_xanh') {
+        camera.position.set(2500, 1800, 2400);
+        controls.target.set(900, 1050, -300);
+      } else if (state.currentPreset === 'luxury_shoe_cabinet') {
+        camera.position.set(2200, 1900, 2600);
+        controls.target.set(800, 1300, -260);
+      } else if (state.currentPreset === 'bull_horn_dining_set') {
+        camera.position.set(1900, 1600, 2100);
+        controls.target.set(0, 450, 0);
+      } else if (state.currentPreset === 'dining_table_set') {
+        camera.position.set(2200, 1800, 2400);
+        controls.target.set(0, 500, 0);
+      } else {
+        camera.position.set(3400, 2600, 3800);
+        controls.target.set(1350, 900, -300);
+      }
+    });
+    document.getElementById('btnViewFront').addEventListener('click', () => {
+      if (state.currentPreset === 'door_2leaves_transom') {
+        camera.position.set(900, 1300, 3500);
+        controls.target.set(900, 1300, 0);
+      } else if (state.currentPreset === 'luxury_shoe_cabinet') {
+        camera.position.set(800, 1300, 3200);
+        controls.target.set(800, 1300, -260);
+      } else if (state.currentPreset === 'bull_horn_dining_set') {
+        camera.position.set(0, 600, 2600);
+        controls.target.set(0, 450, 0);
+      } else if (state.currentPreset === 'dining_table_set') {
+        camera.position.set(0, 600, 3000);
+        controls.target.set(0, 500, 0);
+      } else {
+        camera.position.set(1350, 1100, 4500);
+        controls.target.set(1350, 1100, -300);
+      }
+    });
+    document.getElementById('btnViewTop').addEventListener('click', () => {
+      if (state.currentPreset === 'door_2leaves_transom') {
+        camera.position.set(900, 4200, 0);
+        controls.target.set(900, 0, 0);
+      } else if (state.currentPreset === 'luxury_shoe_cabinet') {
+        camera.position.set(800, 3800, -260);
+        controls.target.set(800, 0, -260);
+      } else if (state.currentPreset === 'bull_horn_dining_set') {
+        camera.position.set(0, 3000, 0);
+        controls.target.set(0, 0, 0);
+      } else if (state.currentPreset === 'dining_table_set') {
+        camera.position.set(0, 3400, 0);
+        controls.target.set(0, 0, 0);
+      } else {
+        camera.position.set(1350, 5000, -300);
+        controls.target.set(1350, 0, -300);
+      }
+    });
+    document.getElementById('btnViewSide').addEventListener('click', () => {
+      if (state.currentPreset === 'door_2leaves_transom') {
+        camera.position.set(3800, 1300, 0);
+        controls.target.set(900, 1300, 0);
+      } else if (state.currentPreset === 'luxury_shoe_cabinet') {
+        camera.position.set(3400, 1300, -260);
+        controls.target.set(800, 1300, -260);
+      } else if (state.currentPreset === 'bull_horn_dining_set') {
+        camera.position.set(2600, 600, 0);
+        controls.target.set(0, 450, 0);
+      } else if (state.currentPreset === 'dining_table_set') {
+        camera.position.set(3000, 600, 0);
+        controls.target.set(0, 500, 0);
+      } else {
+        camera.position.set(4800, 1100, -700);
+        controls.target.set(2100, 1100, -700);
+      }
+    });
+    document.getElementById('btnResetView').addEventListener('click', () => {
+      if (state.currentPreset === 'door_2leaves_transom') {
+        camera.position.set(2400, 1600, 3200);
+        controls.target.set(900, 1300, 0);
+      } else if (state.currentPreset === 'luxury_shoe_cabinet') {
+        camera.position.set(2200, 1900, 2600);
+        controls.target.set(800, 1300, -260);
+      } else if (state.currentPreset === 'bull_horn_dining_set') {
+        camera.position.set(1900, 1600, 2100);
+        controls.target.set(0, 450, 0);
+      } else if (state.currentPreset === 'dining_table_set') {
+        camera.position.set(2200, 1800, 2400);
+        controls.target.set(0, 500, 0);
+      } else {
+        camera.position.set(3400, 2600, 3800);
+        controls.target.set(1350, 900, -300);
+      }
+    });
+
+    // PRESET SWITCHER
+    document.getElementById('selPreset').addEventListener('change', (e) => {
+      const presetKey = e.target.value;
+      state.currentPreset = presetKey;
+      const preset = BUILTIN_PRESETS[presetKey];
+      if (preset) {
+        preset.build();
+        state.currentModelMeta = preset.meta;
+        setSubTitle(preset.meta.name + " • " + preset.meta.subtitle);
+        if (preset.meta.camera && preset.meta.camera.position) {
+          camera.position.set(...preset.meta.camera.position);
+          controls.target.set(...preset.meta.camera.target);
+        }
+      }
+    });
+
+    // OUTLINER TREE LIST
+    function updateOutlinerTree() {
+      const list = document.getElementById('outlinerTreeList');
+      list.innerHTML = '';
+      let count = 0;
+
+      modelGroup.traverse((obj) => {
+        if (obj.isMesh && obj.userData && obj.userData.id) {
+          count++;
+          const item = document.createElement('div');
+          item.className = "p-2 rounded-lg bg-slate-900/90 border border-slate-800 hover:border-cyan-400 transition cursor-pointer flex items-center justify-between";
+          item.innerHTML = `
+            <span class="font-bold text-slate-300 text-xs">${obj.userData.name || obj.userData.id}</span>
+            <span class="font-mono text-[10px] text-cyan-400 px-1.5 py-0.5 rounded bg-slate-800">${obj.userData.id}</span>
+          `;
+          item.addEventListener('click', () => selectObject(obj));
+          list.appendChild(item);
+        }
+      });
+      document.getElementById('badgePartCount').innerText = `${count} Cấu kiện`;
+    }
+
+    // TABS SWITCHER
+    document.getElementById('tabBtnEntity').addEventListener('click', () => switchTab('entity'));
+    document.getElementById('tabBtnOutliner').addEventListener('click', () => switchTab('outliner'));
+    document.getElementById('tabBtnMaterials').addEventListener('click', () => switchTab('materials'));
+
+    function switchTab(t) {
+      document.getElementById('tabBtnEntity').className = (t==='entity') ? "py-1.5 rounded-lg text-cyan-400 bg-slate-800/90 shadow" : "py-1.5 rounded-lg text-slate-400 hover:text-slate-200";
+      document.getElementById('tabBtnOutliner').className = (t==='outliner') ? "py-1.5 rounded-lg text-cyan-400 bg-slate-800/90 shadow" : "py-1.5 rounded-lg text-slate-400 hover:text-slate-200";
+      document.getElementById('tabBtnMaterials').className = (t==='materials') ? "py-1.5 rounded-lg text-cyan-400 bg-slate-800/90 shadow" : "py-1.5 rounded-lg text-slate-400 hover:text-slate-200";
+
+      document.getElementById('tabContentEntity').style.display = (t==='entity') ? 'flex' : 'none';
+      document.getElementById('tabContentOutliner').style.display = (t==='outliner') ? 'flex' : 'none';
+      document.getElementById('tabContentMaterials').style.display = (t==='materials') ? 'flex' : 'none';
+    }
+
+    // =========================================================================
+    // SIDEBAR TOGGLE & RESPONSIVE COLLAPSIBLE ENGINE
+    // =========================================================================
+    const rightSidebar = document.getElementById('rightSidebar');
+    const btnToggleSidebar = document.getElementById('btnToggleSidebar');
+    const iconToggleSidebar = document.getElementById('iconToggleSidebar');
+    let isSidebarOpen = true;
+
+    function toggleSidebar(forceOpen) {
+      if (forceOpen !== undefined) isSidebarOpen = forceOpen;
+      else isSidebarOpen = !isSidebarOpen;
+
+      if (isSidebarOpen) {
+        rightSidebar.classList.remove('collapsed');
+        iconToggleSidebar.innerHTML = '<path d="M9 5l7 7-7 7"/>';
+        btnToggleSidebar.title = "Thu gọn bảng (Phím Tab)";
+      } else {
+        rightSidebar.classList.add('collapsed');
+        iconToggleSidebar.innerHTML = '<path d="M15 19l-7-7 7-7"/>';
+        btnToggleSidebar.title = "Mở rộng bảng thuộc tính (Phím Tab)";
+      }
+    }
+
+    if (btnToggleSidebar) {
+      btnToggleSidebar.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleSidebar();
+      });
+    }
+
+    // Phím tắt Tab để toggle Sidebar
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Tab' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        toggleSidebar();
+      }
+    });
+
+    // Tự động thu gọn trên màn hình nhỏ (< 1100px)
+    if (window.innerWidth < 1100) {
+      toggleSidebar(false);
+    }
+
+    // =========================================================================
+    // 1-CLICK EXPORT TO REVIT MCP (ws://127.0.0.1:7777)
+    // =========================================================================
+    function makeRectProfile(x1, y1, x2, y2) {
+      const minX = Math.min(x1, x2);
+      const maxX = Math.max(x1, x2);
+      const minY = Math.min(y1, y2);
+      const maxY = Math.max(y1, y2);
+      
+      const safeMaxX = (maxX - minX < 2) ? minX + 2 : maxX;
+      const safeMaxY = (maxY - minY < 2) ? minY + 2 : maxY;
+
+      return [
+        { type: "line", start: [minX, minY, 0], end: [safeMaxX, minY, 0] },
+        { type: "line", start: [safeMaxX, minY, 0], end: [safeMaxX, safeMaxY, 0] },
+        { type: "line", start: [safeMaxX, safeMaxY, 0], end: [minX, safeMaxY, 0] },
+        { type: "line", start: [minX, safeMaxY, 0], end: [minX, minY, 0] }
+      ];
+    }
+
+    function extractRevitForms() {
+      scene.updateMatrixWorld(true);
+      const forms = [];
+      modelGroup.traverse((obj) => {
+        if (obj.isMesh && obj.userData && obj.userData.id) {
+          const u = obj.userData;
+          if (u.isWallHost || (u.id && u.id.startsWith("HostWall")) || u.category === "wall_host") return; // Bo qua tuong host mo, Revit da co Host Wall
+          // Get bounding box in world coordinates
+          const box = new THREE.Box3().setFromObject(obj);
+          const min = box.min;
+          const max = box.max;
+
+          let startY = Math.round(min.y);
+          let endY = Math.round(max.y);
+          if (endY - startY < 2) {
+            endY = startY + 2;
+          }
+
+          let matParam = u.materialParam;
+          if (!matParam) {
+            if (u.category === 'glass') matParam = "VatLieu_CanhKinh";
+            else if (u.category === 'gold' || u.category === 'metal') matParam = "VatLieu_KhungNhomVang";
+            else if (u.category === 'mirror') matParam = "VatLieu_GuongSoi";
+            else if (u.category === 'drawer_front' || u.category === 'upper') matParam = "VatLieu_CanhTu";
+            else if (u.category === 'shoe' || u.category === 'accessory' || u.category === 'drawer') matParam = "VatLieu_PhuKien";
+            else if (u.category === 'top') matParam = "VatLieu_MatDa";
+            else if (u.category === 'cushion') matParam = "VatLieu_NemVai";
+            else if (u.category === 'leg' || u.category === 'chair' || u.category === 'apron') matParam = "VatLieu_GoTuNhien";
+            else matParam = "VatLieu_ThungTu";
+          }
+
+          if (u.isLoft && u.sections) {
+            forms.push({
+              id: u.id,
+              formType: "loft",
+              isSolid: true,
+              materialParam: matParam,
+              sections: u.sections
+            });
+            return;
+          }
+
+          if (u.isMeshForm && u.vertices && u.faces) {
+            forms.push({
+              id: u.id,
+              formType: "mesh",
+              isSolid: true,
+              materialParam: matParam,
+              vertices: u.vertices,
+              faces: u.faces
+            });
+            return;
+          }
+
+          if (u.isSCurve) {
+            const xMin = Math.round(u.xMin);
+            const xMax = Math.round(u.xMax);
+            const yMin = Math.round(u.yMin);
+            const yMax = Math.round(u.yMax);
+            const thickZ = u.thickZ;
+            const dir = u.dir;
+            const zBase = u.zBase;
+
+            // Su dung HermiteSpline Revit: 8 phan doan (9 diem kiem soat) la toi uu tuyet doi
+            // giup Revit ve duong cong Spline muot ma, khong bi dao dong bac cao
+            const numControlPts = 8;
+            const ptsBack = [];
+            const ptsFront = [];
+
+            for (let i = 0; i <= numControlPts; i++) {
+              const yVal = yMin + (yMax - yMin) * (i / numControlPts);
+              const zCenter = zBase + getBackrestZOffset(yVal, dir);
+              const zBack = Math.round(zCenter - thickZ / 2);
+              const zFront = Math.round(zCenter + thickZ / 2);
+
+              // Toa do Revit: X = xMin, Y = Z_three (chieu sau), Z = Y_three (cao do)
+              ptsBack.push([xMin, zBack, Math.round(yVal)]);
+              ptsFront.push([xMin, zFront, Math.round(yVal)]);
+            }
+
+            // Dao nguoc chuoi diem mep truoc de tao vong khep kin lien tuc theo chieu kim dong ho:
+            // 1. Spline sau: tu day len dinh (ptsBack[0] -> ptsBack[N])
+            // 2. Line dinh: tu mep sau sang mep truoc (ptsBack[N] -> ptsFrontReversed[0])
+            // 3. Spline truoc: tu dinh xuong day (ptsFrontReversed[0] -> ptsFrontReversed[N])
+            // 4. Line day: tu mep truoc ve mep sau (ptsFrontReversed[N] -> ptsBack[0])
+            const ptsFrontReversed = [...ptsFront].reverse();
+
+            const profile = [
+              { type: "spline", points: ptsBack },
+              { type: "line", start: ptsBack[ptsBack.length - 1], end: ptsFrontReversed[0] },
+              { type: "spline", points: ptsFrontReversed },
+              { type: "line", start: ptsFrontReversed[ptsFrontReversed.length - 1], end: ptsBack[0] }
+            ];
+
+            forms.push({
+              id: u.id,
+              formType: "extrusion",
+              isSolid: true,
+              materialParam: matParam,
+              sketchPlane: {
+                origin: [xMin, 0, 0],
+                normal: [1, 0, 0]
+              },
+              startOffsetMm: 0,
+              endOffsetMm: Math.max(2, xMax - xMin),
+              profile: profile
+            });
+            return;
+          }
+
+          if (u.isProfileExtrusionYZ && u.profile && u.profile.length > 0) {
+            forms.push({
+              id: u.id,
+              formType: "extrusion",
+              isSolid: true,
+              materialParam: matParam,
+              sketchPlane: {
+                origin: [Math.round(u.x1), 0, 0],
+                normal: [1, 0, 0]
+              },
+              startOffsetMm: 0,
+              endOffsetMm: Math.max(2, Math.round(u.x2 - u.x1)),
+              profile: u.profile
+            });
+            return;
+          }
+
+          if (u.isBullHornArc) {
+            const cx = u.cx;
+            const cz = u.cz;
+            const rCenter = u.rCenter;
+            const thickness = u.thickness;
+            const r1 = rCenter - thickness / 2;
+            const r2 = rCenter + thickness / 2;
+            const angleSpanRad = (u.angleSpanDeg || 150) * Math.PI / 180;
+            const halfAngle = angleSpanRad / 2;
+            const phi = u.rotRad || 0;
+
+            const a1 = phi - halfAngle;
+            const a2 = phi + halfAngle;
+            const amid = phi;
+
+            const p1_out = [Math.round(cx + r2 * Math.cos(a1)), Math.round(cz + r2 * Math.sin(a1)), 0];
+            const pmid_out = [Math.round(cx + r2 * Math.cos(amid)), Math.round(cz + r2 * Math.sin(amid)), 0];
+            const p2_out = [Math.round(cx + r2 * Math.cos(a2)), Math.round(cz + r2 * Math.sin(a2)), 0];
+
+            const p1_in = [Math.round(cx + r1 * Math.cos(a1)), Math.round(cz + r1 * Math.sin(a1)), 0];
+            const pmid_in = [Math.round(cx + r1 * Math.cos(amid)), Math.round(cz + r1 * Math.sin(amid)), 0];
+            const p2_in = [Math.round(cx + r1 * Math.cos(a2)), Math.round(cz + r1 * Math.sin(a2)), 0];
+
+            const profile = [
+              { type: "arc3pt", p1: p1_out, p2: p2_out, mid: pmid_out },
+              { type: "line", start: p2_out, end: p2_in },
+              { type: "arc3pt", p1: p2_in, p2: p1_in, mid: pmid_in },
+              { type: "line", start: p1_in, end: p1_out }
+            ];
+
+            forms.push({
+              id: u.id,
+              formType: "extrusion",
+              isSolid: true,
+              materialParam: matParam,
+              startOffsetMm: Math.round(u.y1 !== undefined ? u.y1 : min.y),
+              endOffsetMm: Math.round(u.y2 !== undefined ? u.y2 : max.y),
+              profile: profile
+            });
+            return;
+          }
+
+          if (u.isCylinder) {
+            const r = u.radius;
+            const cx = Math.round(u.cx);
+            const cz = Math.round(u.cz);
+            const profile = [
+              { type: "arc3pt", p1: [cx - r, cz, 0], p2: [cx + r, cz, 0], mid: [cx, cz + r, 0] },
+              { type: "arc3pt", p1: [cx + r, cz, 0], p2: [cx - r, cz, 0], mid: [cx, cz - r, 0] }
+            ];
+            forms.push({
+              id: u.id,
+              formType: "extrusion",
+              isSolid: true,
+              materialParam: matParam,
+              startOffsetMm: Math.round(min.y),
+              endOffsetMm: Math.round(max.y),
+              profile: profile
+            });
+            return;
+          }
+
+          if (u.isRoundedRect) {
+            const w = u.w, d = u.d, r = u.r;
+            const cx = Math.round(u.posX);
+            const cz = Math.round(u.posZ);
+            const x1 = cx - w/2, x2 = cx + w/2;
+            const z1 = cz - d/2, z2 = cz + d/2;
+            const k = Math.round(r * 0.2929);
+            const profile = [
+              { type: "line", start: [x1 + r, z2, 0], end: [x2 - r, z2, 0] },
+              { type: "arc3pt", p1: [x2 - r, z2, 0], p2: [x2, z2 - r, 0], mid: [x2 - k, z2 - k, 0] },
+              { type: "line", start: [x2, z2 - r, 0], end: [x2, z1 + r, 0] },
+              { type: "arc3pt", p1: [x2, z1 + r, 0], p2: [x2 - r, z1, 0], mid: [x2 - k, z1 + k, 0] },
+              { type: "line", start: [x2 - r, z1, 0], end: [x1 + r, z1, 0] },
+              { type: "arc3pt", p1: [x1 + r, z1, 0], p2: [x1, z1 + r, 0], mid: [x1 + k, z1 + k, 0] },
+              { type: "line", start: [x1, z1 + r, 0], end: [x1, z2 - r, 0] },
+              { type: "arc3pt", p1: [x1, z2 - r, 0], p2: [x1 + r, z2, 0], mid: [x1 + k, z2 - k, 0] }
+            ];
+            forms.push({
+              id: u.id,
+              formType: "extrusion",
+              isSolid: true,
+              materialParam: matParam,
+              startOffsetMm: Math.round(min.y),
+              endOffsetMm: Math.round(max.y),
+              profile: profile
+            });
+            return;
+          }
+
+          forms.push({
+            id: u.id,
+            formType: "extrusion",
+            isSolid: true,
+            materialParam: matParam,
+            startOffsetMm: startY,
+            endOffsetMm: endY,
+            profile: makeRectProfile(Math.round(min.x), Math.round(min.z), Math.round(max.x), Math.round(max.z))
+          });
+        }
+      });
+      return forms;
+    }
+
+    const btnPushRevit = document.getElementById('btnPushRevit');
+    btnPushRevit.addEventListener('click', async () => {
+      btnPushRevit.disabled = true;
+      const originalHTML = btnPushRevit.innerHTML;
+      btnPushRevit.innerHTML = `
+        <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-slate-950" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+        </svg>
+        <span>Đang dựng trong Revit...</span>
+      `;
+
+      let isDone = false;
+      const timeoutTimer = setTimeout(() => {
+        if (!isDone) {
+          alert("Revit phản hồi lâu hơn dự kiến. Nếu Revit đang mở, vui lòng click chuột vào màn hình Revit để kích hoạt hàng đợi xử lý.");
+        }
+      }, 25000);
+
+      try {
+        const ws = new WebSocket("ws://127.0.0.1:7777");
+        ws.onopen = () => {
+          const forms = extractRevitForms();
+          const meta = state.currentModelMeta || {};
+          let category = meta.category || "OST_Casework";
+          let defaultTypeName = meta.defaultTypeName || (meta.name ? "HT_" + meta.name.replace(/[^a-zA-Z0-9_]/g, '_') : "HT_CustomModel");
+          let parameters = meta.parameters;
+
+          if (!parameters || !Array.isArray(parameters) || parameters.length === 0) {
+            const paramMap = {
+              "VatLieu_ThungTu": { val: "HT_Go_MDF_TrangSu", rgb: [240, 240, 242] },
+              "VatLieu_CanhKinh": { val: "HT_Kinh_MauTra", rgb: [180, 140, 100] },
+              "VatLieu_KhungNhomVang": { val: "HT_Nhom_Anode_Vang", rgb: [220, 180, 70] },
+              "VatLieu_GuongSoi": { val: "HT_Guong_TrangBac", rgb: [230, 240, 250] },
+              "VatLieu_CanhTu": { val: "HT_SonTrang_Acrylic", rgb: [250, 250, 250] },
+              "VatLieu_PhuKien": { val: "HT_PhuKien_TuGiay", rgb: [50, 50, 55] },
+              "VatLieu_GoTuNhien": { val: "HT_Go_TuNhien", rgb: [198, 138, 88] },
+              "VatLieu_NemVai": { val: "HT_NemVai_KemSang", rgb: [245, 239, 230] },
+              "VatLieu_MatDa": { val: "HT_Da_TrangVanMay", rgb: [245, 245, 248] },
+              "VatLieu_KinhMatBan": { val: "HT_Kinh_MatBan", rgb: [225, 242, 248] },
+              "VatLieu_KimLoai": { val: "HT_Inox_304", rgb: [210, 215, 220] },
+              "VatLieu_ThietBi": { val: "HT_KinhDen_ThietBi", rgb: [25, 25, 28] }
+            };
+            const usedParams = new Set();
+            forms.forEach(f => { if (f.materialParam) usedParams.add(f.materialParam); });
+            parameters = [];
+            usedParams.forEach(pName => {
+              const info = paramMap[pName] || { val: "HT_" + pName.replace("VatLieu_", ""), rgb: [200, 200, 200] };
+              parameters.push({
+                name: pName,
+                type: "Material",
+                value: info.val,
+                color: info.rgb,
+                isInstance: false
+              });
+            });
+            if (parameters.length === 0) {
+              parameters.push({
+                name: "VatLieu_ThungTu",
+                type: "Material",
+                value: "HT_VatLieu_MacDinh",
+                color: [220, 220, 220],
+                isInstance: false
+              });
+            }
+          }
+
+          const payload = {
+            category: category,
+            clearArtifacts: true,
+            defaultTypeName: defaultTypeName,
+            parameters: parameters,
+            forms: forms
+          };
+
+          const cmd = {
+            requestId: "req_universal_" + Date.now(),
+            action: "revit_build_dynamic_family",
+            parameters: payload
+          };
+
+          ws.send(JSON.stringify(cmd));
+        };
+
+        ws.onmessage = (evt) => {
+          isDone = true;
+          clearTimeout(timeoutTimer);
+          btnPushRevit.disabled = false;
+
+          try {
+            const res = JSON.parse(evt.data);
+            if (res.success || res.Success) {
+              const data = res.data || res.Data || {};
+              const modeMsg = (data.mode === 'project_document') ? "Đã nạp Family vào Project Revit & tạo mô hình!" : "Đã dựng xong trong Family Document!";
+              btnPushRevit.innerHTML = `
+                <svg class="w-4 h-4 text-emerald-600" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                <span>${modeMsg}</span>
+              `;
+              let warnMsg = "";
+              if (data.warning && data.warning.length > 0) {
+                const wText = Array.isArray(data.warning) ? data.warning.join('\n- ') : data.warning;
+                warnMsg = `\n\nCảnh báo từ Revit:\n- ${wText}`;
+              }
+              alert(`THÀNH CÔNG!\n${modeMsg}\nTên Family: ${data.familyName || 'HT_Cabinet'}\nTrạng thái: ${data.status || 'Hoàn tất'}${warnMsg}`);
+            } else {
+              const errMsg = res.error || res.Error || "Lỗi không xác định từ Revit.";
+              btnPushRevit.innerHTML = originalHTML;
+              alert(`LỖI TỪ REVIT:\n${errMsg}`);
+            }
+          } catch (pe) {
+            btnPushRevit.innerHTML = originalHTML;
+            alert("Lỗi phân tích phản hồi từ Revit: " + pe.message);
+          }
+          setTimeout(() => { btnPushRevit.innerHTML = originalHTML; }, 4000);
+          ws.close();
+        };
+
+        ws.onerror = (err) => {
+          isDone = true;
+          clearTimeout(timeoutTimer);
+          alert("Không thể kết nối Revit MCP (ws://127.0.0.1:7777).\nVui lòng đảm bảo Revit đang mở và MCP Server đang Chạy!");
+          btnPushRevit.disabled = false;
+          btnPushRevit.innerHTML = originalHTML;
+        };
+
+        ws.onclose = () => {
+          if (!isDone) {
+            clearTimeout(timeoutTimer);
+            btnPushRevit.disabled = false;
+            btnPushRevit.innerHTML = originalHTML;
+          }
+        };
+      } catch (e) {
+        isDone = true;
+        clearTimeout(timeoutTimer);
+        alert("Lỗi: " + e.message);
+        btnPushRevit.disabled = false;
+        btnPushRevit.innerHTML = originalHTML;
+      }
+    });
+
+    // RENDER LOOP
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>

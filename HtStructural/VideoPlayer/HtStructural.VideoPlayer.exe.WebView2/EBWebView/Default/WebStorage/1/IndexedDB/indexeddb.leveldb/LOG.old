@@ -1,0 +1,14 @@
+2026/09/16-14:51:12.611 40bc Reusing MANIFEST F:\00_HtCode\HtStructural\src\HtStructural.VideoPlayer\bin\Release\net8.0-windows\HtStructural.VideoPlayer.exe.WebView2\EBWebView\Default\WebStorage\1\IndexedDB\indexeddb.leveldb/MANIFEST-000001
+2026/09/16-14:51:12.614 40bc Recovering log #199
+2026/09/16-14:51:12.614 40bc Reusing old log F:\00_HtCode\HtStructural\src\HtStructural.VideoPlayer\bin\Release\net8.0-windows\HtStructural.VideoPlayer.exe.WebView2\EBWebView\Default\WebStorage\1\IndexedDB\indexeddb.leveldb/000199.log 
+2026/09/16-14:51:12.614 40bc Delete type=2 #197
+2026/09/16-14:51:12.626 40bc Level-0 table #204: started
+2026/09/16-14:51:12.627 40bc Level-0 table #204: 5675 bytes OK
+2026/09/16-14:51:12.628 40bc Delete type=0 #199
+2026/09/16-14:51:12.628 8984 Manual compaction at level-0 from '\x00I\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00J\x00\x00\x00' @ 0 : 0; will stop at '\x00J\x00\x00\xc8\x11\x00L\x00o\x00g\x00s\x00R\x00e\x00q\x00u\x00e\x00s\x00t\x00s\x00S\x00t\x00o\x00r\x00e' @ 10990 : 1
+2026/09/16-14:51:12.628 8984 Compacting 1@0 + 1@1 files
+2026/09/16-14:51:12.631 8984 Generated table #205@0: 652 keys, 8745 bytes
+2026/09/16-14:51:12.631 8984 Compacted 1@0 + 1@1 files => 8745 bytes
+2026/09/16-14:51:12.631 8984 compacted to: files[ 0 1 1 0 0 0 0 ]
+2026/09/16-14:51:12.632 8984 Delete type=2 #204
+2026/09/16-14:51:12.632 8984 Manual compaction at level-0 from '\x00J\x00\x00\xc8\x11\x00L\x00o\x00g\x00s\x00R\x00e\x00q\x00u\x00e\x00s\x00t\x00s\x00S\x00t\x00o\x00r\x00e' @ 10990 : 1 .. '\x00J\x00\x00\x00' @ 0 : 0; will stop at (end)

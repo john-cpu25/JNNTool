@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<RevitAddIns>
+    <AddIn Type="Application">
+        <Name>JNNTool</Name>
+        <Assembly>JNNTool.dll</Assembly>
+        <FullClassName>JNNTool.App</FullClassName>
+        <AddInId>a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d</AddInId>
+        <VendorId>NGUYEN</VendorId>
+        <VendorDescription>Nguyen, Architecture &amp; Engineering</VendorDescription>
+    </AddIn>
+</RevitAddIns>

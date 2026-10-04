@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Autodesk.Revit.DB;
@@ -255,8 +255,8 @@ namespace JNNTool
 
                 try
                 {
-                    Rebar rebar = Rebar.CreateFromCurves(_doc, RebarStyle.Standard, barType, null, null,
-                        hostBeam, rebarNormal, curves, RebarHookOrientation.Left, RebarHookOrientation.Left,
+                    Rebar rebar = JNNTool.Core.Compat.RebarCompat.CreateFromCurves(_doc, RebarStyle.Standard, barType, null, null,
+                        hostBeam, rebarNormal, curves, JNNTool.Core.Compat.JnnHookOrientation.Left, JNNTool.Core.Compat.JnnHookOrientation.Left,
                         true, true);
                         
                     _createdRebars.Add(rebar);
@@ -471,8 +471,8 @@ namespace JNNTool
             Transform tr = Transform.CreateTranslation(dir * anchorOffset);
             List<Curve> movedProfile = profile.Select(c => c.CreateTransformed(tr)).ToList();
 
-            Rebar stirrupSet = Rebar.CreateFromCurves(_doc, RebarStyle.StirrupTie, barType, stirrupHook, stirrupHook,
-                beam, dir, movedProfile, RebarHookOrientation.Left, RebarHookOrientation.Left, true, true);
+            Rebar stirrupSet = JNNTool.Core.Compat.RebarCompat.CreateFromCurves(_doc, RebarStyle.StirrupTie, barType, stirrupHook, stirrupHook,
+                beam, dir, movedProfile, JNNTool.Core.Compat.JnnHookOrientation.Left, JNNTool.Core.Compat.JnnHookOrientation.Left, true, true);
 
             RebarShapeDrivenAccessor accessor = stirrupSet.GetShapeDrivenAccessor();
             accessor.SetLayoutAsNumberWithSpacing(quantity, spacing, layoutForward, true, true);
@@ -739,7 +739,7 @@ namespace JNNTool
                 
                 try
                 {
-                    Rebar rebar = Rebar.CreateFromCurves(_doc, RebarStyle.Standard, barType, null, null, beam, right, curves, RebarHookOrientation.Left, RebarHookOrientation.Left, true, true);
+                    Rebar rebar = JNNTool.Core.Compat.RebarCompat.CreateFromCurves(_doc, RebarStyle.Standard, barType, null, null, beam, right, curves, JNNTool.Core.Compat.JnnHookOrientation.Left, JNNTool.Core.Compat.JnnHookOrientation.Left, true, true);
                     
                     _createdRebars.Add(rebar);
                 }

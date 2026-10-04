@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Reflection;
 using System.Text.Json;
@@ -25,6 +25,16 @@ namespace JNNTool
                 // Bỏ qua nếu Tab đã tồn tại
             }
 
+            // Khởi tạo ActionEventHandler cho các Modeless UI của JNN Rebar Suite
+            try
+            {
+                JNNTool.Core.ExternalEvents.ActionEventHandler.Instance.Initialize();
+            }
+            catch (Exception ex)
+            {
+                JNNTool.Core.Logging.Logger.Error("Lỗi khởi tạo ActionEventHandler", ex);
+            }
+
 
             // Tạo Ribbon Panel Modeling
             RibbonPanel modelingPanel = application.CreateRibbonPanel(tabName, modelingPanelName);
@@ -35,6 +45,223 @@ namespace JNNTool
             
             // Hướng tới thư mục Resources
             string resourcesPath = Path.Combine(Directory.GetParent(assemblyDir).FullName, "Resources");
+
+            // ═══════════════════════════════════════════════════════════════
+            //  Panel: JNN Rebar Suite
+            // ═══════════════════════════════════════════════════════════════
+            RibbonPanel rebarPanel = application.CreateRibbonPanel(tabName, "JNN Rebar");
+
+            // ------------------- Rebar Slab -------------------
+            string iconPathRebarSlab = Path.Combine(resourcesPath, "RebarSlab.png");
+            PushButtonData btnRebarSlabData = new PushButtonData(
+                "cmdSlabRebar",
+                "Rebar\nSlab",
+                assemblyPath,
+                "JNNTool.RebarSuite.Slab.SlabRebarCommand"
+            );
+            btnRebarSlabData.ToolTip = "Bố trí thép sàn tự động: Lớp dưới, lớp trên và thép mũ gối L/4 theo TCVN 5574:2018.";
+
+            PushButton btnRebarSlab = rebarPanel.AddItem(btnRebarSlabData) as PushButton;
+            if (File.Exists(iconPathRebarSlab))
+            {
+                BitmapImage img = new BitmapImage();
+                img.BeginInit();
+                img.UriSource = new Uri(iconPathRebarSlab, UriKind.Absolute);
+                img.CacheOption = BitmapCacheOption.OnLoad;
+                img.EndInit();
+                btnRebarSlab.LargeImage = img;
+                btnRebarSlab.Image = img;
+            }
+
+            // ------------------- Rebar Beam (Suite) -------------------
+            string iconPathRebarBeamSuite = Path.Combine(resourcesPath, "RebarBeam.png");
+            PushButtonData btnRebarBeamSuiteData = new PushButtonData(
+                "cmdBeamRebarSuite",
+                "Rebar\nBeam",
+                assemblyPath,
+                "JNNTool.RebarSuite.Beam.BeamRebarCommand"
+            );
+            btnRebarBeamSuiteData.ToolTip = "Bố trí thép dầm liên tục: Thép chủ, gia cường gối L/4, đai dày/thưa và tạo mặt cắt tự động.";
+
+            PushButton btnRebarBeamSuite = rebarPanel.AddItem(btnRebarBeamSuiteData) as PushButton;
+            if (File.Exists(iconPathRebarBeamSuite))
+            {
+                BitmapImage img = new BitmapImage();
+                img.BeginInit();
+                img.UriSource = new Uri(iconPathRebarBeamSuite, UriKind.Absolute);
+                img.CacheOption = BitmapCacheOption.OnLoad;
+                img.EndInit();
+                btnRebarBeamSuite.LargeImage = img;
+                btnRebarBeamSuite.Image = img;
+            }
+
+            // ------------------- Rebar Column -------------------
+            string iconPathRebarColSuite = Path.Combine(resourcesPath, "RebarColumn.png");
+            PushButtonData btnRebarColSuiteData = new PushButtonData(
+                "cmdColumnRebarSuite",
+                "Rebar\nColumn",
+                assemblyPath,
+                "JNNTool.RebarSuite.Column.ColumnRebarCommand"
+            );
+            btnRebarColSuiteData.ToolTip = "Bố trí thép chuỗi cột theo tầng: Bẻ cổ chai 1:6, đai dày/thưa, đai AB/CN và tạo MCD.";
+
+            PushButton btnRebarColSuite = rebarPanel.AddItem(btnRebarColSuiteData) as PushButton;
+            if (File.Exists(iconPathRebarColSuite))
+            {
+                BitmapImage img = new BitmapImage();
+                img.BeginInit();
+                img.UriSource = new Uri(iconPathRebarColSuite, UriKind.Absolute);
+                img.CacheOption = BitmapCacheOption.OnLoad;
+                img.EndInit();
+                btnRebarColSuite.LargeImage = img;
+                btnRebarColSuite.Image = img;
+            }
+
+            // ------------------- Rebar Wall -------------------
+            string iconPathRebarWallSuite = Path.Combine(resourcesPath, "DisallowWallJoins.png");
+            PushButtonData btnRebarWallSuiteData = new PushButtonData(
+                "cmdWallRebarSuite",
+                "Rebar\nWall",
+                assemblyPath,
+                "JNNTool.RebarSuite.Wall.WallRebarCommand"
+            );
+            btnRebarWallSuiteData.ToolTip = "Bố trí thép vách 2 lớp: Thép đứng, thép ngang, đai C ghim biên, chống thấm và tạo MCD.";
+
+            PushButton btnRebarWallSuite = rebarPanel.AddItem(btnRebarWallSuiteData) as PushButton;
+            if (File.Exists(iconPathRebarWallSuite))
+            {
+                BitmapImage img = new BitmapImage();
+                img.BeginInit();
+                img.UriSource = new Uri(iconPathRebarWallSuite, UriKind.Absolute);
+                img.CacheOption = BitmapCacheOption.OnLoad;
+                img.EndInit();
+                btnRebarWallSuite.LargeImage = img;
+                btnRebarWallSuite.Image = img;
+            }
+
+            // ------------------- Rebar Foundation -------------------
+            string iconPathRebarFdn = Path.Combine(resourcesPath, "Connection.png");
+            PushButtonData btnRebarFdnData = new PushButtonData(
+                "cmdFoundationRebarSuite",
+                "Rebar\nFooting",
+                assemblyPath,
+                "JNNTool.RebarSuite.Foundation.FoundationRebarCommand"
+            );
+            btnRebarFdnData.ToolTip = "Bố trí thép móng & đài cọc: Lưới đáy móc uốn 90°, lưới trên, thép chờ cột chân vịt.";
+
+            PushButton btnRebarFdn = rebarPanel.AddItem(btnRebarFdnData) as PushButton;
+            if (File.Exists(iconPathRebarFdn))
+            {
+                BitmapImage img = new BitmapImage();
+                img.BeginInit();
+                img.UriSource = new Uri(iconPathRebarFdn, UriKind.Absolute);
+                img.CacheOption = BitmapCacheOption.OnLoad;
+                img.EndInit();
+                btnRebarFdn.LargeImage = img;
+                btnRebarFdn.Image = img;
+            }
+
+            // ------------------- Rebar Pile -------------------
+            string iconPathRebarPile = Path.Combine(resourcesPath, "PileLocation.png");
+            PushButtonData btnRebarPileData = new PushButtonData(
+                "cmdPileRebarSuite",
+                "Rebar\nPile",
+                assemblyPath,
+                "JNNTool.RebarSuite.Pile.PileRebarCommand"
+            );
+            btnRebarPileData.ToolTip = "Bố trí thép cọc khoan nhồi / cọc vuông: Lồng thép, đai phân vùng, vành gia cường và xuất tọa độ CSV.";
+
+            PushButton btnRebarPile = rebarPanel.AddItem(btnRebarPileData) as PushButton;
+            if (File.Exists(iconPathRebarPile))
+            {
+                BitmapImage img = new BitmapImage();
+                img.BeginInit();
+                img.UriSource = new Uri(iconPathRebarPile, UriKind.Absolute);
+                img.CacheOption = BitmapCacheOption.OnLoad;
+                img.EndInit();
+                btnRebarPile.LargeImage = img;
+                btnRebarPile.Image = img;
+            }
+
+            // ------------------- Rebar Stair -------------------
+            string iconPathRebarStairSuite = Path.Combine(resourcesPath, "StairDetail.png");
+            PushButtonData btnRebarStairSuiteData = new PushButtonData(
+                "cmdStairRebarSuite",
+                "Rebar\nStair",
+                assemblyPath,
+                "JNNTool.RebarSuite.Stair.StairRebarCommand"
+            );
+            btnRebarStairSuiteData.ToolTip = "Bố trí thép bản thang: Thép lớp dưới chịu nhịp, thép mũ gối trên neo dầm và thép phân bố ngang.";
+
+            PushButton btnRebarStairSuite = rebarPanel.AddItem(btnRebarStairSuiteData) as PushButton;
+            if (File.Exists(iconPathRebarStairSuite))
+            {
+                BitmapImage img = new BitmapImage();
+                img.BeginInit();
+                img.UriSource = new Uri(iconPathRebarStairSuite, UriKind.Absolute);
+                img.CacheOption = BitmapCacheOption.OnLoad;
+                img.EndInit();
+                btnRebarStairSuite.LargeImage = img;
+                btnRebarStairSuite.Image = img;
+            }
+
+            // ------------------- Pulldown: Rebar Utils -------------------
+            PulldownButtonData pulldownUtilsData = new PulldownButtonData(
+                "cmdRebarUtilsSuite",
+                "Rebar\nUtils"
+            );
+            pulldownUtilsData.ToolTip = "Bộ tiện ích cốt thép: Thống kê khối lượng, đánh số hiệu Mark, Unobscured, Isolate và chuẩn hóa RebarType.";
+
+            PulldownButton pullUtils = rebarPanel.AddItem(pulldownUtilsData) as PulldownButton;
+            string iconPathUtils = Path.Combine(resourcesPath, "SpeedOverrider.png");
+            if (File.Exists(iconPathUtils))
+            {
+                BitmapImage img = new BitmapImage();
+                img.BeginInit();
+                img.UriSource = new Uri(iconPathUtils, UriKind.Absolute);
+                img.CacheOption = BitmapCacheOption.OnLoad;
+                img.EndInit();
+                pullUtils.LargeImage = img;
+                pullUtils.Image = img;
+            }
+
+            pullUtils.AddPushButton(new PushButtonData(
+                "cmdRebarVolume",
+                "Thống Kê Khối Lượng Thép (CSV)",
+                assemblyPath,
+                "JNNTool.RebarSuite.Utilities.Commands.RebarVolumeCommand"
+            ));
+
+            pullUtils.AddPushButton(new PushButtonData(
+                "cmdRebarNumber",
+                "Đánh Số Hiệu Thép (Auto Mark)",
+                assemblyPath,
+                "JNNTool.RebarSuite.Utilities.Commands.RebarNumberCommand"
+            ));
+
+            pullUtils.AddPushButton(new PushButtonData(
+                "cmdRebarUnobscured",
+                "Bật Nhìn Xuyên (View Unobscured)",
+                assemblyPath,
+                "JNNTool.RebarSuite.Utilities.Commands.RebarUnobscuredCommand"
+            ));
+
+            pullUtils.AddPushButton(new PushButtonData(
+                "cmdRebarIsolate",
+                "Cô Lập Cốt Thép (Isolate Rebar)",
+                assemblyPath,
+                "JNNTool.RebarSuite.Utilities.Commands.IsolateRebarCommand"
+            ));
+
+            pullUtils.AddPushButton(new PushButtonData(
+                "cmdRebarTypeManager",
+                "Chuẩn Hóa RebarBarType (D6-D32)",
+                assemblyPath,
+                "JNNTool.RebarSuite.Utilities.Commands.RebarTypeManagerCommand"
+            ));
+
+
+
 
 
             // ------------------- Floor By Room -------------------
@@ -324,6 +551,50 @@ namespace JNNTool
                 img.EndInit();
                 btnPileLocation.LargeImage = img;
                 btnPileLocation.Image = img;
+            }
+
+            // ------------------- Create Dim (Beam) -------------------
+            string iconPathCreateDim = Path.Combine(resourcesPath, "CreateDim.png");
+            PushButtonData btnCreateDimData = new PushButtonData(
+                "cmdCreateDimBeam",
+                "Dim\nBeam",
+                assemblyPath,
+                "JNNTool.Tools.CreateDim.CreateDimBeamCmd"
+            );
+            btnCreateDimData.ToolTip = "Chọn 1 hoặc nhiều dầm trên mặt bằng → tự tạo Dim chiều dài tổng (2 đầu dầm).";
+
+            PushButton btnCreateDim = modelingPanel.AddItem(btnCreateDimData) as PushButton;
+            if (File.Exists(iconPathCreateDim))
+            {
+                BitmapImage img = new BitmapImage();
+                img.BeginInit();
+                img.UriSource = new Uri(iconPathCreateDim, UriKind.Absolute);
+                img.CacheOption = BitmapCacheOption.OnLoad;
+                img.EndInit();
+                btnCreateDim.LargeImage = img;
+                btnCreateDim.Image = img;
+            }
+
+            // ------------------- Extend Beam -------------------
+            string iconPathExtendBeam = Path.Combine(resourcesPath, "ExtendBeam.png");
+            PushButtonData btnExtendBeamData = new PushButtonData(
+                "cmdExtendBeam",
+                "Extend\nBeam",
+                assemblyPath,
+                "JNNTool.Tools.ExtendBeam.ExtendBeamCmd"
+            );
+            btnExtendBeamData.ToolTip = "Chạy cho toàn bộ dầm trong view hiện hành (hoặc chỉ các dầm đã chọn sẵn) → tự nhận diện gối ở đầu Start / End (Cột, Dầm, Tường, Sàn, Móng) và đưa tim dầm 2 đầu tới đúng mặt gối. Dầm xuyên qua cấu kiện không bị cắt.";
+
+            PushButton btnExtendBeam = modelingPanel.AddItem(btnExtendBeamData) as PushButton;
+            if (File.Exists(iconPathExtendBeam))
+            {
+                BitmapImage img = new BitmapImage();
+                img.BeginInit();
+                img.UriSource = new Uri(iconPathExtendBeam, UriKind.Absolute);
+                img.CacheOption = BitmapCacheOption.OnLoad;
+                img.EndInit();
+                btnExtendBeam.LargeImage = img;
+                btnExtendBeam.Image = img;
             }
 
             // ─── Auto-update check (background, non-blocking) ───────────────

@@ -1,0 +1,25 @@
+2026/09/18-08:58:25.309 704 Reusing MANIFEST F:\00_HtCode\HtStructural\src\HtStructural.VideoPlayer\bin\Release\net8.0-windows\HtStructural.VideoPlayer.exe.WebView2\EBWebView\Default\WebStorage\1\IndexedDB\indexeddb.leveldb/MANIFEST-000001
+2026/09/18-08:58:25.309 704 Recovering log #203
+2026/09/18-08:58:25.309 704 Reusing old log F:\00_HtCode\HtStructural\src\HtStructural.VideoPlayer\bin\Release\net8.0-windows\HtStructural.VideoPlayer.exe.WebView2\EBWebView\Default\WebStorage\1\IndexedDB\indexeddb.leveldb/000203.log 
+2026/09/18-08:58:25.310 704 Delete type=2 #201
+2026/09/18-08:58:25.321 4c68 Level-0 table #208: started
+2026/09/18-08:58:25.322 4c68 Level-0 table #208: 7669 bytes OK
+2026/09/18-08:58:25.323 4c68 Delete type=0 #203
+2026/09/18-08:58:25.323 66ac Manual compaction at level-0 from '\x00J\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00K\x00\x00\x00' @ 0 : 0; will stop at '\x00K\x00\x00\xc8\x11\x00L\x00o\x00g\x00s\x00R\x00e\x00q\x00u\x00e\x00s\x00t\x00s\x00S\x00t\x00o\x00r\x00e' @ 11144 : 1
+2026/09/18-08:58:25.323 66ac Compacting 1@0 + 1@1 files
+2026/09/18-08:58:25.325 66ac Generated table #209@0: 655 keys, 8793 bytes
+2026/09/18-08:58:25.325 66ac Compacted 1@0 + 1@1 files => 8793 bytes
+2026/09/18-08:58:25.326 66ac compacted to: files[ 0 1 1 0 0 0 0 ]
+2026/09/18-08:58:25.326 66ac Delete type=2 #208
+2026/09/18-08:58:25.326 66ac Manual compaction at level-0 from '\x00K\x00\x00\xc8\x11\x00L\x00o\x00g\x00s\x00R\x00e\x00q\x00u\x00e\x00s\x00t\x00s\x00S\x00t\x00o\x00r\x00e' @ 11144 : 1 .. '\x00K\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/09/18-08:59:09.598 66ac Level-0 table #211: started
+2026/09/18-08:59:09.599 66ac Level-0 table #211: 7253 bytes OK
+2026/09/18-08:59:09.600 66ac Delete type=2 #205
+2026/09/18-08:59:09.600 66ac Delete type=0 #207
+2026/09/18-08:59:09.601 516c Manual compaction at level-0 from '\x00K\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00L\x00\x00\x00' @ 0 : 0; will stop at '\x00L\x00\x00\xc8\x11\x00L\x00o\x00g\x00s\x00R\x00e\x00q\x00u\x00e\x00s\x00t\x00s\x00S\x00t\x00o\x00r\x00e' @ 11286 : 1
+2026/09/18-08:59:09.601 516c Compacting 1@0 + 1@1 files
+2026/09/18-08:59:09.602 516c Generated table #212@0: 658 keys, 8869 bytes
+2026/09/18-08:59:09.602 516c Compacted 1@0 + 1@1 files => 8869 bytes
+2026/09/18-08:59:09.603 516c compacted to: files[ 0 1 1 0 0 0 0 ]
+2026/09/18-08:59:09.603 516c Delete type=2 #211
+2026/09/18-08:59:09.604 516c Manual compaction at level-0 from '\x00L\x00\x00\xc8\x11\x00L\x00o\x00g\x00s\x00R\x00e\x00q\x00u\x00e\x00s\x00t\x00s\x00S\x00t\x00o\x00r\x00e' @ 11286 : 1 .. '\x00L\x00\x00\x00' @ 0 : 0; will stop at (end)

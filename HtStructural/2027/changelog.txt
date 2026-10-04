@@ -1,0 +1,18 @@
+Version: V8.11
+Nhật ký HT-Structural V8.11
++ FEM 3D:
+  - Thêm gán tải gió dầm biên và hệ số giảm tải
+  - Fix tính toán Dầm, Cột
+  - Fix hiện thiết kế thép Cột
+  - Bổ sung thiết kế thép Sàn theo dải Strip
++ Tính Cột:
+  - Thêm tuỳ chọn gán tên Group cột thiết kế
+  - Thêm check đai thép Cột
+  - Fix lỗi BDTT
++ Tool MCD cột:
+  - Fix Dim chiều cao Móng
++ Tool xuất sơ đồ tính qua etabs:
+  - Fix lỗi mất level ở Etabs v22.7
++ Fix tool chọn đối tượng 2D
+
+#Ht_structural #Ketcau

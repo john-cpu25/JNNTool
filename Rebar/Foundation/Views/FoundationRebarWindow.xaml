@@ -1,0 +1,285 @@
+<Window x:Class="JNNTool.RebarSuite.Foundation.Views.FoundationRebarWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:JNNTool.RebarSuite.Foundation.ViewModels"
+        mc:Ignorable="d"
+        Title="JNN Rebar — Bố trí Thép Móng &amp; Đài Cọc (TCVN 5574:2018)"
+        Height="560" Width="680"
+        WindowStartupLocation="CenterScreen"
+        Topmost="True"
+        Background="#F8FAFC"
+        FontFamily="Segoe UI" FontSize="13">
+
+    <Window.DataContext>
+        <vm:FoundationRebarViewModel />
+    </Window.DataContext>
+
+    <Window.Resources>
+        <Style TargetType="GroupBox">
+            <Setter Property="Margin" Value="0,4,0,8"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#1E293B"/>
+        </Style>
+
+        <Style TargetType="TextBox">
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="6,2"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+
+        <Style TargetType="ComboBox">
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#0F172A" CornerRadius="6" Padding="14,10" Margin="0,0,0,12">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="🏗️" FontSize="20" Margin="0,0,10,0"/>
+                <StackPanel>
+                    <TextBlock Text="JNN REBAR — BỐ TRÍ THÉP MÓNG &amp; ĐÀI CỌC" FontWeight="Bold" FontSize="14" Foreground="#F8FAFC"/>
+                    <TextBlock Text="Móng đơn, đài cọc: Lưới thép đáy móc uốn 90°, lưới mặt trên và thép chờ cổ cột chân vịt" FontSize="11" Foreground="#94A3B8"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Tab Content -->
+        <TabControl Grid.Row="1" Background="White" BorderBrush="#CBD5E1">
+
+            <!-- TAB 1: THÉP LƯỚI ĐÁY -->
+            <TabItem Header="  Lưới Thép Đáy  " FontWeight="SemiBold">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="12">
+                    <StackPanel>
+                        <GroupBox Header="Lưới Thép Đáy Phương X (Dọc Móng)">
+                            <Grid Margin="0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="150"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="20"/>
+                                    <ColumnDefinition Width="150"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="34"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Đường kính thép X:" VerticalAlignment="Center" FontWeight="Normal"/>
+                                <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding BottomBarOptions}" SelectedItem="{Binding Settings.BottomDiameterX}"/>
+
+                                <TextBlock Grid.Row="0" Grid.Column="3" Text="Khoảng cách a (mm):" VerticalAlignment="Center" FontWeight="Normal"/>
+                                <TextBox Grid.Row="0" Grid.Column="4" Text="{Binding Settings.BottomSpacingX, UpdateSourceTrigger=PropertyChanged}"/>
+                            </Grid>
+                        </GroupBox>
+
+                        <GroupBox Header="Lưới Thép Đáy Phương Y (Ngang Móng)">
+                            <Grid Margin="0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="150"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="20"/>
+                                    <ColumnDefinition Width="150"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="34"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Đường kính thép Y:" VerticalAlignment="Center" FontWeight="Normal"/>
+                                <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding BottomBarOptions}" SelectedItem="{Binding Settings.BottomDiameterY}"/>
+
+                                <TextBlock Grid.Row="0" Grid.Column="3" Text="Khoảng cách a (mm):" VerticalAlignment="Center" FontWeight="Normal"/>
+                                <TextBox Grid.Row="0" Grid.Column="4" Text="{Binding Settings.BottomSpacingY, UpdateSourceTrigger=PropertyChanged}"/>
+                            </Grid>
+                        </GroupBox>
+
+                        <GroupBox Header="Móc Neo Uốn Đứng Ở 2 Đầu Thanh">
+                            <Grid Margin="0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="34"/>
+                                    <RowDefinition Height="34"/>
+                                </Grid.RowDefinitions>
+
+                                <CheckBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Content="Uốn móc 90° đứng lên ở 2 đầu thép lưới đáy"
+                                          IsChecked="{Binding Settings.HookBottomBarsUp}" VerticalAlignment="Center"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Chiều cao đoạn móc (mm):" VerticalAlignment="Center" FontWeight="Normal"/>
+                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Settings.BottomHookHeightMm, UpdateSourceTrigger=PropertyChanged}"
+                                         IsEnabled="{Binding Settings.HookBottomBarsUp}"/>
+                            </Grid>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- TAB 2: THÉP MẶT TRÊN (ĐÀI CỌC) -->
+            <TabItem Header="  Lưới Thép Trên (Đài Cọc)  " FontWeight="SemiBold">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="12">
+                    <StackPanel>
+                        <GroupBox Header="Cấu Hình Lưới Thép Mặt Trên">
+                            <Grid Margin="0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="150"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="20"/>
+                                    <ColumnDefinition Width="150"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="34"/>
+                                    <RowDefinition Height="34"/>
+                                    <RowDefinition Height="34"/>
+                                    <RowDefinition Height="34"/>
+                                </Grid.RowDefinitions>
+
+                                <CheckBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="5" 
+                                          Content="Bố trí lưới cốt thép cấu tạo mặt trên (dành cho đài cọc hoặc móng dày)" 
+                                          IsChecked="{Binding Settings.CreateTopGrid}" VerticalAlignment="Center"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Đường kính thép trên X:" VerticalAlignment="Center" FontWeight="Normal"/>
+                                <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding TopBarOptions}" SelectedItem="{Binding Settings.TopDiameterX}"
+                                          IsEnabled="{Binding Settings.CreateTopGrid}"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="3" Text="Khoảng cách a (mm):" VerticalAlignment="Center" FontWeight="Normal"/>
+                                <TextBox Grid.Row="1" Grid.Column="4" Text="{Binding Settings.TopSpacingX, UpdateSourceTrigger=PropertyChanged}"
+                                         IsEnabled="{Binding Settings.CreateTopGrid}"/>
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Đường kính thép trên Y:" VerticalAlignment="Center" FontWeight="Normal"/>
+                                <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding TopBarOptions}" SelectedItem="{Binding Settings.TopDiameterY}"
+                                          IsEnabled="{Binding Settings.CreateTopGrid}"/>
+
+                                <TextBlock Grid.Row="2" Grid.Column="3" Text="Khoảng cách a (mm):" VerticalAlignment="Center" FontWeight="Normal"/>
+                                <TextBox Grid.Row="2" Grid.Column="4" Text="{Binding Settings.TopSpacingY, UpdateSourceTrigger=PropertyChanged}"
+                                         IsEnabled="{Binding Settings.CreateTopGrid}"/>
+
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Đoạn móc gập xuống (mm):" VerticalAlignment="Center" FontWeight="Normal"/>
+                                <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Settings.TopHookHeightMm, UpdateSourceTrigger=PropertyChanged}"
+                                         IsEnabled="{Binding Settings.CreateTopGrid}"/>
+                            </Grid>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- TAB 3: THÉP CHỜ CỘT & BẢO VỆ -->
+            <TabItem Header="  Thép Chờ Cột &amp; Bảo Vệ  " FontWeight="SemiBold">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="12">
+                    <StackPanel>
+                        <GroupBox Header="Thép Chờ Cổ Cột Chân Vịt (Starter Dowels)">
+                            <Grid Margin="0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="150"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="20"/>
+                                    <ColumnDefinition Width="150"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="34"/>
+                                    <RowDefinition Height="34"/>
+                                    <RowDefinition Height="34"/>
+                                    <RowDefinition Height="34"/>
+                                </Grid.RowDefinitions>
+
+                                <CheckBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="5" 
+                                          Content="Tạo thép chờ cột uốn chân vịt cắm vào móng" 
+                                          IsChecked="{Binding Settings.CreateColumnDowels}" VerticalAlignment="Center"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Đường kính thép chờ:" VerticalAlignment="Center" FontWeight="Normal"/>
+                                <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding DowelBarOptions}" SelectedItem="{Binding Settings.DowelDiameter}"
+                                          IsEnabled="{Binding Settings.CreateColumnDowels}"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="3" Text="Chiều dài chân vịt (mm):" VerticalAlignment="Center" FontWeight="Normal"/>
+                                <TextBox Grid.Row="1" Grid.Column="4" Text="{Binding Settings.DowelFootLengthMm, UpdateSourceTrigger=PropertyChanged}"
+                                         IsEnabled="{Binding Settings.CreateColumnDowels}"/>
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Số thanh cạnh B x H:" VerticalAlignment="Center" FontWeight="Normal"/>
+                                <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal">
+                                    <TextBox Width="50" Text="{Binding Settings.DowelsCountB, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding Settings.CreateColumnDowels}"/>
+                                    <TextBlock Text=" x " VerticalAlignment="Center" Margin="4,0"/>
+                                    <TextBox Width="50" Text="{Binding Settings.DowelsCountH, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding Settings.CreateColumnDowels}"/>
+                                </StackPanel>
+
+                                <TextBlock Grid.Row="2" Grid.Column="3" Text="Chiều cao chờ lên (mm):" VerticalAlignment="Center" FontWeight="Normal"/>
+                                <TextBox Grid.Row="2" Grid.Column="4" Text="{Binding Settings.DowelExtendHeightMm, UpdateSourceTrigger=PropertyChanged}"
+                                         IsEnabled="{Binding Settings.CreateColumnDowels}"/>
+
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Đai định vị cổ móng:" VerticalAlignment="Center" FontWeight="Normal"/>
+                                <ComboBox Grid.Row="3" Grid.Column="1" ItemsSource="{Binding DowelTieOptions}" SelectedItem="{Binding Settings.DowelTieDiameter}"
+                                          IsEnabled="{Binding Settings.CreateColumnDowels}"/>
+
+                                <TextBlock Grid.Row="3" Grid.Column="3" Text="Số lượng đai định vị:" VerticalAlignment="Center" FontWeight="Normal"/>
+                                <TextBox Grid.Row="3" Grid.Column="4" Text="{Binding Settings.DowelTieCount, UpdateSourceTrigger=PropertyChanged}"
+                                         IsEnabled="{Binding Settings.CreateColumnDowels}"/>
+                            </Grid>
+                        </GroupBox>
+
+                        <GroupBox Header="Lớp Bê Tông Bảo Vệ (mm)">
+                            <Grid Margin="0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="150"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="20"/>
+                                    <ColumnDefinition Width="150"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="34"/>
+                                    <RowDefinition Height="34"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Lớp bảo vệ đáy:" VerticalAlignment="Center" FontWeight="Normal"/>
+                                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Settings.CoverBottomMm, UpdateSourceTrigger=PropertyChanged}"/>
+
+                                <TextBlock Grid.Row="0" Grid.Column="3" Text="Lớp bảo vệ bên hông:" VerticalAlignment="Center" FontWeight="Normal"/>
+                                <TextBox Grid.Row="0" Grid.Column="4" Text="{Binding Settings.CoverSideMm, UpdateSourceTrigger=PropertyChanged}"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Lớp bảo vệ mặt trên:" VerticalAlignment="Center" FontWeight="Normal"/>
+                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Settings.CoverTopMm, UpdateSourceTrigger=PropertyChanged}"/>
+                            </Grid>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+        </TabControl>
+
+        <!-- Footer / Status Bar & Action Buttons -->
+        <Grid Grid.Row="2" Margin="0,12,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Status Message -->
+            <TextBlock Grid.Column="0" Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="#475569" FontStyle="Italic"/>
+
+            <!-- Buttons -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Content="Mặc Định" Width="100" Height="34" Margin="0,0,8,0"
+                        Command="{Binding ResetDefaultsCommand}" Background="#E2E8F0" BorderBrush="#CBD5E1"/>
+                <Button Content="Tạo Thép Móng" Width="130" Height="34"
+                        Command="{Binding CreateRebarCommand}" FontWeight="Bold"
+                        Background="#059669" Foreground="White" BorderThickness="0"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

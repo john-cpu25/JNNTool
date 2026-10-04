@@ -1,12 +1,13 @@
 {
-  "version": "1.0.0",
-  "releaseDate": "2026-09-13",
+  "version": "2.0.0",
+  "releaseDate": "2026-10-04",
   "manifestUrl": "https://raw.githubusercontent.com/john-cpu25/JNNTool/main/version.json",
+  "downloadUrl": "https://github.com/john-cpu25/JNNTool/releases/download/v2.0.0/JNNToolSetup_v2.0.0.msi",
   "changelog": [
-    "Fix crash Speed Overrider Element (ShowDialog + race condition)",
-    "Fix crash Create Filter (ShowDialog + race condition + deprecated API)",
-    "Fix deprecated ElementId API cho Revit 2025+",
-    "Thêm icon cho tất cả tools",
-    "Hỗ trợ Revit 2022 - 2026"
+    "Ra mắt bộ Rebar Suite đầy đủ: Sàn, Dầm, Cột, Vách, Móng, Cọc, Thang, Tiện ích",
+    "Hỗ trợ Revit 2027 trên nền tảng .NET 10",
+    "Thống kê khối lượng cốt thép (Tấn & xuất CSV)",
+    "Đánh số hiệu Mark cốt thép tự động",
+    "Hỗ trợ toàn diện Revit 2022 - 2027"
   ]
 }

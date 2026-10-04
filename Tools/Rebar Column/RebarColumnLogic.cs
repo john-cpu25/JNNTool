@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Autodesk.Revit.DB;
@@ -104,7 +104,7 @@ namespace JNNTool.Tools.RebarColumn
                             Line line = Line.CreateBound(pBottom, pTop);
                             IList<Curve> curves = new List<Curve> { line };
 
-                            Rebar rebar = Rebar.CreateFromCurves(_doc, RebarStyle.Standard, barType, null, null, _column, basisX, curves, RebarHookOrientation.Right, RebarHookOrientation.Right, true, true);
+                            Rebar rebar = JNNTool.Core.Compat.RebarCompat.CreateFromCurves(_doc, RebarStyle.Standard, barType, null, null, _column, basisX, curves, JNNTool.Core.Compat.JnnHookOrientation.Right, JNNTool.Core.Compat.JnnHookOrientation.Right, true, true);
                             if (rebar != null)
                             {
                                 createdRebars.Add(rebar);
@@ -210,7 +210,7 @@ namespace JNNTool.Tools.RebarColumn
                 Line.CreateBound(corner3, corner0)
             };
 
-            Rebar stirrup = Rebar.CreateFromCurves(_doc, RebarStyle.StirrupTie, type, null, null, _column, basisZ, curves, RebarHookOrientation.Right, RebarHookOrientation.Right, true, true);
+            Rebar stirrup = JNNTool.Core.Compat.RebarCompat.CreateFromCurves(_doc, RebarStyle.StirrupTie, type, null, null, _column, basisZ, curves, JNNTool.Core.Compat.JnnHookOrientation.Right, JNNTool.Core.Compat.JnnHookOrientation.Right, true, true);
             
             if (stirrup != null && !string.IsNullOrEmpty(selectedShapeName))
             {

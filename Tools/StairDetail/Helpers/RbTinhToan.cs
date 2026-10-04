@@ -1,4 +1,4 @@
-﻿
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -1110,41 +1110,29 @@ public static class RbTinhToan
 
 	public static List<XYZ> GiaoDiem(Curve cv1, Curve cv2)
 	{
-		//IL_000a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0010: Invalid comparison between Unknown and I4
-		//IL_0098: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009f: Expected O, but got Unknown
-		List<XYZ> list = new List<XYZ>();
-		IntersectionResultArray val = default(IntersectionResultArray);
-		if ((int)cv1.Intersect(cv2, out val) != 8)
+		List<XYZ> list = JNNTool.Core.Compat.CurveCompat.IntersectPoints(cv1, cv2);
+		if (list.Count > 0)
 		{
-			if (cv1.IsBound && cv2.IsBound)
+			return list;
+		}
+
+		if (cv1.IsBound && cv2.IsBound)
+		{
+			XYZ endPoint = cv1.GetEndPoint(0);
+			XYZ endPoint2 = cv1.GetEndPoint(1);
+			XYZ endPoint3 = cv2.GetEndPoint(0);
+			XYZ endPoint4 = cv2.GetEndPoint(1);
+			if (GeomUtil.IsEqual(endPoint, endPoint3) || GeomUtil.IsEqual(endPoint, endPoint4))
 			{
-				XYZ endPoint = cv1.GetEndPoint(0);
-				XYZ endPoint2 = cv1.GetEndPoint(1);
-				XYZ endPoint3 = cv2.GetEndPoint(0);
-				XYZ endPoint4 = cv2.GetEndPoint(1);
-				if (GeomUtil.IsEqual(endPoint, endPoint3) || GeomUtil.IsEqual(endPoint, endPoint4))
-				{
-					list.Add(endPoint);
-				}
-				if (GeomUtil.IsEqual(endPoint2, endPoint3) || GeomUtil.IsEqual(endPoint2, endPoint4))
-				{
-					list.Add(endPoint2);
-				}
+				list.Add(endPoint);
 			}
-			return null;
+			if (GeomUtil.IsEqual(endPoint2, endPoint3) || GeomUtil.IsEqual(endPoint2, endPoint4))
+			{
+				list.Add(endPoint2);
+			}
 		}
-		if (val.Size < 1)
-		{
-			return null;
-		}
-		foreach (IntersectionResult item in val)
-		{
-			IntersectionResult val2 = item;
-			list.Add(val2.XYZPoint);
-		}
-		return list;
+
+		return list.Count > 0 ? list : null;
 	}
 
 	public static Arc ArcFromStarEndCenter(XYZ start, XYZ end, XYZ center)

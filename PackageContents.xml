@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <ApplicationPackage SchemaVersion="1.0" AutodeskProduct="Revit" ProductType="Application">
     <CompanyDetails Name="NGUYEN" />
     <RuntimeRequirements OS="Win64" Platform="Revit" />
@@ -26,5 +26,10 @@
     <Components Description="Revit 2026">
         <RuntimeRequirements OS="Win64" Platform="Revit" SeriesMin="R2026" SeriesMax="R2026" />
         <ComponentEntry ModuleName="./Contents/2026/JNNTool.addin" />
+    </Components>
+
+    <Components Description="Revit 2027">
+        <RuntimeRequirements OS="Win64" Platform="Revit" SeriesMin="R2027" SeriesMax="R2027" />
+        <ComponentEntry ModuleName="./Contents/2027/JNNTool.addin" />
     </Components>
 </ApplicationPackage>

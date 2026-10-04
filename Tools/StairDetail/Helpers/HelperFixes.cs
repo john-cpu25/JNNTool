@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using Autodesk.Revit.DB;
 
@@ -71,13 +71,7 @@ namespace JNNTool.Tools.StairDetail
     {
         public static XYZ GiaoDiem(Curve cv1, Curve cv2)
         {
-            IntersectionResultArray results;
-            SetComparisonResult result = cv1.Intersect(cv2, out results);
-            if (result == SetComparisonResult.Overlap && results != null && !results.IsEmpty)
-            {
-                return results.get_Item(0).XYZPoint;
-            }
-            return null;
+            return JNNTool.Core.Compat.CurveCompat.IntersectFirstPoint(cv1, cv2);
         }
     }
 

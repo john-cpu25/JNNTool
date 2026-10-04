@@ -137,7 +137,7 @@ public class InstallerService
     public List<string> GetInstalledRevitVersions()
     {
         var result = new List<string>();
-        foreach (var year in new[] { "2022", "2023", "2024", "2025", "2026" })
+        foreach (var year in new[] { "2022", "2023", "2024", "2025", "2026", "2027" })
         {
             var path = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
