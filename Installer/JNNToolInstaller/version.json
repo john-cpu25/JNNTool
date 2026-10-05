@@ -1,13 +1,13 @@
 {
-  "version": "2.0.0",
-  "releaseDate": "2026-10-04",
+  "version": "2.0.2",
+  "releaseDate": "2026-10-05",
   "manifestUrl": "https://raw.githubusercontent.com/john-cpu25/JNNTool/main/version.json",
-  "downloadUrl": "https://github.com/john-cpu25/JNNTool/releases/download/v2.0.0/JNNToolSetup_v2.0.0.msi",
+  "downloadUrl": "https://github.com/john-cpu25/JNNTool/releases/download/v2.0.2/JNNToolSetup_v2.0.2.msi",
   "changelog": [
-    "Ra mắt bộ Rebar Suite đầy đủ: Sàn, Dầm, Cột, Vách, Móng, Cọc, Thang, Tiện ích",
-    "Hỗ trợ Revit 2027 trên nền tảng .NET 10",
-    "Thống kê khối lượng cốt thép (Tấn & xuất CSV)",
-    "Đánh số hiệu Mark cốt thép tự động",
-    "Hỗ trợ toàn diện Revit 2022 - 2027"
+    "CSI x Revit: Thêm Tab 'Tạo tiết diện thiếu' tự động nhân bản Family mẫu và gán b, h, D",
+    "CSI x Revit: Không còn gán ngẫu nhiên vào 250x500 hay 100x200 khi thiếu tiết diện",
+    "CSI x Revit: Hỗ trợ Cardinal Point (đỉnh dầm bằng mặt sàn theo cao độ gối)",
+    "CSI x Revit: Tự động căn chỉnh dầm/cột biên phẳng mép ngoài công trình",
+    "Hỗ trợ đầy đủ Revit 2022 - 2027 (.NET 4.8 / .NET 8 / .NET 10)"
   ]
 }

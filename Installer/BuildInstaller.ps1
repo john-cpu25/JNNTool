@@ -41,8 +41,8 @@ Write-Host ""
 Write-Host "2. Cap nhat version trong Package.wxs..." -ForegroundColor Yellow
 $wxsPath = Join-Path $InstallerDir "Package.wxs"
 $wxsContent = Get-Content $wxsPath -Raw
-$wxsContent = $wxsContent -replace 'Version="[\d\.]+"', "Version=""$Version"""
-Set-Content $wxsPath $wxsContent -Encoding UTF8
+$wxsContent = $wxsContent -replace '(?<=<Package[^>]*\bVersion=")[^"]*', $Version
+[System.IO.File]::WriteAllText($wxsPath, $wxsContent, (New-Object System.Text.UTF8Encoding($false)))
 Write-Host "   Version da cap nhat thanh $Version" -ForegroundColor Gray
 
 # 4. Build MSI voi WiX

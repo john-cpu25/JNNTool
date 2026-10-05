@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using Autodesk.Revit.DB;
 
@@ -17,6 +17,11 @@ namespace JNNTool.Tools.CSIxRevit.Mapping
         public FamilyMapper(Document doc)
         {
             _doc = doc;
+            LoadFromDocument();
+        }
+
+        public void Reload()
+        {
             LoadFromDocument();
         }
 

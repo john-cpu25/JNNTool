@@ -9,7 +9,7 @@
 
   <Package Name="JNNTool Revit Plugin"
            Manufacturer="JNN"
-           Version="2.0.0"
+           Version="2.0.2"
            UpgradeCode="7f04a601-5e26-4b8c-8f4b-57f920f92b7c"
            Compressed="yes">
 
@@ -18,7 +18,7 @@
       DowngradeErrorMessage="Phien ban moi hon da duoc cai. Vui long go cai dat truoc."
       Schedule="afterInstallInitialize" />
 
-    <!-- Nhúng toàn bộ file nén (cab) vào bên trong file MSI -->
+    <!-- NhÃƒÆ’Ã‚Âºng toÃƒÆ’Ã‚Â n bÃƒÂ¡Ã‚Â»Ã¢â€žÂ¢ file nÃƒÆ’Ã‚Â©n (cab) vÃƒÆ’Ã‚Â o bÃƒÆ’Ã‚Âªn trong file MSI -->
     <MediaTemplate EmbedCab="yes" />
 
     <!-- Giao dien wizard gon (Welcome -> Install -> Finish) -->
@@ -73,6 +73,21 @@
       <Component Id="CmpUpdaterExe" Guid="*" Directory="AppDir">
         <File Id="UpdaterExe"
               Source="publish\JNNToolInstaller.exe"
+              KeyPath="yes" />
+      </Component>
+      <Component Id="CmpUpdaterDll" Guid="*" Directory="AppDir">
+        <File Id="UpdaterDll"
+              Source="publish\JNNToolInstaller.dll"
+              KeyPath="yes" />
+      </Component>
+      <Component Id="CmpUpdaterRuntimeConfig" Guid="*" Directory="AppDir">
+        <File Id="UpdaterRuntimeConfig"
+              Source="publish\JNNToolInstaller.runtimeconfig.json"
+              KeyPath="yes" />
+      </Component>
+      <Component Id="CmpUpdaterDeps" Guid="*" Directory="AppDir">
+        <File Id="UpdaterDeps"
+              Source="publish\JNNToolInstaller.deps.json"
               KeyPath="yes" />
       </Component>
 
@@ -224,3 +239,4 @@
 
   </Package>
 </Wix>
+

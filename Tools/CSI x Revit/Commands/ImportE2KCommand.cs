@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
@@ -44,7 +44,7 @@ namespace JNNTool.Tools.CSIxRevit.Commands
                         } catch { }
 
                         var parser = new E2KParser();
-                        parser.Parse(tables, out var points, out var beams, out var columns, out var walls, out var floors, out var sectionProps, out var stories, out var grids);
+                        parser.Parse(tables, out var points, out var beams, out var columns, out var walls, out var floors, out var sectionProps, out var stories, out var grids, out var sectionDefs);
 
                         var mapper = new FamilyMapper(doc);
                         
@@ -85,7 +85,9 @@ namespace JNNTool.Tools.CSIxRevit.Commands
                         var window = new JNNTool.Tools.CSIxRevit.UI.ImportWindow(
                             doc, 
                             items, 
-                            mapper.Levels
+                            mapper.Levels,
+                            mapper,
+                            sectionDefs
                         );
 
                         if (window.ShowDialog() == true)
@@ -94,6 +96,14 @@ namespace JNNTool.Tools.CSIxRevit.Commands
                             var colMap = window.GetColumnMapping();
                             var floorMap = window.GetFloorMapping();
                             var wallMap = window.GetWallMapping();
+                            bool applyCardinalPoint = window.ApplyCardinalPoint;
+                            bool applyEdgeAlignment = window.ApplyEdgeAlignment;
+
+                            Dictionary<string, XYZ> nodeOffsets = null;
+                            if (applyEdgeAlignment)
+                            {
+                                nodeOffsets = EdgeAlignmentHelper.CalculateNodeOffsets(points, beams, columns, sectionDefs);
+                            }
                             
                             var levelId = window.GetSelectedLevelId();
                             var level = doc.GetElement(levelId) as Level;
@@ -117,7 +127,16 @@ namespace JNNTool.Tools.CSIxRevit.Commands
                                         var p1 = points.FirstOrDefault(p => p.Name == b.PointI);
                                         var p2 = points.FirstOrDefault(p => p.Name == b.PointJ);
                                         if (p1 != null && p2 != null)
-                                            BeamBuilder.Build(doc, b, p1, p2, beamMap[b.Section] as FamilySymbol, allLevels);
+                                        {
+                                            XYZ offset1 = null;
+                                            XYZ offset2 = null;
+                                            if (nodeOffsets != null)
+                                            {
+                                                nodeOffsets.TryGetValue(b.PointI, out offset1);
+                                                nodeOffsets.TryGetValue(b.PointJ, out offset2);
+                                            }
+                                            BeamBuilder.Build(doc, b, p1, p2, beamMap[b.Section] as FamilySymbol, allLevels, offset1, offset2, applyCardinalPoint);
+                                        }
                                     }
                                 }
 
@@ -128,7 +147,14 @@ namespace JNNTool.Tools.CSIxRevit.Commands
                                         var p1 = points.FirstOrDefault(p => p.Name == c.PointI);
                                         var p2 = points.FirstOrDefault(p => p.Name == c.PointJ);
                                         if (p1 != null && p2 != null)
-                                            ColumnBuilder.Build(doc, c, p1, p2, colMap[c.Section] as FamilySymbol, allLevels);
+                                        {
+                                            XYZ offset = null;
+                                            if (nodeOffsets != null)
+                                            {
+                                                nodeOffsets.TryGetValue(c.PointI, out offset);
+                                            }
+                                            ColumnBuilder.Build(doc, c, p1, p2, colMap[c.Section] as FamilySymbol, allLevels, offset);
+                                        }
                                     }
                                 }
 

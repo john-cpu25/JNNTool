@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -10,6 +10,7 @@ namespace JNNTool.Tools.CSIxRevit.Parser
     public class E2KParser
     {
         private double scaleToFeet = 3.2808399; // Default Meters to Feet
+        private double scaleToMm = 1000.0; // Default Meters to MM
 
         public void Parse(Dictionary<string, List<string>> tables,
             out List<PointData> points,
@@ -21,6 +22,20 @@ namespace JNNTool.Tools.CSIxRevit.Parser
             out List<StoryData> stories,
             out List<GridData> grids)
         {
+            Parse(tables, out points, out beams, out columns, out walls, out floors, out sectionProperties, out stories, out grids, out _);
+        }
+
+        public void Parse(Dictionary<string, List<string>> tables,
+            out List<PointData> points,
+            out List<BeamData> beams,
+            out List<ColumnData> columns,
+            out List<WallData> walls,
+            out List<FloorData> floors,
+            out Dictionary<string, string> sectionProperties,
+            out List<StoryData> stories,
+            out List<GridData> grids,
+            out Dictionary<string, SectionDefinition> sectionDefs)
+        {
             points = new List<PointData>();
             beams = new List<BeamData>();
             columns = new List<ColumnData>();
@@ -29,6 +44,7 @@ namespace JNNTool.Tools.CSIxRevit.Parser
             sectionProperties = new Dictionary<string, string>();
             stories = new List<StoryData>();
             grids = new List<GridData>();
+            sectionDefs = new Dictionary<string, SectionDefinition>(StringComparer.OrdinalIgnoreCase);
 
             // 1. Determine Units
             var controlKeys = tables.Keys.Where(k => k.Contains("CONTROL")).ToList();
@@ -36,10 +52,10 @@ namespace JNNTool.Tools.CSIxRevit.Parser
             {
                 foreach (var line in tables[key])
                 {
-                    if (line.Contains("\"MM\"")) scaleToFeet = 1.0 / 304.8;
-                    else if (line.Contains("\"IN\"")) scaleToFeet = 1.0 / 12.0;
-                    else if (line.Contains("\"M\"")) scaleToFeet = 1.0 / 0.3048;
-                    else if (line.Contains("\"CM\"")) scaleToFeet = 1.0 / 30.48;
+                    if (line.Contains("\"MM\"")) { scaleToFeet = 1.0 / 304.8; scaleToMm = 1.0; }
+                    else if (line.Contains("\"IN\"")) { scaleToFeet = 1.0 / 12.0; scaleToMm = 25.4; }
+                    else if (line.Contains("\"M\"")) { scaleToFeet = 1.0 / 0.3048; scaleToMm = 1000.0; }
+                    else if (line.Contains("\"CM\"")) { scaleToFeet = 1.0 / 30.48; scaleToMm = 10.0; }
                 }
             }
 
@@ -78,6 +94,28 @@ namespace JNNTool.Tools.CSIxRevit.Parser
                         sectionPropTypes[name] = Clean(tokens[propTypeIdx + 1]).ToUpper();
                     }
 
+                    // Parse structured FRAME SECTIONS
+                    if (tokens[0].Equals("FRAMESECTION", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var def = new SectionDefinition { Name = name };
+
+                        int matIdx = tokens.FindIndex(t => t.Equals("MATERIAL", StringComparison.OrdinalIgnoreCase));
+                        if (matIdx >= 0 && matIdx + 1 < tokens.Count) def.Material = Clean(tokens[matIdx + 1]);
+
+                        int shapeIdx = tokens.FindIndex(t => t.Equals("SHAPE", StringComparison.OrdinalIgnoreCase));
+                        if (shapeIdx >= 0 && shapeIdx + 1 < tokens.Count) def.Shape = Clean(tokens[shapeIdx + 1]);
+
+                        int dIdx = tokens.FindIndex(t => t.Equals("D", StringComparison.OrdinalIgnoreCase) || t.Equals("DEPTH", StringComparison.OrdinalIgnoreCase));
+                        if (dIdx >= 0 && dIdx + 1 < tokens.Count) def.DepthMm = ParseDouble(tokens[dIdx + 1]) * scaleToMm;
+
+                        int bIdx = tokens.FindIndex(t => t.Equals("B", StringComparison.OrdinalIgnoreCase) || t.Equals("WIDTH", StringComparison.OrdinalIgnoreCase));
+                        if (bIdx >= 0 && bIdx + 1 < tokens.Count) def.WidthMm = ParseDouble(tokens[bIdx + 1]) * scaleToMm;
+
+                        if (def.IsCircular && def.WidthMm == 0) def.WidthMm = def.DepthMm;
+
+                        sectionDefs[name] = def;
+                    }
+
                     var strTokens = tokens.Where(t => !TryParseDouble(t, out _)).Select(t => Clean(t)).ToList();
                     var numTokens = tokens.Where(t => TryParseDouble(t, out _)).Select(t => Clean(t)).ToList();
 
@@ -94,6 +132,30 @@ namespace JNNTool.Tools.CSIxRevit.Parser
                     if (!sectionProperties.ContainsKey(name))
                     {
                         sectionProperties[name] = details.Trim(' ', '-');
+                    }
+                }
+            }
+
+            // Parse CONCRETE SECTIONS for ElementType (Beam or Column)
+            var concreteSecKeys = tables.Keys.Where(k => k.Contains("CONCRETE SECTION")).ToList();
+            foreach (var key in concreteSecKeys)
+            {
+                foreach (var line in tables[key])
+                {
+                    var tokens = Tokenize(line);
+                    if (tokens.Count < 2) continue;
+                    string name = Clean(tokens[1]);
+                    int typeIdx = tokens.FindIndex(t => t.Equals("TYPE", StringComparison.OrdinalIgnoreCase));
+                    if (typeIdx >= 0 && typeIdx + 1 < tokens.Count)
+                    {
+                        string secType = Clean(tokens[typeIdx + 1]);
+                        if (sectionDefs.TryGetValue(name, out var def))
+                        {
+                            if (secType.Equals("Column", StringComparison.OrdinalIgnoreCase))
+                                def.ElementType = "Cột (Column)";
+                            else if (secType.Equals("Beam", StringComparison.OrdinalIgnoreCase))
+                                def.ElementType = "Dầm (Beam)";
+                        }
                     }
                 }
             }
@@ -296,7 +358,14 @@ namespace JNNTool.Tools.CSIxRevit.Parser
                         section = Clean(tokens[sIdx + 1]);
                     }
 
-                    frameAssigns.Add(new FrameAssignData { FrameName = name, StoryName = storyName, Section = section });
+                    int cp = 8;
+                    int cpIdx = tokens.FindIndex(t => t.Equals("CARDINALPT", StringComparison.OrdinalIgnoreCase));
+                    if (cpIdx >= 0 && cpIdx + 1 < tokens.Count && int.TryParse(Clean(tokens[cpIdx + 1]), out int parsedCp))
+                    {
+                        cp = parsedCp;
+                    }
+
+                    frameAssigns.Add(new FrameAssignData { FrameName = name, StoryName = storyName, Section = section, CardinalPoint = cp });
                 }
             }
 
@@ -415,6 +484,7 @@ namespace JNNTool.Tools.CSIxRevit.Parser
 
                 string section = assign.Section != "DefaultFrame" ? assign.Section : "DefaultFrame";
                 string instanceName = assign.FrameName + "_" + assign.StoryName;
+                sectionDefs.TryGetValue(section, out var secDef);
 
                 bool isVertical = Math.Abs(ptI.X - ptJ.X) < 0.1 && Math.Abs(ptI.Y - ptJ.Y) < 0.1;
                 if (conn.IsColumn == true || (conn.IsColumn == null && isVertical))
@@ -427,7 +497,20 @@ namespace JNNTool.Tools.CSIxRevit.Parser
                         colBot = botElev + Math.Min(zOffsetI, zOffsetJ);
                         colTop = botElev + Math.Max(zOffsetI, zOffsetJ);
                     }
-                    columns.Add(new ColumnData { Name = instanceName, PointI = conn.PointI, PointJ = conn.PointJ, Section = section, TopElevation = colTop, BottomElevation = colBot });
+                    if (secDef != null && string.IsNullOrEmpty(secDef.ElementType))
+                        secDef.ElementType = "Cột (Column)";
+
+                    columns.Add(new ColumnData {
+                        Name = instanceName,
+                        PointI = conn.PointI,
+                        PointJ = conn.PointJ,
+                        Section = section,
+                        TopElevation = colTop,
+                        BottomElevation = colBot,
+                        CardinalPoint = assign.CardinalPoint > 0 ? assign.CardinalPoint : 5,
+                        WidthMm = secDef?.WidthMm ?? 0,
+                        DepthMm = secDef?.DepthMm ?? 0
+                    });
                 }
                 else
                 {
@@ -437,7 +520,19 @@ namespace JNNTool.Tools.CSIxRevit.Parser
                         // Z-offset beam: Z is relative to bottom of story
                         beamElev = botElev + Math.Max(zOffsetI, zOffsetJ);
                     }
-                    beams.Add(new BeamData { Name = instanceName, PointI = conn.PointI, PointJ = conn.PointJ, Section = section, Elevation = beamElev });
+                    if (secDef != null && string.IsNullOrEmpty(secDef.ElementType))
+                        secDef.ElementType = "Dầm (Beam)";
+
+                    beams.Add(new BeamData {
+                        Name = instanceName,
+                        PointI = conn.PointI,
+                        PointJ = conn.PointJ,
+                        Section = section,
+                        Elevation = beamElev,
+                        CardinalPoint = assign.CardinalPoint > 0 ? assign.CardinalPoint : 8,
+                        WidthMm = secDef?.WidthMm ?? 0,
+                        DepthMm = secDef?.DepthMm ?? 0
+                    });
                 }
             }
 
@@ -553,6 +648,18 @@ namespace JNNTool.Tools.CSIxRevit.Parser
                 }
             }
 
+            // Infer remaining element types
+            foreach (var kv in sectionDefs)
+            {
+                if (string.IsNullOrEmpty(kv.Value.ElementType))
+                {
+                    if (kv.Key.StartsWith("C-", StringComparison.OrdinalIgnoreCase) || kv.Key.StartsWith("C", StringComparison.OrdinalIgnoreCase))
+                        kv.Value.ElementType = "Cột (Column)";
+                    else
+                        kv.Value.ElementType = "Dầm (Beam)";
+                }
+            }
+
             points = localPoints.Values.ToList();
         }
 
@@ -578,6 +685,7 @@ namespace JNNTool.Tools.CSIxRevit.Parser
             public string FrameName { get; set; }
             public string StoryName { get; set; }
             public string Section { get; set; }
+            public int CardinalPoint { get; set; } = 8;
         }
 
         private class AreaAssignData
