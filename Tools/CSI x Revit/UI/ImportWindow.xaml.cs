@@ -68,26 +68,17 @@ namespace JNNTool.Tools.CSIxRevit.UI
 
             var defaultBeamSymbol = _mapper.BeamSymbols.FirstOrDefault();
             var defaultColSymbol = _mapper.ColumnSymbols.FirstOrDefault();
+            var defaultFloorType = _mapper.FloorTypes.FirstOrDefault();
+            var defaultWallType = _mapper.WallTypes.FirstOrDefault();
 
             var list = new List<CreateSectionItem>();
 
             foreach (var item in MappingItems)
             {
-                if (item.ElementType != "Dầm (Beam)" && item.ElementType != "Cột (Column)")
-                    continue;
-
-                bool isCol = item.ElementType == "Cột (Column)";
                 string cleanName = CleanName(item.EtabsSectionName);
-
                 bool exists = false;
-                if (isCol)
-                {
-                    exists = _mapper.ColumnSymbols.Any(s => CleanName(s.Name) == cleanName || CleanName(s.Name).Contains(cleanName));
-                }
-                else
-                {
-                    exists = _mapper.BeamSymbols.Any(s => CleanName(s.Name) == cleanName || CleanName(s.Name).Contains(cleanName));
-                }
+                List<ElementType> availableTemplates = null;
+                ElementType selectedTemplate = null;
 
                 _sectionDefs.TryGetValue(item.EtabsSectionName, out var def);
 
@@ -95,49 +86,78 @@ namespace JNNTool.Tools.CSIxRevit.UI
                 double depthMm = def?.DepthMm ?? 0;
                 bool isCircular = def?.IsCircular ?? false;
 
-                // Fallback: parse dimensions from name (e.g. B-300x600, C-500)
-                if (widthMm <= 0 && depthMm <= 0)
+                if (item.ElementType == "Cột (Column)")
                 {
-                    var matchRect = Regex.Match(item.EtabsSectionName, @"(\d+)[xX*_-](\d+)");
-                    if (matchRect.Success)
+                    exists = _mapper.ColumnSymbols.Any(s => CleanName(s.Name) == cleanName || CleanName(s.Name).Contains(cleanName));
+                    if (widthMm <= 0 && depthMm <= 0)
                     {
-                        double.TryParse(matchRect.Groups[1].Value, out widthMm);
-                        double.TryParse(matchRect.Groups[2].Value, out depthMm);
-                    }
-                    else
-                    {
-                        var matchCir = Regex.Match(item.EtabsSectionName, @"[Cc]-?(\d+)");
-                        if (matchCir.Success)
+                        var matchRect = Regex.Match(item.EtabsSectionName, @"(\d+)[xX*_-](\d+)");
+                        if (matchRect.Success)
                         {
-                            double.TryParse(matchCir.Groups[1].Value, out depthMm);
-                            widthMm = depthMm;
-                            isCircular = true;
+                            double.TryParse(matchRect.Groups[1].Value, out widthMm);
+                            double.TryParse(matchRect.Groups[2].Value, out depthMm);
                         }
                     }
+                    availableTemplates = _mapper.ColumnSymbols.Cast<ElementType>().ToList();
+                    selectedTemplate = defaultColSymbol;
                 }
-
-                string dimSummary = def != null && !string.IsNullOrEmpty(def.DimensionSummary)
-                    ? def.DimensionSummary
-                    : (isCircular ? $"Ø{Math.Round(depthMm, 0)} mm" : (widthMm > 0 && depthMm > 0 ? $"{Math.Round(widthMm, 0)}×{Math.Round(depthMm, 0)} mm" : ""));
-
-                var availableTemplates = isCol ? _mapper.ColumnSymbols : _mapper.BeamSymbols;
-
-                FamilySymbol selectedTemplate = null;
-                if (isCol)
+                else if (item.ElementType == "Dầm (Beam)")
                 {
-                    if (isCircular)
+                    exists = _mapper.BeamSymbols.Any(s => CleanName(s.Name) == cleanName || CleanName(s.Name).Contains(cleanName));
+                    if (widthMm <= 0 && depthMm <= 0)
                     {
-                        selectedTemplate = _mapper.ColumnSymbols.FirstOrDefault(s => s.Name.IndexOf("Circle", StringComparison.OrdinalIgnoreCase) >= 0 || s.Name.IndexOf("Round", StringComparison.OrdinalIgnoreCase) >= 0 || s.Name.IndexOf("Tron", StringComparison.OrdinalIgnoreCase) >= 0)
-                            ?? defaultColSymbol;
+                        var matchRect = Regex.Match(item.EtabsSectionName, @"(\d+)[xX*_-](\d+)");
+                        if (matchRect.Success)
+                        {
+                            double.TryParse(matchRect.Groups[1].Value, out widthMm);
+                            double.TryParse(matchRect.Groups[2].Value, out depthMm);
+                        }
                     }
-                    else
+                    availableTemplates = _mapper.BeamSymbols.Cast<ElementType>().ToList();
+                    selectedTemplate = defaultBeamSymbol;
+                }
+                else if (item.ElementType == "Sàn (Floor)")
+                {
+                    if (depthMm <= 0)
                     {
-                        selectedTemplate = defaultColSymbol;
+                        var m = Regex.Match(item.EtabsSectionName, @"\d+");
+                        if (m.Success && double.TryParse(m.Value, out double d)) depthMm = d;
+                        else depthMm = 100;
                     }
+                    string thickStr = Math.Round(depthMm, 0).ToString();
+                    exists = _mapper.FloorTypes.Any(f => CleanName(f.Name) == cleanName || CleanName(f.Name).Contains(cleanName) || CleanName(f.Name).Contains(thickStr));
+                    availableTemplates = _mapper.FloorTypes.Cast<ElementType>().ToList();
+                    selectedTemplate = defaultFloorType;
+                }
+                else if (item.ElementType == "Vách (Wall)")
+                {
+                    if (depthMm <= 0)
+                    {
+                        var m = Regex.Match(item.EtabsSectionName, @"\d+");
+                        if (m.Success && double.TryParse(m.Value, out double d)) depthMm = d;
+                        else depthMm = 200;
+                    }
+                    string thickStr = Math.Round(depthMm, 0).ToString();
+                    exists = _mapper.WallTypes.Any(w => CleanName(w.Name) == cleanName || CleanName(w.Name).Contains(cleanName) || CleanName(w.Name).Contains(thickStr));
+                    availableTemplates = _mapper.WallTypes.Cast<ElementType>().ToList();
+                    selectedTemplate = defaultWallType;
                 }
                 else
                 {
-                    selectedTemplate = defaultBeamSymbol;
+                    continue;
+                }
+
+                string dimSummary = "";
+                if (item.ElementType == "Sàn (Floor)" || item.ElementType == "Vách (Wall)")
+                {
+                    if (depthMm <= 1.0 && depthMm > 0) dimSummary = "Dày 1 mm (Sàn ảo)";
+                    else if (depthMm > 0) dimSummary = $"Dày {Math.Round(depthMm, 0)} mm";
+                }
+                else
+                {
+                    dimSummary = def != null && !string.IsNullOrEmpty(def.DimensionSummary)
+                        ? def.DimensionSummary
+                        : (isCircular ? $"Ø{Math.Round(depthMm, 0)} mm" : (widthMm > 0 && depthMm > 0 ? $"{Math.Round(widthMm, 0)}×{Math.Round(depthMm, 0)} mm" : ""));
                 }
 
                 list.Add(new CreateSectionItem
@@ -216,33 +236,84 @@ namespace JNNTool.Tools.CSIxRevit.UI
 
                     try
                     {
-                        FamilySymbol targetSymbol = null;
-                        var family = item.SelectedTemplate.Family;
-
-                        // Check if type with this name already exists in the family
-                        foreach (ElementId id in family.GetFamilySymbolIds())
+                        if (item.SelectedTemplate is FamilySymbol symbolTemplate)
                         {
-                            var s = _doc.GetElement(id) as FamilySymbol;
-                            if (s != null && s.Name.Equals(item.SectionName, StringComparison.OrdinalIgnoreCase))
+                            FamilySymbol targetSymbol = null;
+                            var family = symbolTemplate.Family;
+
+                            foreach (ElementId id in family.GetFamilySymbolIds())
                             {
-                                targetSymbol = s;
-                                break;
+                                var s = _doc.GetElement(id) as FamilySymbol;
+                                if (s != null && s.Name.Equals(item.SectionName, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    targetSymbol = s;
+                                    break;
+                                }
+                            }
+
+                            if (targetSymbol == null)
+                            {
+                                targetSymbol = symbolTemplate.Duplicate(item.SectionName) as FamilySymbol;
+                            }
+
+                            if (targetSymbol != null)
+                            {
+                                SetSymbolDimensionParameters(targetSymbol, item.IsCircular, item.WidthMm, item.DepthMm);
+                                item.Status = "✅ Đã tạo trong Revit";
+                                item.IsMissing = false;
+                                item.IsSelected = false;
+                                createdCount++;
                             }
                         }
-
-                        if (targetSymbol == null)
+                        else if (item.SelectedTemplate is FloorType floorTemplate)
                         {
-                            targetSymbol = item.SelectedTemplate.Duplicate(item.SectionName) as FamilySymbol;
+                            FloorType targetFloor = _mapper.FloorTypes.FirstOrDefault(f => f.Name.Equals(item.SectionName, StringComparison.OrdinalIgnoreCase));
+                            if (targetFloor == null)
+                            {
+                                targetFloor = floorTemplate.Duplicate(item.SectionName) as FloorType;
+                            }
+
+                            if (targetFloor != null)
+                            {
+                                var cs = targetFloor.GetCompoundStructure();
+                                if (cs != null)
+                                {
+                                    int layerIdx = cs.GetFirstCoreLayerIndex();
+                                    if (layerIdx < 0) layerIdx = 0;
+                                    double thickFeet = UnitUtils.ConvertToInternalUnits(item.DepthMm > 0 ? item.DepthMm : 100, UnitTypeId.Millimeters);
+                                    cs.SetLayerWidth(layerIdx, thickFeet);
+                                    targetFloor.SetCompoundStructure(cs);
+                                }
+                                item.Status = "✅ Đã tạo trong Revit";
+                                item.IsMissing = false;
+                                item.IsSelected = false;
+                                createdCount++;
+                            }
                         }
-
-                        if (targetSymbol != null)
+                        else if (item.SelectedTemplate is WallType wallTemplate)
                         {
-                            SetSymbolDimensionParameters(targetSymbol, item.IsCircular, item.WidthMm, item.DepthMm);
+                            WallType targetWall = _mapper.WallTypes.FirstOrDefault(w => w.Name.Equals(item.SectionName, StringComparison.OrdinalIgnoreCase));
+                            if (targetWall == null)
+                            {
+                                targetWall = wallTemplate.Duplicate(item.SectionName) as WallType;
+                            }
 
-                            item.Status = "✅ Đã tạo trong Revit";
-                            item.IsMissing = false;
-                            item.IsSelected = false;
-                            createdCount++;
+                            if (targetWall != null)
+                            {
+                                var cs = targetWall.GetCompoundStructure();
+                                if (cs != null)
+                                {
+                                    int layerIdx = cs.GetFirstCoreLayerIndex();
+                                    if (layerIdx < 0) layerIdx = 0;
+                                    double thickFeet = UnitUtils.ConvertToInternalUnits(item.DepthMm > 0 ? item.DepthMm : 200, UnitTypeId.Millimeters);
+                                    cs.SetLayerWidth(layerIdx, thickFeet);
+                                    targetWall.SetCompoundStructure(cs);
+                                }
+                                item.Status = "✅ Đã tạo trong Revit";
+                                item.IsMissing = false;
+                                item.IsSelected = false;
+                                createdCount++;
+                            }
                         }
                     }
                     catch (Exception ex)
@@ -359,6 +430,80 @@ namespace JNNTool.Tools.CSIxRevit.UI
                     continue;
                 }
 
+                // 3. Smart thickness match for Sàn (Floor) & Vách (Wall)
+                if (item.ElementType == "Sàn (Floor)" || item.ElementType == "Vách (Wall)")
+                {
+                    double targetThickMm = 0;
+                    if (_sectionDefs.TryGetValue(item.EtabsSectionName, out var def) && def.DepthMm > 0)
+                    {
+                        targetThickMm = def.DepthMm;
+                    }
+                    else
+                    {
+                        var match = Regex.Match(item.EtabsSectionName, @"\d+");
+                        if (match.Success && double.TryParse(match.Value, out double parsed))
+                        {
+                            targetThickMm = parsed;
+                        }
+                    }
+
+                    if (targetThickMm > 0)
+                    {
+                        string thickStr = Math.Round(targetThickMm, 0).ToString();
+                        var thickMatch = item.AvailableTypes.FirstOrDefault(s =>
+                        {
+                            string sName = CleanName(s.Name);
+                            return sName.Contains(thickStr);
+                        });
+
+                        if (thickMatch != null)
+                        {
+                            item.SelectedType = thickMatch;
+                            continue;
+                        }
+                    }
+                }
+                // 4. Smart dimension match for Cột (Column) & Dầm (Beam)
+                else if (item.ElementType == "Cột (Column)" || item.ElementType == "Dầm (Beam)")
+                {
+                    if (_sectionDefs.TryGetValue(item.EtabsSectionName, out var def) && def.WidthMm > 0 && def.DepthMm > 0)
+                    {
+                        string wStr = Math.Round(def.WidthMm, 0).ToString();
+                        string dStr = Math.Round(def.DepthMm, 0).ToString();
+
+                        var dimMatch = item.AvailableTypes.FirstOrDefault(s =>
+                        {
+                            string sName = CleanName(s.Name);
+                            return sName.Contains(wStr) && sName.Contains(dStr);
+                        });
+
+                        if (dimMatch != null)
+                        {
+                            item.SelectedType = dimMatch;
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        var match = Regex.Match(item.EtabsSectionName, @"(\d+)[xX*_-](\d+)");
+                        if (match.Success)
+                        {
+                            string g1 = match.Groups[1].Value;
+                            string g2 = match.Groups[2].Value;
+                            var dimMatch = item.AvailableTypes.FirstOrDefault(s =>
+                            {
+                                string sName = CleanName(s.Name);
+                                return sName.Contains(g1) && sName.Contains(g2);
+                            });
+                            if (dimMatch != null)
+                            {
+                                item.SelectedType = dimMatch;
+                                continue;
+                            }
+                        }
+                    }
+                }
+
                 // Do not fallback to random first item! Keep null if not matched
                 item.SelectedType = null;
             }
@@ -440,7 +585,7 @@ namespace JNNTool.Tools.CSIxRevit.UI
     public class CreateSectionItem : INotifyPropertyChanged
     {
         private bool _isSelected = true;
-        private FamilySymbol _selectedTemplate;
+        private ElementType _selectedTemplate;
         private string _status = "Chưa có trong Revit";
 
         public bool IsSelected
@@ -463,9 +608,9 @@ namespace JNNTool.Tools.CSIxRevit.UI
             set { _status = value; OnPropertyChanged(nameof(Status)); }
         }
 
-        public List<FamilySymbol> AvailableTemplates { get; set; } = new List<FamilySymbol>();
+        public List<ElementType> AvailableTemplates { get; set; } = new List<ElementType>();
 
-        public FamilySymbol SelectedTemplate
+        public ElementType SelectedTemplate
         {
             get => _selectedTemplate;
             set { _selectedTemplate = value; OnPropertyChanged(nameof(SelectedTemplate)); }

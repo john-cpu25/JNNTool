@@ -64,15 +64,19 @@ if ($LASTEXITCODE -ne 0 -or -not (Test-Path $MsiPath)) {
 # 4. Git Commit, Tag & Push
 Write-Host "`n4. Git Commit, Tag va Push len GitHub..." -ForegroundColor Yellow
 Set-Location $ProjectRoot
-git add .
-git commit -m "Release v$Version: $Changelog"
+git add -A
+$status = git status --porcelain
+if ($status) {
+    git commit -m "Release v${Version}: $Changelog"
+}
 # Tao hoac cap nhat Tag
 if (& git tag -l "v$Version") {
     Write-Host "   Tag v$Version da ton tai, cap nhat tag..." -ForegroundColor Gray
     git tag -d "v$Version"
 }
-git tag -a "v$Version" -m "Release v$Version: $Changelog"
-git push origin main --tags --force
+git tag -a "v$Version" -m "Release v${Version}: $Changelog"
+git push origin main
+git push origin "v$Version" --force
 if ($LASTEXITCODE -ne 0) { Write-Error "Git push that bai!"; exit 1 }
 
 # 5. Lay Token tu Windows Credential Manager
@@ -145,7 +149,7 @@ try {
     $releaseBody = @{
         tag_name         = "v$Version"
         target_commitish = "main"
-        name             = "Release v$Version: $Changelog"
+        name             = "Release v${Version}: $Changelog"
         body             = "## JNNTool v$Version ($Today)`n`n### Changelog:`n$Changelog"
         draft            = $false
         prerelease       = $false

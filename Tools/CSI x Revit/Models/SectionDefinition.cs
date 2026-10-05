@@ -22,7 +22,10 @@ namespace JNNTool.Tools.CSIxRevit.Models
                 if (DepthMm > 0 && WidthMm > 0)
                     return $"{Math.Round(WidthMm, 0)}×{Math.Round(DepthMm, 0)} mm";
                 if (DepthMm > 0)
-                    return $"h={Math.Round(DepthMm, 0)} mm";
+                {
+                    if (DepthMm <= 1.0) return "Dày 1 mm (Sàn ảo)";
+                    return $"Dày {Math.Round(DepthMm, 0)} mm";
+                }
                 return string.Empty;
             }
         }

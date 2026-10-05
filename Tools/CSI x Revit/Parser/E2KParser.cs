@@ -114,6 +114,65 @@ namespace JNNTool.Tools.CSIxRevit.Parser
                         if (def.IsCircular && def.WidthMm == 0) def.WidthMm = def.DepthMm;
 
                         sectionDefs[name] = def;
+
+                        string dim = def.DimensionSummary;
+                        if (string.IsNullOrEmpty(dim) && def.DepthMm > 0)
+                        {
+                            dim = def.WidthMm > 0 ? $"{Math.Round(def.WidthMm, 0)}×{Math.Round(def.DepthMm, 0)} mm" : $"{Math.Round(def.DepthMm, 0)} mm";
+                        }
+                        string detail = dim;
+                        if (!string.IsNullOrEmpty(def.Material))
+                        {
+                            detail += (detail.Length > 0 ? " - Mat: " : "Mat: ") + def.Material;
+                        }
+                        sectionProperties[name] = detail;
+                        continue;
+                    }
+
+                    // Parse structured SHELL / SLAB / WALL SECTIONS
+                    if (tokens[0].Equals("SHELLPROP", StringComparison.OrdinalIgnoreCase) ||
+                        tokens[0].Equals("AREASECTION", StringComparison.OrdinalIgnoreCase) ||
+                        tokens[0].StartsWith("SHELL", StringComparison.OrdinalIgnoreCase) ||
+                        tokens[0].Contains("SLAB") || tokens[0].Contains("WALL"))
+                    {
+                        var def = new SectionDefinition { Name = name };
+
+                        int matIdx = tokens.FindIndex(t => t.Equals("MATERIAL", StringComparison.OrdinalIgnoreCase) || t.Equals("MAT", StringComparison.OrdinalIgnoreCase));
+                        if (matIdx >= 0 && matIdx + 1 < tokens.Count) def.Material = Clean(tokens[matIdx + 1]);
+
+                        string propType = "Slab";
+                        if (sectionPropTypes.TryGetValue(name, out var pt)) propType = pt;
+                        int ptIdx = tokens.FindIndex(t => t.Equals("PROPTYPE", StringComparison.OrdinalIgnoreCase) || t.Equals("TYPE", StringComparison.OrdinalIgnoreCase));
+                        if (ptIdx >= 0 && ptIdx + 1 < tokens.Count) propType = Clean(tokens[ptIdx + 1]);
+
+                        def.Shape = propType;
+                        def.ElementType = propType.Equals("WALL", StringComparison.OrdinalIgnoreCase) ? "Vách (Wall)" : "Sàn (Floor)";
+
+                        int thickIdx = tokens.FindIndex(t => t.Equals("THICKNESS", StringComparison.OrdinalIgnoreCase) || t.Equals("THICK", StringComparison.OrdinalIgnoreCase));
+                        if (thickIdx >= 0 && thickIdx + 1 < tokens.Count)
+                        {
+                            def.DepthMm = ParseDouble(tokens[thickIdx + 1]) * scaleToMm;
+                        }
+                        else
+                        {
+                            var num = tokens.Skip(2).FirstOrDefault(t => TryParseDouble(t, out _));
+                            if (num != null) def.DepthMm = ParseDouble(num) * scaleToMm;
+                        }
+
+                        sectionDefs[name] = def;
+
+                        string detail = "";
+                        if (def.DepthMm > 0)
+                        {
+                            if (def.DepthMm <= 1.0) detail = "Dày 1 mm (Sàn ảo/Membrane)";
+                            else detail = $"Dày {Math.Round(def.DepthMm, 0)} mm";
+                        }
+                        if (!string.IsNullOrEmpty(def.Material))
+                        {
+                            detail += (detail.Length > 0 ? " - Mat: " : "Mat: ") + def.Material;
+                        }
+                        sectionProperties[name] = detail;
+                        continue;
                     }
 
                     var strTokens = tokens.Where(t => !TryParseDouble(t, out _)).Select(t => Clean(t)).ToList();
@@ -124,7 +183,7 @@ namespace JNNTool.Tools.CSIxRevit.Parser
                     {
                         details = "Size: " + string.Join("x", numTokens.Take(3));
                     }
-                    var extraStrs = strTokens.Skip(2).Where(t => !t.Equals("Rectangular", StringComparison.OrdinalIgnoreCase) && !t.Equals("Circular", StringComparison.OrdinalIgnoreCase) && !t.Equals("Concrete", StringComparison.OrdinalIgnoreCase) && !t.Equals("Steel", StringComparison.OrdinalIgnoreCase)).ToList();
+                    var extraStrs = strTokens.Skip(2).Where(t => !t.Equals("Rectangular", StringComparison.OrdinalIgnoreCase) && !t.Equals("Circular", StringComparison.OrdinalIgnoreCase) && !t.Equals("Concrete", StringComparison.OrdinalIgnoreCase) && !t.Equals("Steel", StringComparison.OrdinalIgnoreCase) && !t.Equals("PROPTYPE", StringComparison.OrdinalIgnoreCase) && !t.Equals("Slab", StringComparison.OrdinalIgnoreCase) && !t.Equals("Wall", StringComparison.OrdinalIgnoreCase)).ToList();
                     if (extraStrs.Count > 0)
                     {
                         details += " - Mat: " + string.Join(",", extraStrs);

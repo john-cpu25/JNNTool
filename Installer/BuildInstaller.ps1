@@ -4,8 +4,8 @@ param(
     [string]$Version = ""   # Neu de trong se doc tu version.json
 )
 
-$ProjectRoot   = Resolve-Path ".."
-$InstallerDir  = Get-Location
+$InstallerDir  = $PSScriptRoot
+$ProjectRoot   = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $BundleDir     = Join-Path $ProjectRoot "JNNTool.bundle"
 $VersionJson   = Join-Path $BundleDir "version.json"
 
@@ -54,8 +54,13 @@ $MsiPath = Join-Path $InstallerDir $MsiName
 # Xoa file cu neu co
 if (Test-Path $MsiPath) { Remove-Item $MsiPath }
 
-wix build "$wxsPath" -ext WixToolset.UI.wixext/4.0.5 -o "$MsiPath"
-if ($LASTEXITCODE -ne 0) { Write-Error "Build MSI that bai!"; exit 1 }
+Push-Location $InstallerDir
+try {
+    wix build "Package.wxs" -ext WixToolset.UI.wixext/4.0.5 -o "$MsiPath"
+    if ($LASTEXITCODE -ne 0) { Write-Error "Build MSI that bai!"; exit 1 }
+} finally {
+    Pop-Location
+}
 
 # 5. Ket qua
 $msiSize = [math]::Round((Get-Item $MsiPath).Length / 1MB, 2)
