@@ -1,19 +1,23 @@
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media;
+using JNNToolInstaller.Models;
 using JNNToolInstaller.Services;
 
 namespace JNNToolInstaller;
 
 public partial class MainWindow : Window
 {
-    private readonly VersionChecker   _checker  = new();
-    private readonly InstallerService _svc      = new();
-    private CancellationTokenSource?  _cts;
+    private readonly VersionChecker _checker = new();
+    private readonly InstallerService _svc = new();
+    private readonly ObservableCollection<RevitVersionModel> _revitVersions = new();
+    private CancellationTokenSource? _cts;
 
     public MainWindow()
     {
         InitializeComponent();
+        RevitVersionCards.ItemsSource = _revitVersions;
         Loaded += async (_, _) => await InitAsync();
     }
 
@@ -29,65 +33,96 @@ public partial class MainWindow : Window
 
     private void RefreshUI()
     {
-        // Installed
+        string installedVer = "Chưa rõ";
         if (_checker.IsInstalled && _checker.InstalledManifest != null)
         {
-            var m = _checker.InstalledManifest;
-            TxtInstalledVersion.Text = $"v{m.Version}";
-            TxtInstallDate.Text      = m.ReleaseDate;
-            BtnUninstall.IsEnabled   = true;
+            installedVer = $"v{_checker.InstalledManifest.Version}";
+            TxtInstalledVerVal.Text = installedVer;
+            BtnUninstall.IsEnabled = true;
         }
         else
         {
-            TxtInstalledVersion.Text = "Chưa cài";
-            TxtInstallDate.Text      = "";
-            BtnUninstall.IsEnabled   = false;
+            installedVer = "Chưa cài";
+            TxtInstalledVerVal.Text = installedVer;
+            BtnUninstall.IsEnabled = false;
         }
 
-        // Latest
+        string onlineVer = "Chưa rõ";
         if (_checker.LatestManifest != null)
         {
             var m = _checker.LatestManifest;
-            TxtLatestLabel.Text   = _checker.IsFetchedFromGit ? "LATEST (TỪ GIT)" : "LATEST";
-            TxtLatestVersion.Text = $"v{m.Version}";
-            TxtLatestDate.Text    = m.ReleaseDate;
+            onlineVer = $"v{m.Version}";
+            TxtOnlineVerVal.Text = onlineVer;
+            TxtChangelogVersion.Text = $"Version: {m.Version}";
 
-            // Changelog
             if (m.Changelog.Count > 0)
             {
                 ChangelogList.ItemsSource = m.Changelog;
-                ChangelogPanel.Visibility = Visibility.Visible;
             }
         }
 
-        // Update badge
+        // Header Status
+        TxtHeaderOnlineVer.Text = onlineVer;
+        TxtHeaderInstalledVer.Text = installedVer;
+
+        // Status Badge Card
         if (_checker.UpdateAvailable)
         {
-            TxtUpdateTitle.Text = $"Có phiên bản mới trên Git: v{_checker.LatestManifest!.Version}";
-            TxtUpdateSub.Text   = "Nhấn 'Cập nhật từ Git' để tải và cài đặt tự động";
-            UpdateBadge.Visibility = Visibility.Visible;
+            TxtStatusHeadline.Text = "● Sẵn sàng cập nhật.";
+            TxtStatusHeadline.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#16A34A"));
+            StatusDot.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#16A34A"));
+            StatusBadgeBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F0FDF4"));
+            StatusBadgeBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#86EFAC"));
+        }
+        else if (_checker.IsInstalled)
+        {
+            TxtStatusHeadline.Text = "● Đã là phiên bản mới nhất.";
+            TxtStatusHeadline.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0284C7"));
+            StatusDot.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0284C7"));
+            StatusBadgeBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F0F9FF"));
+            StatusBadgeBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#BAE6FD"));
         }
         else
         {
-            UpdateBadge.Visibility = Visibility.Collapsed;
+            TxtStatusHeadline.Text = "● Sẵn sàng cài đặt.";
+            TxtStatusHeadline.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D97706"));
+            StatusDot.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D97706"));
+            StatusBadgeBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFBEB"));
+            StatusBadgeBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FDE68A"));
         }
 
-        // BtnInstall label
-        BtnInstall.Content = _checker.IsInstalled
-            ? (_checker.UpdateAvailable ? "⬆  Cập nhật từ Git" : "🔄  Cài lại / Đồng bộ Git")
-            : "⬇  Cài đặt từ Git";
-
-        // Revit versions
-        RevitVersionsPanel.Children.Clear();
+        // Revit Versions List (Full Ver 2022 - 2027)
         var detected = _svc.GetInstalledRevitVersions();
+        _revitVersions.Clear();
         foreach (var year in new[] { "2022", "2023", "2024", "2025", "2026", "2027" })
         {
-            bool found = detected.Contains(year);
-            RevitVersionsPanel.Children.Add(MakeVersionBadge(year, found));
+            bool inMachine = detected.Contains(year);
+            _revitVersions.Add(new RevitVersionModel
+            {
+                Year = year,
+                IsInstalledInMachine = inMachine,
+                IsSelectedForInstall = inMachine || (int.Parse(year) >= 2024) // Mặc định chọn các bản có trong máy hoặc từ 2024 trở lên
+            });
         }
     }
 
-    // ─── Buttons ─────────────────────────────────────────────────────────────
+    // ─── Actions & Event Handlers ────────────────────────────────────────────
+
+    private void BtnSelectAllRevit_Click(object sender, RoutedEventArgs e)
+    {
+        foreach (var item in _revitVersions)
+        {
+            item.IsSelectedForInstall = true;
+        }
+    }
+
+    private void BtnDeselectAllRevit_Click(object sender, RoutedEventArgs e)
+    {
+        foreach (var item in _revitVersions)
+        {
+            item.IsSelectedForInstall = false;
+        }
+    }
 
     private async void BtnCheckUpdate_Click(object sender, RoutedEventArgs e)
     {
@@ -109,23 +144,23 @@ public partial class MainWindow : Window
             MessageBox.Show(
                 $"Đã tìm thấy phiên bản mới trên Git: v{_checker.LatestManifest!.Version}!\n" +
                 $"Ngày phát hành: {_checker.LatestManifest.ReleaseDate}\n\n" +
-                "Bạn có thể nhấn nút 'Cập nhật từ Git' để tự động tải và cài đặt ngay.",
+                "Bạn có thể nhấn nút 'Cài đặt / Cập nhật' để tự động tải và cài đặt ngay.",
                 "Có bản cập nhật mới",
                 MessageBoxButton.OK, MessageBoxImage.Information);
         }
         else if (_checker.IsInstalled)
         {
             MessageBox.Show(
-                $"Bạn đang dùng phiên bản mới nhất (v{_checker.InstalledManifest?.Version ?? "1.0.0"}) từ Git!\n\n" +
-                "Nếu cần tải lại hoặc cài đặt lại, bạn có thể nhấn nút 'Cài lại / Đồng bộ Git'.",
+                $"Bạn đang dùng phiên bản mới nhất (v{_checker.InstalledManifest?.Version ?? "2.0.4"}) từ Git!\n\n" +
+                "Nếu cần cài lại, bạn có thể nhấn nút 'Cài đặt / Cập nhật'.",
                 "Đã là phiên bản mới nhất",
                 MessageBoxButton.OK, MessageBoxImage.Information);
         }
         else
         {
             MessageBox.Show(
-                $"Phiên bản mới nhất trên Git: v{_checker.LatestManifest?.Version ?? "1.0.0"}.\n" +
-                "Nhấn 'Cài đặt từ Git' để tiến hành cài đặt vào Revit.",
+                $"Phiên bản mới nhất trên Git: v{_checker.LatestManifest?.Version ?? "2.0.4"}.\n" +
+                "Nhấn 'Cài đặt / Cập nhật' để tiến hành cài đặt vào Revit.",
                 "Thông tin phiên bản",
                 MessageBoxButton.OK, MessageBoxImage.Information);
         }
@@ -135,20 +170,27 @@ public partial class MainWindow : Window
     {
         if (_checker.LatestManifest == null)
         {
-            MessageBox.Show("Kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c version manifest.", "L\u1ed7i",
+            MessageBox.Show("Không đọc được version manifest.", "Lỗi",
                 MessageBoxButton.OK, MessageBoxImage.Error);
             return;
         }
 
-        // Kiem tra downloadUrl truoc khi download
+        var selectedVersions = _revitVersions.Where(x => x.IsSelectedForInstall).ToList();
+        if (selectedVersions.Count == 0)
+        {
+            MessageBox.Show("Vui lòng chọn ít nhất một phiên bản Revit để cài đặt.", "Chưa chọn phiên bản Revit",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
         var url = _checker.LatestManifest.DownloadUrl;
         if (string.IsNullOrWhiteSpace(url) || url.Contains("YOUR_USERNAME"))
         {
             MessageBox.Show(
-                "Ch\u01b0a c\u00f3 link t\u1ea3i v\u1ec1 trong manifest.\n\n" +
-                "T\u00e1c gi\u1ea3 c\u1ea7n upload release l\u00ean GitHub tr\u01b0\u1edbc.\n" +
-                "Vui l\u00f2ng th\u1eed l\u1ea1i sau ho\u1eb7c xem: github.com/john-cpu25/JNNTool/releases",
-                "Ch\u01b0a c\u00f3 b\u1ea3n ph\u00e1t h\u00e0nh",
+                "Chưa có link tải về trong manifest.\n\n" +
+                "Tác giả cần upload release lên GitHub trước.\n" +
+                "Link: github.com/john-cpu25/JNNTool/releases",
+                "Chưa có bản phát hành",
                 MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
@@ -157,8 +199,9 @@ public partial class MainWindow : Window
         SetBusy(true);
         ProgressPanel.Visibility = Visibility.Visible;
         ProgressBar.Value = 0;
+        ProgressBar.IsIndeterminate = false;
 
-        _svc.StatusChanged   += s => Dispatcher.Invoke(() => TxtStatus.Text    = s);
+        _svc.StatusChanged += s => Dispatcher.Invoke(() => TxtStatus.Text = s);
         _svc.ProgressChanged += p => Dispatcher.Invoke(() => ProgressBar.Value = p);
 
         try
@@ -166,26 +209,27 @@ public partial class MainWindow : Window
             await _svc.InstallAsync(_checker.LatestManifest, _cts.Token);
             await _checker.LoadAsync();
             RefreshUI();
-            ShowSuccess("C\u00e0i \u0111\u1eb7t th\u00e0nh c\u00f4ng! Kh\u1edfi \u0111\u1ed9ng l\u1ea1i Revit \u0111\u1ec3 \u00e1p d\u1ee5ng.");
+            ShowSuccess("Cài đặt thành công! Khởi động lại Revit để áp dụng.");
+            MessageBox.Show("Cài đặt / Cập nhật JNNTool thành công!\nVui lòng khởi động lại Revit để sử dụng.", "Thành công",
+                MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (OperationCanceledException)
         {
-            TxtStatus.Text = "\u0110\u00e3 h\u1ee7y.";
+            TxtStatus.Text = "Đã hủy thao tác.";
         }
         catch (System.Net.Http.HttpRequestException httpEx) when
-            (httpEx.Message.Contains("404") || httpEx.StatusCode ==
-             System.Net.HttpStatusCode.NotFound)
+            (httpEx.Message.Contains("404") || httpEx.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
             MessageBox.Show(
-                "Kh\u00f4ng t\u00ecm th\u1ea5y file t\u1ea3i v\u1ec1 tr\u00ean GitHub (404).\n\n" +
-                "H\u00e3y upload file MSI l\u00ean GitHub Releases r\u1ed3i th\u1eed l\u1ea1i.\n" +
+                "Không tìm thấy file tải về trên GitHub (404).\n\n" +
+                "Hãy upload file MSI lên GitHub Releases rồi thử lại.\n" +
                 "Link: github.com/john-cpu25/JNNTool/releases",
-                "Kh\u00f4ng t\u00ecm th\u1ea5y b\u1ea3n ph\u00e1t h\u00e0nh",
+                "Không tìm thấy bản phát hành",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"L\u1ed7i c\u00e0i \u0111\u1eb7t:\n{ex.Message}", "L\u1ed7i",
+            MessageBox.Show($"Lỗi cài đặt:\n{ex.Message}", "Lỗi",
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
@@ -193,7 +237,6 @@ public partial class MainWindow : Window
             SetBusy(false);
         }
     }
-
 
     private async void BtnUninstall_Click(object sender, RoutedEventArgs e)
     {
@@ -207,8 +250,9 @@ public partial class MainWindow : Window
 
         SetBusy(true);
         ProgressPanel.Visibility = Visibility.Visible;
+        ProgressBar.IsIndeterminate = true;
 
-        _svc.StatusChanged   += s => Dispatcher.Invoke(() => TxtStatus.Text    = s);
+        _svc.StatusChanged += s => Dispatcher.Invoke(() => TxtStatus.Text = s);
         _svc.ProgressChanged += p => Dispatcher.Invoke(() => ProgressBar.Value = p);
 
         try
@@ -217,7 +261,10 @@ public partial class MainWindow : Window
             await _checker.LoadAsync();
             RefreshUI();
             ProgressPanel.Visibility = Visibility.Collapsed;
+            ProgressBar.IsIndeterminate = false;
             ShowSuccess("Đã gỡ cài đặt thành công. Vui lòng khởi động lại Revit.");
+            MessageBox.Show("Đã gỡ cài đặt JNNTool hoàn tất.", "Gỡ cài đặt",
+                MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
@@ -230,53 +277,49 @@ public partial class MainWindow : Window
         }
     }
 
+    private void BtnQuickGuide_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "https://github.com/john-cpu25/JNNTool#readme",
+                UseShellExecute = true
+            });
+        }
+        catch { }
+    }
+
+    private void BtnInstallGuide_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "https://github.com/john-cpu25/JNNTool/releases",
+                UseShellExecute = true
+            });
+        }
+        catch { }
+    }
+
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
     private void SetBusy(bool busy)
     {
-        BtnInstall.IsEnabled   = !busy;
+        BtnInstall.IsEnabled = !busy;
         BtnUninstall.IsEnabled = !busy && _checker.IsInstalled;
+        BtnCheckUpdate.IsEnabled = !busy;
     }
 
     private void ShowSuccess(string msg)
     {
-        TxtStatus.Text    = msg;
-        TxtStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#15803D")); // green
+        TxtStatus.Text = msg;
+        TxtStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#15803D"));
     }
 
-    private static Border MakeVersionBadge(string year, bool detected)
-    {
-        var bg    = detected ? "#DCFCE7" : "#F1F5F9";
-        var border= detected ? "#86EFAC" : "#E2E8F0";
-        var fg    = detected ? "#15803D" : "#94A3B8";
-        var icon  = detected ? "✓" : "—";
+    // ─── Window Chrome ───────────────────────────────────────────────────────
 
-        return new Border
-        {
-            Background     = new SolidColorBrush((Color)ColorConverter.ConvertFromString(bg)),
-            BorderBrush    = new SolidColorBrush((Color)ColorConverter.ConvertFromString(border)),
-            BorderThickness= new Thickness(1),
-            CornerRadius   = new CornerRadius(8),
-            Padding        = new Thickness(12, 6, 12, 6),
-            Margin         = new Thickness(0, 0, 8, 8),
-            Child          = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Children    =
-                {
-                    new TextBlock
-                    {
-                        Text       = $"{icon}  Revit {year}",
-                        Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(fg)),
-                        FontSize   = 12,
-                        FontWeight = detected ? FontWeights.SemiBold : FontWeights.Normal
-                    }
-                }
-            }
-        };
-    }
-
-    // ─── Window chrome ────────────────────────────────────────────────────────
     private void TitleBar_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
         if (e.ChangedButton == System.Windows.Input.MouseButton.Left)

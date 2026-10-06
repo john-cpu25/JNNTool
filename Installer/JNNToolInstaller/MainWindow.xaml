@@ -1,42 +1,71 @@
 <Window x:Class="JNNToolInstaller.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="JNNTool Revit Plugin Installer"
-        Width="630" Height="610"
+        Title="JNN Structural Manager"
+        Width="880" Height="630"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         WindowStyle="None"
         AllowsTransparency="True"
-        Icon="pack://application:,,,/Assets/logo.png"
+        Icon="pack://application:,,,/Assets/Logo_JNN.ico"
         Background="Transparent">
 
     <Window.Resources>
-        <!-- Primary Button style -->
-        <Style x:Key="PrimaryBtn" TargetType="Button">
-            <Setter Property="Background" Value="#2563EB"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="BorderThickness" Value="0"/>
+        <!-- Modern ScrollBar Style -->
+        <Style TargetType="ScrollBar">
+            <Setter Property="Width" Value="6"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ScrollBar">
+                        <Track x:Name="PART_Track" IsDirectionReversed="true">
+                            <Track.Thumb>
+                                <Thumb>
+                                    <Thumb.Template>
+                                        <ControlTemplate TargetType="Thumb">
+                                            <Border Background="#CBD5E1" CornerRadius="3"/>
+                                        </ControlTemplate>
+                                    </Thumb.Template>
+                                </Thumb>
+                            </Track.Thumb>
+                        </Track>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Secondary Button Style -->
+        <Style x:Key="SecondaryBtn" TargetType="Button">
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Foreground" Value="#334155"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Height" Value="44"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Padding" Value="10,0"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="bd" Background="{TemplateBinding Background}"
-                                CornerRadius="10" Padding="20,0">
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="#1D4ED8"/>
+                                <Setter TargetName="bd" Property="Background" Value="#F1F5F9"/>
+                                <Setter TargetName="bd" Property="BorderBrush" Value="#94A3B8"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="#1E40AF"/>
+                                <Setter TargetName="bd" Property="Background" Value="#E2E8F0"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="bd" Property="Background" Value="#CBD5E1"/>
+                                <Setter TargetName="bd" Property="Background" Value="#F8FAFC"/>
                                 <Setter Property="Foreground" Value="#94A3B8"/>
+                                <Setter TargetName="bd" Property="BorderBrush" Value="#E2E8F0"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -44,313 +73,299 @@
             </Setter>
         </Style>
 
-        <!-- Danger Button style -->
-        <Style x:Key="DangerBtn" TargetType="Button" BasedOn="{StaticResource PrimaryBtn}">
-            <Setter Property="Background" Value="#EF4444"/>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#DC2626"/>
-                </Trigger>
-                <Trigger Property="IsPressed" Value="True">
-                    <Setter Property="Background" Value="#B91C1C"/>
-                </Trigger>
-                <Trigger Property="IsEnabled" Value="False">
-                    <Setter Property="Background" Value="#FEE2E2"/>
-                    <Setter Property="Foreground" Value="#FCA5A5"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <!-- Card style (Light theme) -->
-        <Style x:Key="Card" TargetType="Border">
-            <Setter Property="Background" Value="#F8FAFC"/>
-            <Setter Property="CornerRadius" Value="12"/>
-            <Setter Property="Padding" Value="16,12"/>
-            <Setter Property="BorderBrush" Value="#E2E8F0"/>
-            <Setter Property="BorderThickness" Value="1"/>
-        </Style>
-
-        <!-- Modern ProgressBar style -->
-        <Style x:Key="ModernProgress" TargetType="ProgressBar">
-            <Setter Property="Height" Value="8"/>
-            <Setter Property="Background" Value="#E2E8F0"/>
-            <Setter Property="Foreground" Value="#2563EB"/>
+        <!-- Action / Primary Dark Button Style -->
+        <Style x:Key="MainActionBtn" TargetType="Button">
+            <Setter Property="Background" Value="#1E293B"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Padding" Value="16,0"/>
             <Setter Property="Template">
                 <Setter.Value>
-                    <ControlTemplate TargetType="ProgressBar">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="4">
-                            <Border x:Name="PART_Track" CornerRadius="4">
-                                <Border x:Name="PART_Indicator"
-                                        HorizontalAlignment="Left"
-                                        Background="{TemplateBinding Foreground}"
-                                        CornerRadius="4"/>
-                            </Border>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#0F172A"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#020617"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="bd" Property="Background" Value="#94A3B8"/>
+                                <Setter Property="Foreground" Value="#F1F5F9"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- Small Outline Button Style -->
+        <Style x:Key="SmallBtn" TargetType="Button" BasedOn="{StaticResource SecondaryBtn}">
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Padding" Value="8,0"/>
+        </Style>
     </Window.Resources>
 
-    <!-- Outer border with soft shadow effect -->
-    <Border CornerRadius="16" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" ClipToBounds="True">
+    <!-- Outer Card with Soft Shadow -->
+    <Border CornerRadius="12" Background="#F8FAFC" BorderBrush="#CBD5E1" BorderThickness="1" ClipToBounds="True">
         <Border.Effect>
-            <DropShadowEffect Color="#0F172A" BlurRadius="25" ShadowDepth="4" Opacity="0.15"/>
+            <DropShadowEffect Color="#0F172A" BlurRadius="25" ShadowDepth="4" Opacity="0.18"/>
         </Border.Effect>
 
         <Grid>
-            <!-- Logo Watermark Background with soft white overlay -->
-            <Grid ClipToBounds="True">
-                <Image Source="pack://application:,,,/Assets/logo.png"
-                       Stretch="Uniform"
-                       Width="340" Height="340"
-                       Opacity="0.05"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Center"
-                       RenderOptions.BitmapScalingMode="HighQuality"/>
-                <Border>
-                    <Border.Background>
-                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                            <GradientStop Color="#EDFFFFFF" Offset="0"/>
-                            <GradientStop Color="#DCF8FAFC" Offset="0.5"/>
-                            <GradientStop Color="#F2FFFFFF" Offset="1"/>
-                        </LinearGradientBrush>
-                    </Border.Background>
-                </Border>
-            </Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/> <!-- 0: Header Navbar (Dark Navy) -->
+                <RowDefinition Height="*"/>    <!-- 1: Main Content Body -->
+                <RowDefinition Height="Auto"/> <!-- 2: Progress Panel -->
+                <RowDefinition Height="Auto"/> <!-- 3: Footer Action Bar -->
+            </Grid.RowDefinitions>
 
-            <!-- Main Layout without ScrollViewer (No scrollbar) -->
-            <Grid Margin="0">
+            <!-- ═══════════════════════════════════════════════════════════════
+                 ROW 0: HEADER NAVBAR (DARK NAVY #182234)
+                 ═══════════════════════════════════════════════════════════════ -->
+            <Border Grid.Row="0" Background="#182234" Padding="16,10" MouseDown="TitleBar_MouseDown" Cursor="SizeAll">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/> <!-- Logo & Brand -->
+                        <ColumnDefinition Width="*"/>    <!-- Center Status Indicator -->
+                        <ColumnDefinition Width="Auto"/> <!-- Revit Warning Alert -->
+                        <ColumnDefinition Width="Auto"/> <!-- Window Controls (Min/Close) -->
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Left: Brand & Logo -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Width="38" Height="38" CornerRadius="8" Background="#0F172A" BorderBrush="#334155" BorderThickness="1" Padding="3">
+                            <Image Source="pack://application:,,,/Assets/Logo_JNN.png" RenderOptions.BitmapScalingMode="HighQuality"/>
+                        </Border>
+                        <StackPanel VerticalAlignment="Center" Margin="10,0,0,0">
+                            <TextBlock Text="JNN-STRUCTURAL" FontSize="15" FontWeight="Bold" Foreground="#FFFFFF" FontFamily="Segoe UI"/>
+                            <TextBlock Text="Structural Design" FontSize="11" Foreground="#94A3B8" Margin="0,1,0,0"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Center: Online vs Machine Version Indicator -->
+                    <Border Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                            Background="#0F172A" BorderBrush="#334155" BorderThickness="1" CornerRadius="16" Padding="12,5">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Ellipse Width="8" Height="8" Fill="#10B981" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Online: " Foreground="#94A3B8" FontSize="12" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="TxtHeaderOnlineVer" Text="v2.0.4" Foreground="#F59E0B" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
+                            <TextBlock Text="  →  " Foreground="#64748B" FontSize="12" VerticalAlignment="Center"/>
+                            <TextBlock Text="Máy: " Foreground="#94A3B8" FontSize="12" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="TxtHeaderInstalledVer" Text="v2.0.4" Foreground="#FFFFFF" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Right Alert: Turn off Revit before install -->
+                    <Border Grid.Column="2" Background="#2E1F03" BorderBrush="#F59E0B" BorderThickness="1" CornerRadius="6"
+                            Padding="10,5" Margin="0,0,12,0" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="⚠️ Vui lòng TẮT REVIT trước khi cài" Foreground="#FBBF24" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Window Buttons (Minimize, Close) -->
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Click="MinimizeBtn_Click" Width="30" Height="28" Background="Transparent" BorderThickness="0" Cursor="Hand" Margin="0,0,4,0">
+                            <TextBlock Text="—" Foreground="#94A3B8" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Button>
+                        <Button Click="CloseBtn_Click" Width="30" Height="28" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                            <TextBlock Text="✕" Foreground="#94A3B8" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- ═══════════════════════════════════════════════════════════════
+                 ROW 1: MAIN BODY
+                 ═══════════════════════════════════════════════════════════════ -->
+            <Grid Grid.Row="1" Margin="18,14,18,10">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="46"/>  <!-- Custom Title bar -->
-                    <RowDefinition Height="*"/>   <!-- Main Content -->
+                    <RowDefinition Height="Auto"/> <!-- Top Section: Left Status Card & Right Changelog -->
+                    <RowDefinition Height="Auto"/> <!-- Bottom Section: Revit Versions Full Bar -->
                 </Grid.RowDefinitions>
 
-                <!-- Custom Title Bar -->
-                <Border Grid.Row="0" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseDown">
-                    <Grid>
-                        <!-- Left: App icon and macOS dots -->
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="14,0">
-                            <Image Source="pack://application:,,,/Assets/logo.png" Width="20" Height="20" Margin="0,0,10,0" RenderOptions.BitmapScalingMode="HighQuality"/>
-                            <Ellipse Width="10" Height="10" Fill="#FF5F57" Margin="0,0,5,0" Cursor="Hand"
-                                     PreviewMouseLeftButtonDown="CloseBtn_Click"/>
-                            <Ellipse Width="10" Height="10" Fill="#FEBC2E" Margin="0,0,5,0" Cursor="Hand"
-                                     PreviewMouseLeftButtonDown="MinimizeBtn_Click"/>
-                            <Ellipse Width="10" Height="10" Fill="#28C840"/>
-                        </StackPanel>
+                <!-- TOP SECTION: 2 COLUMNS -->
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="280"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
 
-                        <!-- Center: title -->
-                        <TextBlock Text="JNNTool Revit Plugin Installer"
-                                   Foreground="#64748B" FontSize="13" FontWeight="SemiBold"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
-
-                        <!-- Right: Win-style buttons -->
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Stretch">
-                            <Button x:Name="BtnMinimize" Click="MinimizeBtn_Click"
-                                    Width="46" Height="32" Content="&#x2212;"
-                                    FontSize="16" Foreground="#64748B" Cursor="Hand">
-                                <Button.Style>
-                                    <Style TargetType="Button">
-                                        <Setter Property="Background" Value="Transparent"/>
-                                        <Setter Property="BorderThickness" Value="0"/>
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="Button">
-                                                    <Border x:Name="bd" Background="{TemplateBinding Background}">
-                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                    </Border>
-                                                    <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter TargetName="bd" Property="Background" Value="#F1F5F9"/>
-                                                            <Setter Property="Foreground" Value="#0F172A"/>
-                                                        </Trigger>
-                                                    </ControlTemplate.Triggers>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
-                            <Button x:Name="BtnClose" Click="CloseBtn_Click"
-                                    Width="46" Height="32" Content="&#x2715;"
-                                    FontSize="13" Foreground="#64748B" Cursor="Hand">
-                                <Button.Style>
-                                    <Style TargetType="Button">
-                                        <Setter Property="Background" Value="Transparent"/>
-                                        <Setter Property="BorderThickness" Value="0"/>
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="Button">
-                                                    <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="0,15,0,0">
-                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                    </Border>
-                                                    <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter TargetName="bd" Property="Background" Value="#EF4444"/>
-                                                            <Setter Property="Foreground" Value="White"/>
-                                                        </Trigger>
-                                                    </ControlTemplate.Triggers>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-
-                <!-- Content Area (Clean, fits perfectly without scrollbar) -->
-                <Grid Grid.Row="1" Margin="26,4,26,20">
-                    <StackPanel VerticalAlignment="Top">
-
-                        <!-- Header with JN Avatar Logo -->
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-                            <Border Width="52" Height="52" CornerRadius="12" Margin="0,0,14,0"
-                                    ClipToBounds="True" Background="White" BorderBrush="#E2E8F0" BorderThickness="1.5">
-                                <Image Source="pack://application:,,,/Assets/logo.png"
-                                       Stretch="Uniform" Margin="4"
-                                       RenderOptions.BitmapScalingMode="HighQuality"/>
-                            </Border>
-                            <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="JNNTool" FontSize="21" FontWeight="Bold"
-                                           Foreground="#0F172A"/>
-                                <TextBlock Text="Revit Plugin • Structural Engineering Tools"
-                                           Foreground="#64748B" FontSize="12" FontWeight="Medium"/>
-                            </StackPanel>
-                        </StackPanel>
-
-                        <!-- Version Status Cards -->
-                        <Grid Margin="0,0,0,12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition/>
-                                <ColumnDefinition Width="12"/>
-                                <ColumnDefinition/>
-                            </Grid.ColumnDefinitions>
-
-                            <!-- Installed version -->
-                            <Border Grid.Column="0" Style="{StaticResource Card}">
-                                <StackPanel>
-                                    <TextBlock Text="INSTALLED" Foreground="#64748B"
-                                               FontSize="10" FontWeight="Bold" Margin="0,0,0,4"/>
-                                    <TextBlock x:Name="TxtInstalledVersion"
-                                               Text="Chưa cài" Foreground="#0F172A"
-                                               FontSize="19" FontWeight="Bold"/>
-                                    <TextBlock x:Name="TxtInstallDate"
-                                               Text="" Foreground="#94A3B8" FontSize="11" Margin="0,2,0,0"/>
-                                </StackPanel>
-                            </Border>
-
-                            <!-- Latest version from Git -->
-                            <Border Grid.Column="2" Style="{StaticResource Card}">
-                                <Grid>
-                                    <StackPanel>
-                                        <TextBlock x:Name="TxtLatestLabel" Text="LATEST (GIT)" Foreground="#64748B"
-                                                   FontSize="10" FontWeight="Bold" Margin="0,0,0,4"/>
-                                        <TextBlock x:Name="TxtLatestVersion"
-                                                   Text="—" Foreground="#2563EB"
-                                                   FontSize="19" FontWeight="Bold"/>
-                                        <TextBlock x:Name="TxtLatestDate"
-                                                   Text="" Foreground="#94A3B8" FontSize="11" Margin="0,2,0,0"/>
+                    <!-- CỘT TRÁI: Trạng Thái Cập Nhật & Thông Tin Phiên Bản -->
+                    <StackPanel Grid.Column="0">
+                        <!-- Card Trạng thái -->
+                        <Border Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="10" Padding="14,12">
+                            <StackPanel>
+                                <!-- Badge Sẵn sàng cập nhật -->
+                                <Border x:Name="StatusBadgeBorder" Background="#F0FDF4" BorderBrush="#86EFAC" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,12">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Ellipse x:Name="StatusDot" Width="7" Height="7" Fill="#16A34A" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="TxtStatusHeadline" Text="Sẵn sàng cập nhật." Foreground="#16A34A" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
                                     </StackPanel>
-                                    <Button Click="BtnCheckUpdate_Click"
-                                            HorizontalAlignment="Right" VerticalAlignment="Top"
-                                            Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1"
-                                            Cursor="Hand" Padding="8,3" Height="24">
-                                        <Button.Template>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border Background="{TemplateBinding Background}"
-                                                        BorderBrush="{TemplateBinding BorderBrush}"
-                                                        BorderThickness="{TemplateBinding BorderThickness}"
-                                                        CornerRadius="6" Padding="{TemplateBinding Padding}">
-                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                            </ControlTemplate>
-                                        </Button.Template>
-                                        <TextBlock Text="🔄 Kiểm tra Git" FontSize="10" Foreground="#2563EB" FontWeight="SemiBold"/>
-                                    </Button>
-                                </Grid>
-                            </Border>
-                        </Grid>
+                                </Border>
 
-                        <!-- Update badge -->
-                        <Border x:Name="UpdateBadge" Visibility="Collapsed"
-                                Background="#DCFCE7" BorderBrush="#86EFAC" BorderThickness="1"
-                                CornerRadius="10" Padding="14,8" Margin="0,0,0,12">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="🔔" FontSize="15" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                <StackPanel>
-                                    <TextBlock x:Name="TxtUpdateTitle" Foreground="#15803D"
-                                               FontSize="13" FontWeight="SemiBold"/>
-                                    <TextBlock x:Name="TxtUpdateSub" Foreground="#166534"
-                                               FontSize="11"/>
-                                </StackPanel>
+                                <!-- Dòng Phiên bản Online -->
+                                <Grid Margin="0,0,0,8">
+                                    <TextBlock Text="• Phiên bản Online" Foreground="#475569" FontSize="12" VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="TxtOnlineVerVal" Text="v2.0.4" Foreground="#D97706" FontWeight="Bold" FontSize="12" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                </Grid>
+
+                                <!-- Dòng Phiên bản Hiện tại -->
+                                <Grid>
+                                    <TextBlock Text="• Phiên bản Hiện tại" Foreground="#475569" FontSize="12" VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="TxtInstalledVerVal" Text="v2.0.3" Foreground="#0F172A" FontWeight="Bold" FontSize="12" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                </Grid>
                             </StackPanel>
                         </Border>
 
-                        <!-- Changelog Card -->
-                        <Border x:Name="ChangelogPanel" Style="{StaticResource Card}" Margin="0,0,0,12" Visibility="Collapsed">
-                            <StackPanel>
-                                <TextBlock Text="CHANGELOG" Foreground="#64748B"
-                                           FontSize="10" FontWeight="Bold" Margin="0,0,0,6"/>
+                        <!-- Card Hướng dẫn nhỏ -->
+                        <Border Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="10" Padding="14,12" Margin="0,10,0,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="💡" FontSize="14" Margin="0,0,8,0" VerticalAlignment="Top"/>
+                                <TextBlock Text="Chọn phiên bản bên dưới rồi bấm 'Cài đặt' để cập nhật." Foreground="#64748B" FontSize="12" TextWrapping="Wrap" LineHeight="18" MaxWidth="210"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- CỘT PHẢI: Nhật Ký Phiên Bản (Changelog) -->
+                    <Border Grid.Column="1" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="10" Padding="16,12" Margin="14,0,0,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Row="0" Margin="0,0,0,8">
+                                <TextBlock Text="• Nhật ký phiên bản" FontWeight="Bold" FontSize="13" Foreground="#0F172A"/>
+                                <TextBlock x:Name="TxtChangelogVersion" Text="Version: 2.0.4" FontWeight="SemiBold" FontSize="12" Foreground="#334155" Margin="0,4,0,1"/>
+                                <TextBlock Text="Nhật ký phiên bản JNNTool:" FontSize="11" Foreground="#64748B"/>
+                            </StackPanel>
+
+                            <!-- Scrollable Changelog List -->
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Height="140">
                                 <ItemsControl x:Name="ChangelogList">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <StackPanel Orientation="Horizontal" Margin="0,1.5">
-                                                <TextBlock Text="•" Foreground="#2563EB" Margin="0,0,8,0" FontWeight="Bold"/>
-                                                <TextBlock Text="{Binding}" Foreground="#334155"
-                                                           FontSize="12" TextWrapping="Wrap"/>
-                                            </StackPanel>
+                                            <Grid Margin="0,2,0,4">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="- " Foreground="#64748B" FontSize="12" VerticalAlignment="Top"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding}" Foreground="#334155" FontSize="12" TextWrapping="Wrap" LineHeight="17"/>
+                                            </Grid>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Revit Versions Detected Card -->
-                        <Border Style="{StaticResource Card}" Margin="0,0,0,12">
-                            <StackPanel>
-                                <TextBlock Text="REVIT VERSIONS DETECTED"
-                                           Foreground="#64748B" FontSize="10" FontWeight="Bold" Margin="0,0,0,8"/>
-                                <WrapPanel x:Name="RevitVersionsPanel" Orientation="Horizontal"/>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Progress Area -->
-                        <Border x:Name="ProgressPanel" Style="{StaticResource Card}"
-                                Margin="0,0,0,12" Visibility="Collapsed">
-                            <StackPanel>
-                                <TextBlock x:Name="TxtStatus" Foreground="#2563EB"
-                                           FontSize="12" Margin="0,0,0,6" FontWeight="Medium"/>
-                                <ProgressBar x:Name="ProgressBar" Style="{StaticResource ModernProgress}"
-                                             Minimum="0" Maximum="100"/>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Action Buttons -->
-                        <Grid Margin="0,4,0,0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition/>
-                                <ColumnDefinition Width="12"/>
-                                <ColumnDefinition Width="140"/>
-                            </Grid.ColumnDefinitions>
-
-                            <Button x:Name="BtnInstall" Grid.Column="0"
-                                    Style="{StaticResource PrimaryBtn}"
-                                    Content="⬇  Cài đặt / Cập nhật"
-                                    Click="BtnInstall_Click"/>
-
-                            <Button x:Name="BtnUninstall" Grid.Column="2"
-                                    Style="{StaticResource DangerBtn}"
-                                    Content="Gỡ cài đặt"
-                                    IsEnabled="False"
-                                    Click="BtnUninstall_Click"/>
+                            </ScrollViewer>
                         </Grid>
+                    </Border>
+                </Grid>
 
-                    </StackPanel>
+                <!-- BOTTOM SECTION: PHIÊN BẢN REVIT (FULL VER - HÌNH 3) -->
+                <Grid Grid.Row="1" Margin="0,14,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/> <!-- Title & Select All / Deselect Buttons -->
+                        <RowDefinition Height="Auto"/> <!-- Version Cards Horizontal Row -->
+                    </Grid.RowDefinitions>
+
+                    <!-- Header: Label + Buttons -->
+                    <Grid Grid.Row="0" Margin="0,0,0,8">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Phiên bản Revit:" FontWeight="Bold" FontSize="13" Foreground="#0F172A"/>
+                            <TextBlock Text=" (Dòng 1: Chọn cài | Dòng 2: Trong máy)" Foreground="#64748B" FontSize="11" VerticalAlignment="Center" Margin="4,1,0,0"/>
+                        </StackPanel>
+
+                        <!-- Quick Select Buttons -->
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="Chọn tất cả" Style="{StaticResource SmallBtn}" Click="BtnSelectAllRevit_Click" Margin="0,0,6,0"/>
+                            <Button Content="Bỏ chọn" Style="{StaticResource SmallBtn}" Click="BtnDeselectAllRevit_Click"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Revit Cards Grid (Hỗ trợ Full Ver 2022 - 2027) -->
+                    <ItemsControl x:Name="RevitVersionCards" Grid.Row="1">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Rows="1"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{Binding CardBackground}" BorderBrush="{Binding CardBorder}"
+                                        BorderThickness="1" CornerRadius="8" Padding="10,8" Margin="0,0,8,0">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <!-- Dòng 1: Chọn cài -->
+                                        <CheckBox IsChecked="{Binding IsSelectedForInstall, Mode=TwoWay}"
+                                                  Content="{Binding Year}"
+                                                  FontWeight="Bold" FontSize="13" Foreground="#0F172A"
+                                                  HorizontalAlignment="Center" Cursor="Hand"/>
+                                        <!-- Dòng 2: Trong máy -->
+                                        <TextBlock Text="{Binding StatusText}"
+                                                   Foreground="{Binding StatusColor}"
+                                                   FontSize="11" FontWeight="SemiBold"
+                                                   HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </Grid>
             </Grid>
+
+            <!-- ═══════════════════════════════════════════════════════════════
+                 ROW 2: PROGRESS BAR & STATUS
+                 ═══════════════════════════════════════════════════════════════ -->
+            <Border Grid.Row="2" x:Name="ProgressPanel" Visibility="Collapsed" Margin="18,0,18,6">
+                <StackPanel>
+                    <TextBlock x:Name="TxtStatus" Text="Đang tải..." Foreground="#2563EB" FontSize="12" Margin="0,0,0,4"/>
+                    <ProgressBar x:Name="ProgressBar" Height="6" Background="#E2E8F0" Foreground="#2563EB" BorderThickness="0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- ═══════════════════════════════════════════════════════════════
+                 ROW 3: FOOTER ACTION BAR (HÌNH 2 & 3)
+                 ═══════════════════════════════════════════════════════════════ -->
+            <Border Grid.Row="3" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0" Padding="16,10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/> <!-- Left Actions: Uninstall, Guides, Lang -->
+                        <ColumnDefinition Width="*"/>    <!-- Center: Version Combo -->
+                        <ColumnDefinition Width="Auto"/> <!-- Right Actions: Check Git, Install -->
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Left Buttons: Gỡ cài đặt, Hướng dẫn, Ngôn ngữ -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button x:Name="BtnUninstall" Content="🗑 Gỡ cài đặt" Style="{StaticResource SecondaryBtn}" Click="BtnUninstall_Click" Margin="0,0,6,0"/>
+                        <Button Content="⚡ Hướng dẫn nhanh" Style="{StaticResource SecondaryBtn}" Click="BtnQuickGuide_Click" Margin="0,0,6,0"/>
+                        <Button Content="▶ HD cài đặt" Style="{StaticResource SecondaryBtn}" Click="BtnInstallGuide_Click" Margin="0,0,10,0"/>
+                        <TextBlock Text="🌐 VI" Foreground="#475569" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- Center: ComboBox Version -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <ComboBox x:Name="CmbReleaseSelect" Width="130" Height="30" VerticalAlignment="Center" SelectedIndex="0">
+                            <ComboBoxItem Content="Bản mới nhất"/>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <!-- Right Buttons: Kiểm tra File / Git + Cài đặt / Cập nhật -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button x:Name="BtnCheckUpdate" Content="🔍 Kiểm tra File" Style="{StaticResource SecondaryBtn}" Click="BtnCheckUpdate_Click" Margin="0,0,8,0"/>
+                        <Button x:Name="BtnInstall" Content="📥 Cài đặt / Cập nhật" Style="{StaticResource MainActionBtn}" Click="BtnInstall_Click"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
         </Grid>
     </Border>
 </Window>

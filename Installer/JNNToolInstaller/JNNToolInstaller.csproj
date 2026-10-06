@@ -12,11 +12,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Text.Json" Version="8.0.0" />
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
   </ItemGroup>
 
   <ItemGroup>
     <Resource Include="Assets\logo.png" />
+    <Resource Include="Assets\Logo_JNN.png" />
+    <Resource Include="Assets\Logo_JNN.ico" />
     <Resource Include="Assets\dog.jpg" />
     <None Update="Assets\*" CopyToOutputDirectory="PreserveNewest" />
     <None Update="version.json" CopyToOutputDirectory="Always" />

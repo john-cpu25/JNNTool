@@ -4,6 +4,6 @@
     "manifestUrl":  "https://raw.githubusercontent.com/john-cpu25/JNNTool/main/version.json",
     "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.0.4/JNNToolSetup_v2.0.4.msi",
     "changelog":  [
-                      "CSI x Revit: Tool doc lap Can Le Bien (Modeless, tu dong co keo dam ngang, chong xien); Sua triet de loi UI chim sau Revit; Chuan hoa goc xoay cot bien/cot det; Tam an module IFC Etabs"
+                      "CSI x Revit: Tool doc lap Can Le Bien (Modeless, tu dong co keo dam ngang, chong xien); Sua triet de loi UI chim sau Revit; Chuan hoa goc xoay cot bien/cot det; Nang cap giao dien JNN Updater theo Brand chuan \u0026 doi Logo JNN"
                   ]
 }
