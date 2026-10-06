@@ -1,0 +1,64 @@
+=== GEOMETRY ANALYSIS: NP CHI HOA-TAN SON-GV ===
+Points (Joints): 282
+Stories: 10
+  Story: MAI        Elev:  22.30m (H:  3.30m)
+  Story: T7         Elev:  19.00m (H:  3.30m)
+  Story: T6         Elev:  15.70m (H:  3.30m)
+  Story: T5         Elev:  12.40m (H:  3.30m)
+  Story: T4         Elev:   9.10m (H:  3.30m)
+  Story: T3         Elev:   5.80m (H:  2.90m)
+  Story: T2         Elev:   2.90m (H:  2.90m)
+  Story: T1         Elev:   0.00m (H:  2.90m)
+  Story: HAM        Elev:  -2.90m (H:  1.00m)
+  Story: Base       Elev:  -3.90m (H:  0.00m)
+Grids: 10
+  Grid: X0     Dir: X    Coord:  -2.28m
+  Grid: X1     Dir: X    Coord:   0.00m
+  Grid: X2     Dir: X    Coord:   4.70m
+  Grid: X3     Dir: X    Coord:   9.30m
+  Grid: X4     Dir: X    Coord:  13.95m
+  Grid: X5     Dir: X    Coord:  18.65m
+  Grid: X6     Dir: X    Coord:  23.22m
+  Grid: X7     Dir: X    Coord:  27.06m
+  Grid: Y1     Dir: Y    Coord:   0.00m
+  Grid: Y2     Dir: Y    Coord:   4.99m
+Columns: 150
+  Col Section: C50X20          Count:   54  Size: 200×500 mm
+  Col Section: C60X20          Count:   30  Size: 200×600 mm
+  Col Section: C20X30          Count:    4  Size: 300×200 mm
+  Col Section: SC1-250*8-200*12 Count:   12  Size: 200×250 mm
+  Col Section: C15X40          Count:   24  Size: 400×150 mm
+  Col Section: C30X20          Count:    4  Size: 200×300 mm
+  Col Section: C15X30          Count:   13  Size: 300×150 mm
+  Col Section: C20X20          Count:    9  Size: 200×200 mm
+Beams: 352
+  Beam Section: B35X40          Count:   15  Size: 350×400 mm
+  Beam Section: B20X40          Count:  111  Size: 200×400 mm
+  Beam Section: B15X30          Count:   51  Size: 150×300 mm
+  Beam Section: T1              Count:   37  Size: 100×100 mm
+  Beam Section: B20X30          Count:   47  Size: 200×300 mm
+  Beam Section: SB1-300*6-187*8 Count:   48  Size: 187×300 mm
+  Beam Section: B10X40          Count:   11  Size: 100×400 mm
+  Beam Section: B10X30          Count:   11  Size: 100×300 mm
+  Beam Section: B30X40          Count:    8  Size: 300×400 mm
+  Beam Section: B30X60          Count:    2  Size: 300×600 mm
+  Beam Section: B50X60          Count:    1  Size: 500×600 mm
+  Beam Section: B30X50          Count:    2  Size: 300×500 mm
+  Beam Section: B60X80          Count:    2  Size: 600×800 mm
+  Beam Section: B60X70          Count:    2  Size: 600×700 mm
+  Beam Section: B60X60          Count:    1  Size: 600×600 mm
+  Beam Section: B30X30          Count:    1  Size: 300×300 mm
+  Beam Section: B30X25          Count:    2  Size: 300×250 mm
+Walls: 1
+  Wall Section: S100            Count:    1  Size: Dày 100 mm
+Floors: 187
+  Floor Section: S100            Count:   15  Size: Dày 100 mm
+  Floor Section: S120            Count:   56  Size: Dày 120 mm
+  Floor Section: CT120           Count:   50  Size: Dày 120 mm
+  Floor Section: S200            Count:   12  Size: Dày 200 mm
+  Floor Section: F600            Count:    2  Size: Dày 600 mm
+  Floor Section: F800            Count:    2  Size: Dày 800 mm
+  Floor Section: F700            Count:    8  Size: Dày 700 mm
+  Floor Section: F900            Count:   12  Size: Dày 900 mm
+  Floor Section: SS1             Count:   30  Size: Dày 1 mm (Sàn ảo)
+Bounding Box (meters): X: [-2.28 -> 27.06] (29.34m), Y: [-0.00 -> 4.99] (4.99m), Z: [-3.90 -> 22.30] (26.20m)

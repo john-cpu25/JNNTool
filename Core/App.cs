@@ -379,6 +379,71 @@ namespace JNNTool
                 btnImportE2K.Image = img;
             }
 
+            // ------------------- Tạm ẩn Module IFC Etabs (Chưa hoàn thiện) -------------------
+            /*
+            PushButtonData btnEtabsConverterData = new PushButtonData(
+                "cmdEtabsConverter",
+                "ETABS\nConverter",
+                assemblyPath,
+                "JNNTool.Tools.IFCEtabs.Commands.EtabsConverterCommand"
+            );
+            btnEtabsConverterData.ToolTip = "Chuyển đổi trực tiếp mô hình ETABS sang cấu kiện Native Revit (Dầm, Cột, Tầng, Trục) kèm tham số JNN.";
+
+            PushButton btnEtabsConverter = csiPanel.AddItem(btnEtabsConverterData) as PushButton;
+            if (File.Exists(iconPathImportE2K))
+            {
+                BitmapImage img = new BitmapImage();
+                img.BeginInit();
+                img.UriSource = new Uri(iconPathImportE2K, UriKind.Absolute);
+                img.CacheOption = BitmapCacheOption.OnLoad;
+                img.EndInit();
+                btnEtabsConverter.LargeImage = img;
+                btnEtabsConverter.Image = img;
+            }
+
+            PushButtonData btnPropViewerData = new PushButtonData(
+                "cmdPropertyViewer",
+                "Property\nViewer",
+                assemblyPath,
+                "JNNTool.Tools.IFCEtabs.Commands.PropertyViewerCommand"
+            );
+            btnPropViewerData.ToolTip = "Tra cứu thuộc tính nguồn gốc (ETABS / IFC) và các tham số chi tiết của cấu kiện kết cấu.";
+
+            PushButton btnPropViewer = csiPanel.AddItem(btnPropViewerData) as PushButton;
+            if (File.Exists(iconPathImportE2K))
+            {
+                BitmapImage img = new BitmapImage();
+                img.BeginInit();
+                img.UriSource = new Uri(iconPathImportE2K, UriKind.Absolute);
+                img.CacheOption = BitmapCacheOption.OnLoad;
+                img.EndInit();
+                btnPropViewer.LargeImage = img;
+                btnPropViewer.Image = img;
+            }
+            */
+
+            // ------------------- Căn Lề Biên (Boundary Align) -------------------
+            string iconPathBoundaryAlign = Path.Combine(resourcesPath, "ExtendBeam.png");
+            PushButtonData btnBoundaryAlignData = new PushButtonData(
+                "cmdBoundaryAlign",
+                "Căn Lề\nBiên",
+                assemblyPath,
+                "JNNTool.Tools.CSIxRevit.Commands.BoundaryAlignCommand"
+            );
+            btnBoundaryAlignData.ToolTip = "Dời dầm và cột biên vào trong ranh đất / lưới trục (B/2), tự động co/kéo các dầm ngang vuông góc kết nối vào.";
+
+            PushButton btnBoundaryAlign = csiPanel.AddItem(btnBoundaryAlignData) as PushButton;
+            if (File.Exists(iconPathBoundaryAlign))
+            {
+                BitmapImage img = new BitmapImage();
+                img.BeginInit();
+                img.UriSource = new Uri(iconPathBoundaryAlign, UriKind.Absolute);
+                img.CacheOption = BitmapCacheOption.OnLoad;
+                img.EndInit();
+                btnBoundaryAlign.LargeImage = img;
+                btnBoundaryAlign.Image = img;
+            }
+
             // ------------------- Connection -------------------
             string iconPathConnection = Path.Combine(resourcesPath, "Connection.png");
             PushButtonData btnConnectionData = new PushButtonData(

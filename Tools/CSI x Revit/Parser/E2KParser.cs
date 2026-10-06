@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using Autodesk.Revit.DB;
 using JNNTool.Tools.CSIxRevit.Models;
 
 namespace JNNTool.Tools.CSIxRevit.Parser
@@ -250,25 +249,54 @@ namespace JNNTool.Tools.CSIxRevit.Parser
                 }
             }
 
-            // 1.6 Parse Grids
+            // 1.6 Parse Grids (both Cartesian GRID and Arbitrary GENGRID)
             var gridKeys = tables.Keys.Where(k => k.Contains("GRID")).ToList();
             foreach (var key in gridKeys)
             {
                 foreach (var line in tables[key])
                 {
                     var tokens = Tokenize(line);
-                    if (tokens.Count >= 2 && tokens[0].Equals("GRID", StringComparison.OrdinalIgnoreCase))
+                    if (tokens.Count < 2) continue;
+
+                    if (tokens[0].Equals("GRID", StringComparison.OrdinalIgnoreCase))
                     {
+                        // Format: GRID "G1" LABEL "1" DIR "X" COORD 0 VISIBLE "Yes"
                         int lblIdx = tokens.FindIndex(t => t.Equals("LABEL", StringComparison.OrdinalIgnoreCase));
                         int dirIdx = tokens.FindIndex(t => t.Equals("DIR", StringComparison.OrdinalIgnoreCase));
                         int coordIdx = tokens.FindIndex(t => t.Equals("COORD", StringComparison.OrdinalIgnoreCase));
                         
                         if (lblIdx >= 0 && dirIdx >= 0 && coordIdx >= 0 && coordIdx + 1 < tokens.Count)
                         {
+                            string sys = tokens.Count > 1 && !tokens[1].Equals("LABEL", StringComparison.OrdinalIgnoreCase) ? Clean(tokens[1]) : "";
                             grids.Add(new GridData {
+                                SystemName = sys,
                                 Name = Clean(tokens[lblIdx + 1]),
                                 Direction = Clean(tokens[dirIdx + 1]),
                                 Coordinate = ParseDouble(tokens[coordIdx + 1]) * scaleToFeet
+                            });
+                        }
+                    }
+                    else if (tokens[0].Equals("GENGRID", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Format: GENGRID "G1-DH" LABEL "Z8" X1 123.1223 Y1 62.34762 X2 106.7931 Y2 78.68673
+                        int lblIdx = tokens.FindIndex(t => t.Equals("LABEL", StringComparison.OrdinalIgnoreCase));
+                        int x1Idx = tokens.FindIndex(t => t.Equals("X1", StringComparison.OrdinalIgnoreCase));
+                        int y1Idx = tokens.FindIndex(t => t.Equals("Y1", StringComparison.OrdinalIgnoreCase));
+                        int x2Idx = tokens.FindIndex(t => t.Equals("X2", StringComparison.OrdinalIgnoreCase));
+                        int y2Idx = tokens.FindIndex(t => t.Equals("Y2", StringComparison.OrdinalIgnoreCase));
+
+                        if (lblIdx >= 0 && x1Idx >= 0 && y1Idx >= 0 && x2Idx >= 0 && y2Idx >= 0 && y2Idx + 1 < tokens.Count)
+                        {
+                            string sys = tokens.Count > 1 && !tokens[1].Equals("LABEL", StringComparison.OrdinalIgnoreCase) ? Clean(tokens[1]) : "";
+                            grids.Add(new GridData {
+                                SystemName = sys,
+                                Name = Clean(tokens[lblIdx + 1]),
+                                Direction = "GEN",
+                                IsGeneral = true,
+                                X1 = ParseDouble(tokens[x1Idx + 1]) * scaleToFeet,
+                                Y1 = ParseDouble(tokens[y1Idx + 1]) * scaleToFeet,
+                                X2 = ParseDouble(tokens[x2Idx + 1]) * scaleToFeet,
+                                Y2 = ParseDouble(tokens[y2Idx + 1]) * scaleToFeet
                             });
                         }
                     }
@@ -321,7 +349,7 @@ namespace JNNTool.Tools.CSIxRevit.Parser
 
                         if (isValid && !string.IsNullOrEmpty(name))
                         {
-                            localPoints[name] = new PointData { Name = name, Position = new XYZ(x * scaleToFeet, y * scaleToFeet, z * scaleToFeet) };
+                            localPoints[name] = new PointData { Name = name, Position = new Point3D(x * scaleToFeet, y * scaleToFeet, z * scaleToFeet) };
                         }
                     }
                 }
@@ -424,7 +452,18 @@ namespace JNNTool.Tools.CSIxRevit.Parser
                         cp = parsedCp;
                     }
 
-                    frameAssigns.Add(new FrameAssignData { FrameName = name, StoryName = storyName, Section = section, CardinalPoint = cp });
+                    double angle = 0;
+                    int angIdx = tokens.FindIndex(t => t.Equals("ANG", StringComparison.OrdinalIgnoreCase) || t.Equals("ANGLE", StringComparison.OrdinalIgnoreCase));
+                    if (angIdx >= 0 && angIdx + 1 < tokens.Count && TryParseDouble(tokens[angIdx + 1], out double parsedAng))
+                    {
+                        angle = parsedAng;
+                    }
+                    else if (frameConnectivity.TryGetValue(name, out var fc) && fc.Angle != 0)
+                    {
+                        angle = fc.Angle;
+                    }
+
+                    frameAssigns.Add(new FrameAssignData { FrameName = name, StoryName = storyName, Section = section, CardinalPoint = cp, Angle = angle });
                 }
             }
 
@@ -568,7 +607,8 @@ namespace JNNTool.Tools.CSIxRevit.Parser
                         BottomElevation = colBot,
                         CardinalPoint = assign.CardinalPoint > 0 ? assign.CardinalPoint : 5,
                         WidthMm = secDef?.WidthMm ?? 0,
-                        DepthMm = secDef?.DepthMm ?? 0
+                        DepthMm = secDef?.DepthMm ?? 0,
+                        Angle = assign.Angle
                     });
                 }
                 else
@@ -700,7 +740,7 @@ namespace JNNTool.Tools.CSIxRevit.Parser
                             if (story != null)
                             {
                                 var oldPos = localPoints[ptName].Position;
-                                localPoints[ptName].Position = new XYZ(oldPos.X, oldPos.Y, story.Elevation);
+                                localPoints[ptName].Position = new Point3D(oldPos.X, oldPos.Y, story.Elevation);
                             }
                         }
                     }
@@ -729,6 +769,7 @@ namespace JNNTool.Tools.CSIxRevit.Parser
             public string PointI { get; set; }
             public string PointJ { get; set; }
             public bool? IsColumn { get; set; }
+            public double Angle { get; set; } = 0;
         }
 
         private class AreaConnData
@@ -745,6 +786,7 @@ namespace JNNTool.Tools.CSIxRevit.Parser
             public string StoryName { get; set; }
             public string Section { get; set; }
             public int CardinalPoint { get; set; } = 8;
+            public double Angle { get; set; } = 0;
         }
 
         private class AreaAssignData

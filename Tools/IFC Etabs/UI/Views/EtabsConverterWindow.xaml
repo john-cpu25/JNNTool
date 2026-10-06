@@ -1,0 +1,202 @@
+<Window x:Class="JNNTool.Tools.IFCEtabs.UI.Views.EtabsConverterWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:JNNTool.Tools.IFCEtabs.UI.ViewModels"
+        mc:Ignorable="d"
+        Title="JNN ETABS → Revit Converter"
+        Height="700" Width="520"
+        WindowStartupLocation="CenterScreen"
+        Background="#1E1E1E"
+        Foreground="#E0E0E0"
+        FontFamily="Segoe UI"
+        FontSize="13">
+
+    <Window.DataContext>
+        <vm:EtabsConverterViewModel />
+    </Window.DataContext>
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+
+        <Style TargetType="GroupBox">
+            <Setter Property="Foreground" Value="#00AEEF"/>
+            <Setter Property="BorderBrush" Value="#3F3F46"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+
+        <Style TargetType="CheckBox">
+            <Setter Property="Foreground" Value="#CCCCCC"/>
+            <Setter Property="Margin" Value="0,4,10,4"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="#2D2D30"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#3F3F46"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#007ACC"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.5"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- Header -->
+            <RowDefinition Height="*"/>    <!-- Content -->
+            <RowDefinition Height="Auto"/> <!-- Progress & Status -->
+            <RowDefinition Height="Auto"/> <!-- Action Buttons -->
+        </Grid.RowDefinitions>
+
+        <!-- 1. Header -->
+        <Border Grid.Row="0" Background="#252526" CornerRadius="6" Padding="12" Margin="0,0,0,12" BorderBrush="#00AEEF" BorderThickness="1,0,0,0">
+            <StackPanel>
+                <TextBlock Text="JNN ETABS CONVERTER" FontSize="16" FontWeight="Bold" Foreground="#00AEEF"/>
+                <TextBlock Text="Chuyển đổi trực tiếp mô hình ETABS sang cấu kiện Native Revit (Dầm, Cột, Tầng, Trục)" FontSize="11" Foreground="#888888" Margin="0,3,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- 2. Scrollable Content -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <!-- Source -->
+                <GroupBox Header="1. NGUỒN DỮ LIỆU">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <RadioButton Content="ETABS API (Trực tiếp)" IsChecked="{Binding IsEtabsMode}" Foreground="#CCCCCC" Margin="0,0,20,0"/>
+                            <RadioButton Content="Tệp IFC (Mode B)" IsChecked="{Binding IsIfcMode}" Foreground="#CCCCCC"/>
+                        </StackPanel>
+
+                        <!-- Panel ETABS API -->
+                        <Grid Visibility="{Binding IsEtabsMode, Converter={StaticResource BoolToVis}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" Content="⚡ Kết Nối &amp; Đọc ETABS Đang Mở" Command="{Binding ConnectCommand}" Height="34" Background="#0E639C"/>
+                            <Button Grid.Column="1" Content="⟳ Nạp Lại" Command="{Binding ExtractModelCommand}" Margin="8,0,0,0" Width="80"/>
+                        </Grid>
+
+                        <!-- Panel IFC File -->
+                        <Grid Visibility="{Binding IsIfcMode, Converter={StaticResource BoolToVis}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0" Text="{Binding IfcFilePath, Mode=OneWay}" IsReadOnly="True" Height="34" 
+                                     Background="#252526" Foreground="#FFFFFF" BorderBrush="#3F3F46" Padding="6,6" VerticalContentAlignment="Center"/>
+                            <Button Grid.Column="1" Content="📂 Chọn Tệp IFC..." Command="{Binding SelectIfcFileCommand}" Margin="8,0,0,0" Height="34" Background="#0E639C"/>
+                        </Grid>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- Model Information -->
+                <GroupBox Header="2. THÔNG TIN MÔ HÌNH">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Tên mô hình:" Foreground="#888888" Margin="0,2"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding ModelName}" FontWeight="Bold" Foreground="#FFFFFF" Margin="0,2"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Đơn vị nạp:" Foreground="#888888" Margin="0,2"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Units}" Foreground="#00FFCC" Margin="0,2"/>
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Số tầng / Lưới:" Foreground="#888888" Margin="0,2"/>
+                        <TextBlock Grid.Row="2" Grid.Column="1" Margin="0,2">
+                            <Run Text="{Binding LevelCount, Mode=OneWay}" FontWeight="Bold" Foreground="#FFFFFF"/>
+                            <Run Text=" tầng / " Foreground="#888888"/>
+                            <Run Text="{Binding GridCount, Mode=OneWay}" FontWeight="Bold" Foreground="#FFFFFF"/>
+                            <Run Text=" lưới" Foreground="#888888"/>
+                        </TextBlock>
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Cột / Dầm phát hiện:" Foreground="#888888" Margin="0,2"/>
+                        <TextBlock Grid.Row="3" Grid.Column="1" Margin="0,2">
+                            <Run Text="{Binding ColumnCount, Mode=OneWay}" FontWeight="Bold" Foreground="#00AEEF"/>
+                            <Run Text=" cột / " Foreground="#888888"/>
+                            <Run Text="{Binding BeamCount, Mode=OneWay}" FontWeight="Bold" Foreground="#00AEEF"/>
+                            <Run Text=" dầm" Foreground="#888888"/>
+                        </TextBlock>
+
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Vách / Sàn phát hiện:" Foreground="#888888" Margin="0,2"/>
+                        <TextBlock Grid.Row="4" Grid.Column="1" Margin="0,2">
+                            <Run Text="{Binding WallCount, Mode=OneWay}" FontWeight="Bold" Foreground="#FFCC00"/>
+                            <Run Text=" vách / " Foreground="#888888"/>
+                            <Run Text="{Binding SlabCount, Mode=OneWay}" FontWeight="Bold" Foreground="#FFCC00"/>
+                            <Run Text=" sàn" Foreground="#888888"/>
+                        </TextBlock>
+                    </Grid>
+                </GroupBox>
+
+                <!-- Element Types to Convert -->
+                <GroupBox Header="3. CẤU KIỆN CHUYỂN ĐỔI">
+                    <WrapPanel>
+                        <CheckBox Content="Cột kết cấu (Columns)" IsChecked="{Binding ImportColumns}" Width="200"/>
+                        <CheckBox Content="Dầm kết cấu (Beams)" IsChecked="{Binding ImportBeams}" Width="200"/>
+                        <CheckBox Content="Cao độ tầng (Levels)" IsChecked="{Binding ImportLevels}" Width="200"/>
+                        <CheckBox Content="Lưới trục (Grids)" IsChecked="{Binding ImportGrids}" Width="200"/>
+                        <CheckBox Content="Vách kết cấu (Walls)" IsChecked="{Binding ImportWalls}" Width="200"/>
+                        <CheckBox Content="Sàn kết cấu (Slabs)" IsChecked="{Binding ImportSlabs}" Width="200"/>
+                    </WrapPanel>
+                </GroupBox>
+
+                <!-- Options -->
+                <GroupBox Header="4. TÙY CHỌN CHUYỂN ĐỔI">
+                    <StackPanel>
+                        <CheckBox Content="Tự động nhân bản Family Type nếu chưa có (Auto Create Types)" IsChecked="{Binding AutoCreateTypes}"/>
+                        <CheckBox Content="Cập nhật cấu kiện đã tồn tại (Match ID &amp; Update instead of duplicate)" IsChecked="{Binding UpdateExisting}"/>
+                        <CheckBox Content="Gắn tham số nguồn JNN_* phục vụ truy xuất (Preserve IDs &amp; Traceability)" IsChecked="{Binding PreserveIds}"/>
+                    </StackPanel>
+                </GroupBox>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- 3. Progress & Status -->
+        <Border Grid.Row="2" Background="#252526" CornerRadius="4" Padding="8" Margin="0,10,0,10">
+            <StackPanel>
+                <Grid Margin="0,0,0,4">
+                    <TextBlock Text="{Binding StatusText}" Foreground="#AAAAAA" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Text="{Binding ProgressText}" HorizontalAlignment="Right" Foreground="#00AEEF" FontSize="11"/>
+                </Grid>
+                <ProgressBar Height="4" Value="{Binding ProgressValue}" Minimum="0" Maximum="100" 
+                             Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}" 
+                             Foreground="#00AEEF" Background="#333333" BorderThickness="0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- 4. Action Buttons -->
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="80"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Content="Đóng" Click="CloseButton_Click" Height="38" Margin="0,0,4,0"/>
+            <Button Grid.Column="1" Content="📄 Xuất Báo Cáo QA" Command="{Binding GenerateReportCommand}" Height="38" Margin="4,0,4,0" Background="#3E3E42"/>
+            <Button Grid.Column="2" Content="🚀 CHUYỂN ĐỔI" Command="{Binding ImportCommand}" Height="38" Margin="4,0,0,0" Background="#2E7D32" FontWeight="Bold"/>
+        </Grid>
+    </Grid>
+</Window>

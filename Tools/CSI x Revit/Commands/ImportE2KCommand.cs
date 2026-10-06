@@ -22,7 +22,8 @@ namespace JNNTool.Tools.CSIxRevit.Commands
             using (OpenFileDialog ofd = new OpenFileDialog())
             {
                 ofd.Filter = "ETABS files (*.e2k;*.$et;*.txt)|*.e2k;*.$et;*.txt|All files (*.*)|*.*";
-                if (ofd.ShowDialog() == DialogResult.OK)
+                var revitOwner = new RevitWin32Window(uiapp.MainWindowHandle);
+                if (ofd.ShowDialog(revitOwner) == DialogResult.OK)
                 {
                     try
                     {
@@ -90,7 +91,10 @@ namespace JNNTool.Tools.CSIxRevit.Commands
                             sectionDefs
                         );
 
-                        if (window.ShowDialog() == true)
+                        bool hasImported = false;
+                        GridBuildResult gridResult = new GridBuildResult();
+
+                        bool RunImport()
                         {
                             var beamMap = window.GetBeamMapping();
                             var colMap = window.GetColumnMapping();
@@ -117,16 +121,33 @@ namespace JNNTool.Tools.CSIxRevit.Commands
                                 tx.Start();
 
                                 LevelBuilder.Build(doc, stories);
+
+                                // Regenerate to register new levels before creating grids
+                                doc.Regenerate();
+
                                 var allLevels = new FilteredElementCollector(doc).OfClass(typeof(Level)).Cast<Level>().ToList();
-                                GridBuilder.Build(doc, grids);
+                                gridResult = GridBuilder.Build(doc, grids);
+
+                                if (doc.ActiveView is View3D view3D && !view3D.IsTemplate)
+                                {
+                                    try
+                                    {
+                                        var targetLevelId = (levelId != null && levelId != ElementId.InvalidElementId) ? levelId : allLevels.FirstOrDefault()?.Id;
+                                        if (targetLevelId != null && targetLevelId != ElementId.InvalidElementId)
+                                        {
+                                            view3D.ShowGridsOnLevel(targetLevelId);
+                                        }
+                                    }
+                                    catch { }
+                                }
 
                                 foreach (var b in beams)
                                 {
-                                    if (beamMap.ContainsKey(b.Section) && beamMap[b.Section] != null)
+                                    if (beamMap.TryGetValue(b.Section, out var elemType) && elemType is FamilySymbol sym)
                                     {
                                         var p1 = points.FirstOrDefault(p => p.Name == b.PointI);
                                         var p2 = points.FirstOrDefault(p => p.Name == b.PointJ);
-                                        if (p1 != null && p2 != null)
+                                        if (p1?.Position != null && p2?.Position != null)
                                         {
                                             XYZ offset1 = null;
                                             XYZ offset2 = null;
@@ -134,53 +155,133 @@ namespace JNNTool.Tools.CSIxRevit.Commands
                                             {
                                                 nodeOffsets.TryGetValue(b.PointI, out offset1);
                                                 nodeOffsets.TryGetValue(b.PointJ, out offset2);
+
+                                                if (offset1 != null || offset2 != null)
+                                                {
+                                                    double off1X = offset1?.X ?? 0;
+                                                    double off1Y = offset1?.Y ?? 0;
+                                                    double off2X = offset2?.X ?? 0;
+                                                    double off2Y = offset2?.Y ?? 0;
+
+                                                    // Anti-skew guarantee:
+                                                    // 1. If beam was parallel to X in E2K (abs(dy) < 0.01), ensure Y offsets match!
+                                                    if (Math.Abs(p1.Position.Y - p2.Position.Y) < 0.01)
+                                                    {
+                                                        double commonY = (Math.Abs(off1Y) > 0.001 && Math.Abs(off2Y) > 0.001)
+                                                            ? (off1Y + off2Y) / 2.0
+                                                            : (Math.Abs(off1Y) > 0.001 ? off1Y : off2Y);
+                                                        off1Y = commonY;
+                                                        off2Y = commonY;
+                                                    }
+
+                                                    // 2. If beam was parallel to Y in E2K (abs(dx) < 0.01), ensure X offsets match!
+                                                    if (Math.Abs(p1.Position.X - p2.Position.X) < 0.01)
+                                                    {
+                                                        double commonX = (Math.Abs(off1X) > 0.001 && Math.Abs(off2X) > 0.001)
+                                                            ? (off1X + off2X) / 2.0
+                                                            : (Math.Abs(off1X) > 0.001 ? off1X : off2X);
+                                                        off1X = commonX;
+                                                        off2X = commonX;
+                                                    }
+
+                                                    offset1 = new XYZ(off1X, off1Y, 0);
+                                                    offset2 = new XYZ(off2X, off2Y, 0);
+                                                }
                                             }
-                                            BeamBuilder.Build(doc, b, p1, p2, beamMap[b.Section] as FamilySymbol, allLevels, offset1, offset2, applyCardinalPoint);
+                                            BeamBuilder.Build(doc, b, p1, p2, sym, allLevels, offset1, offset2, applyCardinalPoint);
                                         }
                                     }
                                 }
 
                                 foreach (var c in columns)
                                 {
-                                    if (colMap.ContainsKey(c.Section) && colMap[c.Section] != null)
+                                    if (colMap.TryGetValue(c.Section, out var elemType) && elemType is FamilySymbol sym)
                                     {
                                         var p1 = points.FirstOrDefault(p => p.Name == c.PointI);
                                         var p2 = points.FirstOrDefault(p => p.Name == c.PointJ);
-                                        if (p1 != null && p2 != null)
+                                        if (p1?.Position != null && p2?.Position != null)
                                         {
                                             XYZ offset = null;
                                             if (nodeOffsets != null)
                                             {
                                                 nodeOffsets.TryGetValue(c.PointI, out offset);
                                             }
-                                            ColumnBuilder.Build(doc, c, p1, p2, colMap[c.Section] as FamilySymbol, allLevels, offset);
+                                            ColumnBuilder.Build(doc, c, p1, p2, sym, allLevels, offset);
                                         }
                                     }
                                 }
 
                                 foreach (var w in walls)
                                 {
-                                    if (wallMap.ContainsKey(w.Section) && wallMap[w.Section] != null)
+                                    if (wallMap.TryGetValue(w.Section, out var elemType) && elemType is WallType wt)
                                     {
                                         var coords = w.PointNames.Select(pn => points.FirstOrDefault(p => p.Name == pn)?.Position).Where(pos => pos != null).ToList();
                                         if (coords.Count >= 2)
-                                            WallBuilder.Build(doc, w, coords, wallMap[w.Section] as WallType, allLevels);
+                                            WallBuilder.Build(doc, w, coords, wt, allLevels);
                                     }
                                 }
 
                                 foreach (var f in floors)
                                 {
-                                    if (floorMap.ContainsKey(f.Section) && floorMap[f.Section] != null)
+                                    if (floorMap.TryGetValue(f.Section, out var elemType) && elemType is FloorType ft)
                                     {
                                         var coords = f.PointNames.Select(pn => points.FirstOrDefault(p => p.Name == pn)?.Position).Where(pos => pos != null).ToList();
                                         if (coords.Count >= 3)
-                                            FloorBuilder.Build(doc, f, coords, floorMap[f.Section] as FloorType, allLevels);
+                                            FloorBuilder.Build(doc, f, coords, ft, allLevels);
                                     }
                                 }
 
+                                try
+                                {
+                                    doc.Regenerate();
+                                }
+                                catch { }
+
                                 tx.Commit();
                             }
-                            Autodesk.Revit.UI.TaskDialog.Show("Thành công", "Đã import xong mô hình từ ETABS!");
+
+                            hasImported = true;
+                            return true;
+                        }
+
+                        window.SetImportAction(RunImport);
+
+                        var helper = new System.Windows.Interop.WindowInteropHelper(window);
+                        helper.Owner = uiapp.MainWindowHandle;
+
+                        window.Loaded += (s, e) =>
+                        {
+                            window.Activate();
+                            window.Focus();
+                        };
+
+                        if (window.ShowDialog() == true && !hasImported)
+                        {
+                            RunImport();
+                        }
+
+                        if (hasImported)
+                        {
+
+                            var sb = new System.Text.StringBuilder();
+                            sb.AppendLine("ĐÃ IMPORT XONG MÔ HÌNH TỪ ETABS!");
+                            sb.AppendLine();
+                            sb.AppendLine($"• Lưới trục (Grids): Đã tạo {gridResult.CreatedCount}/{grids.Count} trục (Bỏ qua/trùng: {gridResult.SkippedCount})");
+                            if (gridResult.Errors.Count > 0)
+                            {
+                                sb.AppendLine($"  Ghi chú: {gridResult.ErrorSummary}");
+                            }
+                            sb.AppendLine($"• Tầng (Levels): Đã tạo/khớp {stories.Count} tầng");
+                            sb.AppendLine($"• Dầm (Beams): Đã xử lý {beams.Count} dầm");
+                            sb.AppendLine($"• Cột (Columns): Đã xử lý {columns.Count} cột");
+                            sb.AppendLine($"• Vách (Walls): Đã xử lý {walls.Count} vách");
+                            sb.AppendLine($"• Sàn (Floors): Đã xử lý {floors.Count} sàn");
+                            sb.AppendLine();
+                            sb.AppendLine("💡 Ghi chú xem Lưới trục (Grid):");
+                            sb.AppendLine("- Mở bất kỳ Mặt bằng tầng nào (Floor Plan): Lưới trục hiển thị đầy đủ.");
+                            sb.AppendLine("- Trên 3D View: Đã tự động kích hoạt hiển thị lưới trục trên tầng đã chọn.");
+
+                            Autodesk.Revit.UI.TaskDialog.Show("Kết quả Import ETABS", sb.ToString());
                         }
                     }
                     catch (Exception ex)
@@ -225,5 +326,12 @@ namespace JNNTool.Tools.CSIxRevit.Commands
 
             return FailureProcessingResult.Continue;
         }
+    }
+
+    public class RevitWin32Window : System.Windows.Forms.IWin32Window
+    {
+        private readonly IntPtr _hwnd;
+        public RevitWin32Window(IntPtr hwnd) => _hwnd = hwnd;
+        public IntPtr Handle => _hwnd;
     }
 }

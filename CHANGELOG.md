@@ -2,7 +2,104 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [2.0.4] - 2026-10-06
+
+### Added - CSI x Revit: Công cụ độc lập "🎯 Căn Lề Biên" (Boundary Align)
+- **Công cụ Ribbon Modeless mới**: Thêm nút bấm **"🎯 Căn Lề Biên"** (`BoundaryAlignCommand`) trên Ribbon tab `JNNTool` (Panel `CSI x Revit`).
+- **Giao diện Modeless Window (`BoundaryAlignWindow.xaml`)**:
+  - Cho phép người dùng quét chọn Dầm & Cột biên trực tiếp trên mặt bằng Revit mà không cần đóng cửa sổ.
+  - Tự động lọc cấu kiện bằng `FrameAndColumnSelectionFilter` (Structural Framing & Structural Columns).
+  - Tự động tính toán hướng vào trong lòng nhà (Auto Grid) hoặc chọn hướng thủ công (Dời xuống -Y, Dời lên +Y, Dời sang trái -X, Dời sang phải +X).
+  - Tự động offset biên theo $B/2$ ($100\text{ mm}$ cho dầm $200\text{ mm}$) hoặc khoảng cách tùy chỉnh.
+- **Thuật toán co/kéo dầm ngang (`BoundaryAligner.cs`)**:
+  - Tự động co ngắn hoặc kéo dài các dầm ngang vuông góc kết nối vào dầm biên, đảm bảo không bị hở nút kết cấu sau khi dời biên.
+  - Cơ chế Anti-Skew Beam Protection chống tuyệt đối hiện tượng xiên dầm.
+
+### Fixed - CSI x Revit: Khắc phục lỗi UI bị chìm sau Revit & Tinh gọn cửa sổ Import
+- **Chống chìm UI ra sau Revit**:
+  - Gán `WindowInteropHelper.Owner = uiapp.MainWindowHandle;` cho cửa sổ `ImportWindow`.
+  - Cấu hình `WindowStartupLocation="CenterOwner"` giúp cửa sổ luôn xuất hiện ngay trung tâm màn hình Revit.
+  - Tích hợp `RevitWin32Window` cho `OpenFileDialog.ShowDialog(...)` để Revit không giành focus khi đóng dialog chọn file e2k.
+- **Tinh gọn cửa sổ Import**:
+  - Loại bỏ hoàn toàn Tab 3 (Căn lề biên) khỏi `ImportWindow`, quy trình chỉ tập trung vào 2 tab cốt lõi: 1. Tạo tiết diện thiếu & 2. Khớp tiết diện.
+  - Sau khi bấm "Bắt đầu Dựng Hình", cửa sổ sẽ tự động đóng và thông báo kết quả.
+
+### Fixed - CSI x Revit: Khắc phục triệt để lỗi góc xoay cột biên & cột dẹt
+- **Nguyên nhân cốt lõi**: Trong công thức cũ của `ColumnBuilder.cs`, `targetAngleDeg = angleEtabsLong - angleRevitLong = 90 - 90 = 0`, khiến các cột biên chữ nhật (ví dụ C50X20, C60X20) không được xoay mà giữ nguyên góc đặt mặc định của Revit (cạnh dài $h = 500/600\text{ mm}$ đâm ngang vào lòng nhà).
+- **Giải pháp**: Xây dựng [`ColumnRotationHelper.cs`](file:///c:/Users/nhann/OneDrive/AI/JNNTool/Tools/CSI%20x%20Revit/Builder/ColumnRotationHelper.cs) tự động đối soát chính xác giữa quy ước kích thước $D$ (theo trục X) & $B$ (theo trục Y) của ETABS với các tham số $b$ và $h$ của Family Revit:
+  - Cột biên dọc trục X (`C50X20`, `C60X20`): tự động xoay $90^\circ$ để cạnh dài $500/600\text{ mm}$ chạy dọc theo vách biên/dầm biên (phương X) đúng 100% như mô hình ETABS.
+  - Cột đầu hồi (`C20X30`): tự động giữ nguyên $0^\circ$ để cạnh $300\text{ mm}$ chạy dọc tường đầu hồi (phương Y).
+  - Cột vách thang (`C15X40`): tự động giữ nguyên $0^\circ$ để cạnh $400\text{ mm}$ chạy dọc vách thang (phương Y).
+  - Cột có `ANG 90` (như cột thép `SC1` hoặc `C8`): tự động xoay $90^\circ$.
+  - Đồng bộ logic tính toán bao hình biên trong [`EdgeAlignmentHelper.cs`](file:///c:/Users/nhann/OneDrive/AI/JNNTool/Tools/CSI%20x%20Revit/Builder/EdgeAlignmentHelper.cs).
+- **Kiểm thử**: Bổ sung Unit Tests kiểm tra đầy đủ 7 trường hợp cột (`69/69 tests PASS 100%`). Đã build và deploy thành công cho toàn bộ các phiên bản Revit 2022 - 2027.
+
+### Changed - Ribbon Ribbon Bar
+- **Tạm ẩn Module `Tools/IFC Etabs`**: Tạm ẩn 2 nút `ETABS Converter` và `Property Viewer` trên Ribbon theo yêu cầu do module đang trong giai đoạn tiếp tục hoàn thiện.
+
+### Added - JNN ETABS Converter (Phase 3: Validation Engine & Báo Cáo Nghiệm Thu QA)
+- **Bộ Máy Đối Soát Mô Hình (Validation Engine - `ValidationEngine.cs`)**:
+  - Tự động kiểm tra đối soát số lượng cấu kiện (Cột, Dầm, Tầng) giữa mô hình nguồn (ETABS / IFC) và mô hình Revit thực tế.
+  - Kiểm tra sai lệch cao độ tầng (Levels) và sai lệch kích thước hình học (chiều dài Dầm, Cột) theo dung sai tùy biến (mặc định ±2 mm).
+  - Phân loại đánh giá trạng thái chi tiết: `Pass` (Khớp), `Warning` (Cảnh báo sai lệch), `Fail` (Lỗi).
+  - Tính toán tỷ lệ đạt chuẩn tổng thể `PassRate` (%) của toàn dự án.
+- **Bộ Máy Xuất Báo Cáo Nghiệm Thu (Report Generator - `ReportGenerator.cs`)**:
+  - Thiết kế Decoupled (thuần C# POCO) cho phép sinh báo cáo hoàn chỉnh độc lập hoặc tích hợp trực tiếp với Revit Document.
+  - **Báo cáo HTML Dashboard**: Thiết kế Dark-Theme hiện đại, lưới thẻ KPI trực quan, bảng thống kê số lượng cấu kiện và bảng chi tiết sai lệch dung sai kèm huy hiệu màu sắc.
+  - **Báo cáo Bảng Tính CSV**: Chuẩn hóa mã hóa **UTF-8 with BOM** giúp hiển thị hoàn hảo tiếng Việt trên Microsoft Excel, xuất chi tiết nguồn, mã ID gốc, phân loại, tên tiết diện, tầng và Revit Element ID tương ứng.
+- **Tích Hợp Giao Diện**:
+  - Thêm nút bấm **"📄 Xuất Báo Cáo QA"** (`GenerateReportCommand`) trên thanh điều khiển chính của `EtabsConverterWindow.xaml`.
+  - Tự động kích hoạt mở báo cáo HTML trên trình duyệt mặc định ngay sau khi hoàn tất.
+- **Tối Ưu Kiến Trúc Decoupled**:
+  - Chuyển `ConversionOptions` và `ConversionReportResult` sang `Core/Models/ConversionResult.cs` giúp tầng Core POCO hoàn toàn độc lập với Revit API runtime.
+- **Kiểm Thử & Đóng Gói**:
+  - Bổ sung Unit Tests kiểm thử `ValidationSummary` và sinh báo cáo `ReportGenerator` (HTML + UTF-8 BOM CSV): Đạt **10/10 tests PASS 100%**.
+  - Biên dịch thành công cả 4 phiên bản: Revit 2024, 2025, 2026, 2027 với **0 lỗi**.
+  - Cập nhật checklist kiểm thử bước 8 trong `docs/test-checklist-etabs-converter.md`.
+
+### Added - JNN ETABS Converter (Phase 2: Sàn, Vách, Trình đọc IFC Mode B & Property Viewer)
+- **Tấm Sàn & Lỗ Mở (`FloorBuilder.cs`)**:
+  - Dựng native Revit `Floor` (`Floor.Create`) từ `ETABSSlab`.
+  - Tự động nhận diện `CurveLoop` đường bao ngoài và lồng các đường bao lỗ mở (`Openings`).
+- **Tường Vách Kết Cấu (`WallBuilder.cs`)**:
+  - Dựng native Revit `Wall` (`Wall.Create`) từ `ETABSWall`.
+  - Tự động nhận diện đường chân vách, gán Base Level, chiều cao $H$, bề dày $b$ và tham số JNN.
+- **Trình Đọc Tệp Tin IFC Mode B (`Tools/IFC Etabs/IFC/`)**:
+  - `IfcReader.cs`: Trình phân tích cú pháp STEP/SPF định dạng `.ifc` (IFC2x3 & IFC4) độc lập không phụ thuộc thư viện ngoài.
+  - Bóc tách đầy đủ các thực thể: `IfcBuildingStorey`, `IfcBeam`, `IfcColumn`, `IfcWall`, `IfcSlab`, `IfcMaterial`.
+  - Bảo toàn 100% các bộ thuộc tính `Pset_*` (`Pset_BeamCommon`, `Pset_WallCommon`...) vào từ điển `IFCProperties`.
+- **Bảng Tra Cứu Nguồn Gốc Cấu Kiện (Property Viewer)**:
+  - `PropertyViewerCommand.cs` & `PropertyViewerWindow.xaml`: Tra cứu nhanh cấu kiện đang chọn trên Revit hoặc chọn cấu kiện mới trực tiếp trên view.
+  - Hiển thị nguồn (`ETABS` / `IFC`), ID gốc, GUID, Section, Story, Material, Hash và danh sách toàn bộ tham số chi tiết.
+- **Tích Hợp Giao Diện & Ribbon**:
+  - Mở khóa nút chọn tệp IFC trên `EtabsConverterWindow.xaml`.
+  - Thêm nút bấm **Property Viewer** trên Ribbon tab `JNNTool` (Panel `CSI x Revit`).
+- **Kiểm Thử**:
+  - Bổ sung Unit Tests cho `IfcReader` và hình học Sàn/Vách trong `EtabsConverterTests`: Đạt **8/8 tests PASS 100%**.
+  - Biên dịch thành công cả 4 phiên bản: Revit 2024, 2025, 2026, 2027 với **0 lỗi**.
+
+### Added - JNN ETABS Converter (Phase 1: Foundation & First MVP)
+- **Module Chuyển Đổi Trực Tiếp ETABS → Revit Native Model (`Tools/IFC Etabs/`)**:
+  - **Core POCO Models**: `Point3D`, `Vector3D`, `LineSegment3D`, `CoordinateTransform`, `UnitConverter`, `StructuralModel`, `ETABSLevel`, `ETABSGrid`, `ETABSBeam`, `ETABSColumn`, `ETABSWall`, `ETABSSlab`, `ETABSSection`, `ETABSMaterial`. Hoàn toàn độc lập với Revit API, đơn vị mm.
+  - **Mã Băm Nhận Diện Biến Động (Hash Engine)**: `ElementHashService` sinh mã hash SHA256 từ thuộc tính hình học và kỹ thuật để nhận diện trạng thái `New`, `Updated`, `Unchanged`, `Deleted`.
+  - **ETABS API Adapter (Mode A)**: `EtabsApiService` giao tiếp trực tiếp với tiến trình ETABS đang mở thông qua COM Late-binding (`CSI.ETABS.API.ETABSObject`), hoạt động mượt mà trên mọi phiên bản ETABS (v18–v22+) mà không phụ thuộc DLL tĩnh.
+  - **Revit Native Builders**:
+    - `LevelBuilder`: Tìm hoặc tạo `Level` tự động theo cao độ mm với dung sai tùy chỉnh.
+    - `GridBuilder`: Tạo và tránh trùng lặp lưới trục kết cấu `Grid`.
+    - `TypeAutoCreator`: Tự động tìm kiếm hoặc nhân bản (Duplicate) `FamilySymbol` dầm/cột và gán kích thước $b \times h$ theo tiết diện ETABS.
+    - `ColumnBuilder`: Tạo `FamilyInstance` Structural Column native, gán Base/Top Level, Offsets, góc xoay và tham số JNN.
+    - `BeamBuilder`: Tạo `FamilyInstance` Structural Framing native giữa 2 điểm, Z-offset và tham số JNN.
+  - **Hệ Thống Tham Số Chia Sẻ JNN Traceability**:
+    - Tự động nạp và gán: `JNN_Source`, `JNN_ETABS_ID`, `JNN_IFC_GUID`, `JNN_ETABS_Story`, `JNN_ETABS_Section`, `JNN_ETABS_Material`, `JNN_Source_Hash`, `JNN_Conversion_Status`, `JNN_Conversion_Date`.
+  - **Tracking & Update Engine**:
+    - `ElementTracker` & `UpdateEngine` quét đối tượng Revit đã convert, đối soát phiên bản và cập nhật thay vì tạo trùng lặp.
+  - **Giao Diện Điều Khiển (WPF MVVM)**:
+    - `EtabsConverterWindow` & `EtabsConverterViewModel` dạng Modeless window, kết nối qua `ActionEventHandler`.
+    - Đăng ký nút bấm **ETABS Converter** trên Ribbon tab `JNNTool` (Panel `CSI x Revit`).
+  - **Kiểm Thử & Đóng Gói**:
+    - Unit Tests `EtabsConverterTests`: 6/6 tests PASS.
+    - Build thành công toàn bộ 4 cấu hình: `Release.R24`, `Release.R25`, `Release.R26`, `Release.R27` với **0 lỗi**.
+    - Tài liệu checklist kiểm thử: `docs/test-checklist-etabs-converter.md`.
 
 ### Added - Nâng cấp .NET 10 & Hỗ trợ Đa Phiên Bản Toàn Diện (Revit 2022 – 2027)
 - **Hỗ trợ .NET 10 SDK & Revit 2027 API**:

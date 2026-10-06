@@ -9,6 +9,8 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using JNNTool.Tools.CSIxRevit.Mapping;
 using JNNTool.Tools.CSIxRevit.Models;
+using JNNTool.Tools.CSIxRevit.Builder;
+using JNNTool.Core.ExternalEvents;
 
 namespace JNNTool.Tools.CSIxRevit.UI
 {
@@ -18,11 +20,16 @@ namespace JNNTool.Tools.CSIxRevit.UI
         private readonly FamilyMapper _mapper;
         private readonly Dictionary<string, SectionDefinition> _sectionDefs;
 
+        private Func<bool> _importAction;
+        private bool _hasImported = false;
+
         public ObservableCollection<CreateSectionItem> CreateSectionItems { get; set; }
         public ObservableCollection<SectionMappingItem> MappingItems { get; set; }
 
         public bool ApplyCardinalPoint => ChkApplyCardinalPoint.IsChecked == true;
         public bool ApplyEdgeAlignment => ChkApplyEdgeAlignment.IsChecked == true;
+
+        public void SetImportAction(Func<bool> action) => _importAction = action;
 
         public ImportWindow(
             Document doc,
@@ -531,6 +538,14 @@ namespace JNNTool.Tools.CSIxRevit.UI
 
         private void BtnImport_Click(object sender, RoutedEventArgs e)
         {
+            if (_hasImported)
+            {
+                // Already imported, user clicked to finish
+                DialogResult = true;
+                Close();
+                return;
+            }
+
             // Verify if any active section is unmapped
             var unmapped = MappingItems.Where(x => x.SelectedType == null).ToList();
             if (unmapped.Count > 0)
@@ -545,8 +560,31 @@ namespace JNNTool.Tools.CSIxRevit.UI
                 if (res != TaskDialogResult.Yes) return;
             }
 
-            DialogResult = true;
-            Close();
+            if (_importAction != null)
+            {
+                bool success = false;
+                try
+                {
+                    success = _importAction();
+                }
+                catch (Exception ex)
+                {
+                    TaskDialog.Show("Lỗi Dựng Hình", $"Gặp lỗi trong quá trình dựng hình: {ex.Message}");
+                    return;
+                }
+
+                if (success)
+                {
+                    _hasImported = true;
+                    DialogResult = true;
+                    Close();
+                }
+            }
+            else
+            {
+                DialogResult = true;
+                Close();
+            }
         }
 
         private void BtnCancel_Click(object sender, RoutedEventArgs e)
@@ -639,5 +677,24 @@ namespace JNNTool.Tools.CSIxRevit.UI
 
         public event PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+    }
+
+    public class FrameAndColumnSelectionFilter : Autodesk.Revit.UI.Selection.ISelectionFilter
+    {
+        public bool AllowElement(Element elem)
+        {
+            if (elem is FamilyInstance fi)
+            {
+                var cat = fi.Category;
+                if (cat != null)
+                {
+                    return cat.Id == new ElementId(BuiltInCategory.OST_StructuralFraming) 
+                        || cat.Id == new ElementId(BuiltInCategory.OST_StructuralColumns);
+                }
+            }
+            return false;
+        }
+
+        public bool AllowReference(Reference reference, XYZ position) => false;
     }
 }

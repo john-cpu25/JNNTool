@@ -11,5 +11,6 @@ namespace JNNTool.Tools.CSIxRevit.Models
         public int CardinalPoint { get; set; } = 5;
         public double WidthMm { get; set; }
         public double DepthMm { get; set; }
+        public double Angle { get; set; } = 0;
     }
 }

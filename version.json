@@ -1,9 +1,9 @@
 {
-    "version":  "2.0.3",
-    "releaseDate":  "2026-10-05",
+    "version":  "2.0.4",
+    "releaseDate":  "2026-10-06",
     "manifestUrl":  "https://raw.githubusercontent.com/john-cpu25/JNNTool/main/version.json",
-    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.0.3/JNNToolSetup_v2.0.3.msi",
+    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.0.4/JNNToolSetup_v2.0.4.msi",
     "changelog":  [
-                      "CSI x Revit: Bo in dam chu giao dien giup text thanh thoat; Khop tiet dien va ho tro tao tiet dien San / Vach thong minh; Clean size description"
+                      "CSI x Revit: Tool doc lap Can Le Bien (Modeless, tu dong co keo dam ngang, chong xien); Sua triet de loi UI chim sau Revit; Chuan hoa goc xoay cot bien/cot det; Tam an module IFC Etabs"
                   ]
 }
