@@ -38,6 +38,16 @@ namespace JNNTool
                 JNNTool.Core.Logging.Logger.Error("Lỗi khởi tạo ActionEventHandler", ex);
             }
 
+            // Đảm bảo môi trường WPF an toàn, ngăn lỗi "The Application object is being shut down"
+            try
+            {
+                JNNTool.Core.UI.WpfWindowHelper.EnsureApplicationContext();
+            }
+            catch (Exception ex)
+            {
+                JNNTool.Core.Logging.Logger.Error("Lỗi khởi tạo WpfWindowHelper", ex);
+            }
+
 
             // Lấy đường dẫn thực thi của tệp DLL
             string assemblyPath = Assembly.GetExecutingAssembly().Location;
@@ -589,53 +599,6 @@ namespace JNNTool
                 btnRebarCol.Image = img;
             }
 
-            // ------------------- Stair Model (Auto Structural Stair) -------------------
-            string iconPathStairModel = Path.Combine(resourcesPath, "StairModel.png");
-            if (!File.Exists(iconPathStairModel))
-            {
-                iconPathStairModel = Path.Combine(resourcesPath, "StairDetail.png");
-            }
-            PushButtonData btnStairModelData = new PushButtonData(
-                "cmdStairModel",
-                "Stair\nModel",
-                assemblyPath,
-                "JNNTool.Tools.StairModel.Commands.StairModelCommand"
-            );
-            btnStairModelData.ToolTip = "Tự động dựng cầu thang kết cấu bê tông (Straight, U-shaped, L-shaped) gồm bản thang nghiêng, chiếu nghỉ và dầm đỡ với preview 2D trực quan.";
-
-            PushButton btnStairModel = modelingPanel.AddItem(btnStairModelData) as PushButton;
-            if (File.Exists(iconPathStairModel))
-            {
-                BitmapImage img = new BitmapImage();
-                img.BeginInit();
-                img.UriSource = new Uri(iconPathStairModel, UriKind.Absolute);
-                img.CacheOption = BitmapCacheOption.OnLoad;
-                img.EndInit();
-                btnStairModel.LargeImage = img;
-                btnStairModel.Image = img;
-            }
-
-            // ------------------- Stair Detail -------------------
-            string iconPathStair = Path.Combine(resourcesPath, "StairDetail.png");
-            PushButtonData btnStairData = new PushButtonData(
-                "cmdStairDetail",
-                "Stair\nDetail",
-                assemblyPath,
-                "JNNTool.Tools.StairDetail.StairDetail"
-            );
-            btnStairData.ToolTip = "Tạo chi tiết thép cầu thang (thép chủ, thép phụ, kích thước).";
-
-            PushButton btnStair = modelingPanel.AddItem(btnStairData) as PushButton;
-            if (File.Exists(iconPathStair))
-            {
-                BitmapImage img = new BitmapImage();
-                img.BeginInit();
-                img.UriSource = new Uri(iconPathStair, UriKind.Absolute);
-                img.CacheOption = BitmapCacheOption.OnLoad;
-                img.EndInit();
-                btnStair.LargeImage = img;
-                btnStair.Image = img;
-            }
             // ------------------- Disallow Join Beam -------------------
             string iconPathDisallow = Path.Combine(resourcesPath, "DisallowJoinBeam.png");
             PushButtonData btnDisallowData = new PushButtonData(
@@ -935,6 +898,99 @@ namespace JNNTool
                     }
                 }
                 tabIdx++;
+            }
+
+            // ═══════════════════════════════════════════════════════════════
+            //  Panel: Stair (Bộ công cụ Thiết kế & Bố trí Thép Cầu Thang)
+            // ═══════════════════════════════════════════════════════════════
+            try
+            {
+                RibbonPanel stairPanel = application.CreateRibbonPanel(tabName, "Stair");
+
+                // ------------------- Stair Designer -------------------
+                string iconPathStairDesigner = Path.Combine(resourcesPath, "StairModel.png");
+                PushButtonData btnStairDesignerData = new PushButtonData(
+                    "cmdStairDesigner",
+                    "Stair\nDesigner",
+                    assemblyPath,
+                    "JNN.Stair.Commands.StairDesignerCommand"
+                );
+                btnStairDesignerData.ToolTip = "Thiết kế tham số hình học cầu thang 3D (Thẳng, U-Turn, L-Shape, Rẻ quạt Winder), dầm chiếu nghỉ, tự động dựng Solid và xuất nạp Family (.rfa).";
+
+                PushButton btnStairDesigner = stairPanel.AddItem(btnStairDesignerData) as PushButton;
+                if (btnStairDesigner != null && File.Exists(iconPathStairDesigner))
+                {
+                    BitmapImage img = new BitmapImage();
+                    img.BeginInit();
+                    img.UriSource = new Uri(iconPathStairDesigner, UriKind.Absolute);
+                    img.CacheOption = BitmapCacheOption.OnLoad;
+                    img.EndInit();
+                    btnStairDesigner.LargeImage = img;
+                    btnStairDesigner.Image = img;
+                }
+
+                // ------------------- Stair Rebar -------------------
+                string iconPathStairRebar = Path.Combine(resourcesPath, "StairDetail.png");
+                if (!File.Exists(iconPathStairRebar))
+                {
+                    iconPathStairRebar = Path.Combine(resourcesPath, "RebarStair.png");
+                }
+                PushButtonData btnStairRebarData = new PushButtonData(
+                    "cmdStairRebarSuiteNew",
+                    "Stair\nRebar",
+                    assemblyPath,
+                    "JNN.Stair.Commands.StairDetailingCommand"
+                );
+                btnStairRebarData.ToolTip = "Bố trí & uốn cốt thép thang tự động 3D/2D: Đan chéo chịu kéo tại góc lõm chống bung nổ bê tông theo TCVN 5574:2018.";
+
+                PushButton btnStairRebar = stairPanel.AddItem(btnStairRebarData) as PushButton;
+                if (btnStairRebar != null && File.Exists(iconPathStairRebar))
+                {
+                    BitmapImage img = new BitmapImage();
+                    img.BeginInit();
+                    img.UriSource = new Uri(iconPathStairRebar, UriKind.Absolute);
+                    img.CacheOption = BitmapCacheOption.OnLoad;
+                    img.EndInit();
+                    btnStairRebar.LargeImage = img;
+                    btnStairRebar.Image = img;
+                }
+            }
+            catch (Exception ex)
+            {
+                JNNTool.Core.Logging.Logger.Error("Lỗi tạo Ribbon Panel Stair", ex);
+            }
+
+            // ═══════════════════════════════════════════════════════════════
+            //  Panel: Quantity (Bóc tách khối lượng & 3D Section Box) trên tab JNNTool
+            // ═══════════════════════════════════════════════════════════════
+            try
+            {
+                RibbonPanel quantityPanel = application.CreateRibbonPanel(tabName, "Quantity");
+
+                string iconPathQto = Path.Combine(resourcesPath, "QuantityTakeoff.png");
+                PushButtonData btnQtoData = new PushButtonData(
+                    "cmdQuantityTakeoff",
+                    "Quantity\nTakeoff",
+                    assemblyPath,
+                    "JNNTool.Tools.QuantityTakeoff.Commands.QuantityTakeoffCommand"
+                );
+                btnQtoData.ToolTip = "Bóc tách khối lượng toàn diện (Bê tông, Ván khuôn, Thép, Diện tích, Chiều dài) theo từng tầng và cấu kiện.\n\n• Tạo Box 3D lập tức cho tầng hoặc cấu kiện\n• Xuất bảng tính Excel đa Sheet chuyên nghiệp\n• Lọc theo Category và Level linh hoạt";
+
+                PushButton btnQto = quantityPanel.AddItem(btnQtoData) as PushButton;
+                if (btnQto != null && File.Exists(iconPathQto))
+                {
+                    BitmapImage img = new BitmapImage();
+                    img.BeginInit();
+                    img.UriSource = new Uri(iconPathQto, UriKind.Absolute);
+                    img.CacheOption = BitmapCacheOption.OnLoad;
+                    img.EndInit();
+                    btnQto.LargeImage = img;
+                    btnQto.Image = img;
+                }
+            }
+            catch (Exception ex)
+            {
+                JNNTool.Core.Logging.Logger.Error("Lỗi tạo Ribbon Panel Quantity", ex);
             }
 
             // ─── Auto-update check (background, non-blocking) ───────────────

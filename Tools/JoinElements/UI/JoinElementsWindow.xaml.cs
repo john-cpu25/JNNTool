@@ -9,15 +9,7 @@ namespace RincoNhan.Tools.JoinElements.UI
     {
         public JoinElementsWindow(UIDocument uidoc)
         {
-            // Ensure WPF Application exists (required for XAML resource loading in Revit)
-
-            if (System.Windows.Application.Current == null)
-
-            {
-
-                new System.Windows.Application();
-
-            }
+            JNNTool.Core.UI.WpfWindowHelper.EnsureApplicationContext();
 
 
             InitializeComponent();

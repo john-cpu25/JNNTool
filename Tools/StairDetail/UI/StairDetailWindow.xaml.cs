@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Windows;
 using Autodesk.Revit.DB;
 using JNNTool.Tools.StairDetail.ViewModels;
@@ -9,11 +9,7 @@ namespace JNNTool.Tools.StairDetail.UI
     {
         public StairDetailWindow(List<Element> rebarTypes)
         {
-            // Ensure WPF Application exists (required for XAML resource loading in Revit)
-            if (System.Windows.Application.Current == null)
-            {
-                new System.Windows.Application();
-            }
+            JNNTool.Core.UI.WpfWindowHelper.EnsureApplicationContext();
 
             InitializeComponent();
             this.DataContext = new StairDetailViewModel(rebarTypes);

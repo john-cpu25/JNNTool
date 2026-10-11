@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using JNNTool.Tools.RebarColumn.ViewModels;
 
 namespace JNNTool.Tools.RebarColumn.UI
@@ -7,15 +7,7 @@ namespace JNNTool.Tools.RebarColumn.UI
     {
         public ApplyToOtherFloorsWindow()
         {
-            // Ensure WPF Application exists (required for XAML resource loading in Revit)
-
-            if (System.Windows.Application.Current == null)
-
-            {
-
-                new System.Windows.Application();
-
-            }
+            JNNTool.Core.UI.WpfWindowHelper.EnsureApplicationContext();
 
 
             InitializeComponent();

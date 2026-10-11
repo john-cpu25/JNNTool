@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Specialized;
 using System.Windows;
 using System.Windows.Controls;
@@ -24,15 +24,7 @@ namespace JNNTool.Tools.RebarColumn.UI
 
         public RebarColumnWindow(RebarColumnViewModel viewModel)
         {
-            // Ensure WPF Application exists (required for XAML resource loading in Revit)
-
-            if (System.Windows.Application.Current == null)
-
-            {
-
-                new System.Windows.Application();
-
-            }
+            JNNTool.Core.UI.WpfWindowHelper.EnsureApplicationContext();
 
 
             InitializeComponent();

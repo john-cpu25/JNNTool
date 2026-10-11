@@ -10,10 +10,7 @@ namespace JNNTool.Tools.IFCEtabs.UI.Views
 
         public PropertyViewerWindow()
         {
-            if (System.Windows.Application.Current == null)
-            {
-                new System.Windows.Application();
-            }
+            JNNTool.Core.UI.WpfWindowHelper.EnsureApplicationContext();
             InitializeComponent();
         }
 

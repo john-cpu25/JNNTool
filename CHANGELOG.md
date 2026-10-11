@@ -4,6 +4,33 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added - Tool **Quantity Takeoff** (tab Quantity): Bóc tách khối lượng toàn diện đa cấu kiện, Visual Preview Dashboard & 3D Section Box
+- **Vị trí Ribbon**: Bố trí trên Tab riêng biệt **Quantity** (panel `Takeoff`) độc lập.
+- **Bóc tách đa Category siêu tốc**: Dầm kết cấu, Cột kết cấu, Sàn, Vách/Tường, Móng/Đài/Cọc, Cầu thang, Cốt thép Rebar (Rebar & RebarInSystem), Mái, Trần, Cột kiến trúc, Cấu kiện khác...
+- **Chỉ số khối lượng đầy đủ**:
+  - Thể tích Bê tông ($m^3$) — ưu tiên đọc parameter `HOST_VOLUME_COMPUTED` siêu nhanh, tự động fallback quét Solid 1 lần duy nhất với mức `Coarse` khi cần.
+  - Diện tích Cốp pha ($m^2$) — tự động trích xuất hoặc ước tính mặt biên Solid.
+  - Khối lượng Thép / Rebar (Tấn, kg) — tính toán toán học chính xác 100% bằng công thức định mức $0.006165 \times d^2$, không bóc tách Solid, xử lý tức thì cho cả Rebar và RebarInSystem không gây giật lag.
+  - Chiều dài ($m$), Số lượng cấu kiện.
+- **Visual Preview Dashboard (Trực quan hóa khối lượng)**:
+  - Tích hợp đồ thị trực quan song song với bảng số liệu, có nút bật/tắt `[📊 Visual Preview]` linh hoạt trên Toolbar.
+  - **By Level (Elevation Stack)**: Mặt đứng cao độ khối lượng các tầng từ trên xuống kèm thanh Progress Bar phẳng thể hiện tỷ lệ $m^3$ và %, click chọn tầng để lọc bảng con bên trái, có nút Box 3D nhanh từng tầng.
+  - **By Category (Category Share)**: Biểu đồ phân bổ tỷ lệ khối lượng theo loại cấu kiện với bảng màu hiện đại, thanh progress bar phẳng và nút Box 3D nhanh.
+- **Thống kê theo Tầng (By Level)**:
+  - Bảng tổng hợp từng tầng kèm cao độ, thể tích bê tông, cốp pha, khối lượng thép.
+  - Bảng phân tách chi tiết danh mục cấu kiện trong tầng được chọn (Category Breakdown).
+- **Thống kê theo Cấu kiện (By Category)**:
+  - Bảng tổng hợp theo loại cấu kiện trong phạm vi chọn.
+- **Chi tiết cấu kiện & Tìm kiếm thời gian thực (Element Details)**:
+  - Tìm kiếm live filter theo ID, Type, Family, Level, Mark, Vật liệu.
+  - Lọc theo Category và Level dạng Dropdown.
+- **Bấm Box 3D tức thì (3D Section Box)**:
+  - Bấm nút **Box 3D** hoặc Double-click vào bất kỳ dòng nào (Tầng, Loại cấu kiện, hoặc Cấu kiện đơn lẻ): tự động chuyển sang view 3D (hoặc tạo `{3D - JNN QTO}`), tự động co Section Box vừa khít đối tượng kèm khoảng đệm nhìn rõ nét và zoom tới đối tượng.
+- **Xuất bảng tính Excel chuyên nghiệp (.xls / .csv)**:
+  - Xuất file Excel định dạng XML Spreadsheet 2003 gồm **3 Sheet đầy đủ định dạng** (By Level, By Category, Element Details) kèm tiêu đề, dòng tổng cộng in đậm viền kép và định dạng số chuẩn $0.00$. Mở được ngay trên Microsoft Excel mà không cần cài đặt thư viện COM Interop.
+- **Giao diện chuẩn JNN**: Modeless, không banner tối màu, không dùng font in đậm (`FontWeight="Normal"`, `FontSize="12"`), nền sáng `#F5F7F9`, Card trắng `#FFFFFF`, viền `#DCDDE1`, bo góc $5\text{px}$ đồng bộ. Khắc phục triệt để lỗi WPF Shutdown bằng `WpfWindowHelper`. Checklist: `docs/test-checklist-quantity-takeoff.md`.
+
+
 ### Added - Tool **Auto Structural Stair** (panel Modeling): Dựng cầu thang kết cấu bê tông tự động (Revit 2024–2027)
 - **3 dạng hình học kết cấu**:
   - `Thang chữ U` (U-Shaped): 2 vế song song đảo chiều 180° có chiếu nghỉ giữa, hỗ trợ rẽ trái/phải và khe hở giữa 2 vế.
