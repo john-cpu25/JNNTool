@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added - Tool **Auto Structural Stair** (panel Modeling): Dựng cầu thang kết cấu bê tông tự động (Revit 2024–2027)
+- **3 dạng hình học kết cấu**:
+  - `Thang chữ U` (U-Shaped): 2 vế song song đảo chiều 180° có chiếu nghỉ giữa, hỗ trợ rẽ trái/phải và khe hở giữa 2 vế.
+  - `Thang chữ L` (L-Shaped): 2 vế vuông góc 90° có chiếu nghỉ góc.
+  - `Thang thẳng` (Straight): 1 vế chạy suốt hoặc 2 vế thẳng có chiếu nghỉ nối tiếp.
+- **Dựng cấu kiện Native BIM Kết Cấu**:
+  - Dựng bản thang nghiêng bằng `Floor` có độ dốc (`slopeArrow` và `slope`), bản chiếu nghỉ bằng `Floor` phẳng, dầm đỡ kết cấu bằng `Structural Framing`.
+  - Tự động gộp (`JoinGeometry`) các bản sàn và chiếu nghỉ giao nhau liền mạch.
+  - Đóng gói toàn bộ trong 1 `TransactionGroup` để người dùng Undo sạch sẽ trong 1 bước duy nhất.
+- **Mặt bằng trực quan 2D thời gian thực (Interactive 2D Plan Preview)**:
+  - Tự động scale và hiển thị chi tiết từng vế, chiếu nghỉ, vạch chia mặt bậc, mũi tên dốc (Slope Arrow UP) và dầm đỡ (Support Beam).
+  - Tự động tính toán và đánh giá chỉ số bước chân ecgônômi theo công thức Blondel ($2R + T = 600 - 640\text{ mm}$).
+- **Giao diện chuẩn JNN**: Modeless, không banner tối màu, không dùng font in đậm (`FontWeight="Normal"`, `FontSize="12"`), bo góc $5\text{px}$ đồng bộ.
+- **Engine thuần C#** `StairGeometryEngine`, `StairValidator` + 5 unit tests (tổng 166 pass). Checklist: `docs/test-checklist-stair-model.md`.
+
 ### Added - Tool **Auto Dim Column** (panel Layout): Tự động Dimension Cột kết cấu
 - **Kích thước cột**: Dim chiều rộng $b$ và chiều dài $h$ cho cột chữ nhật/vuông; hỗ trợ cột xoay góc bất kỳ trên mặt bằng theo hệ trục cục bộ của cột.
 - **Định vị từ Lưới trục (Grid-to-Column)**: Tự động tìm Grid gần nhất và song song với từng mặt cột trong phạm vi tìm kiếm (`GridSearchRangeMm`). Tạo chuỗi dim định vị `Grid -> Mép cột gần` hoặc chuỗi liên hoàn `Grid -> Mép gần -> Mép xa`.

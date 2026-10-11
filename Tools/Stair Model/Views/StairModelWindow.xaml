@@ -1,0 +1,529 @@
+<Window x:Class="JNNTool.Tools.StairModel.Views.StairModelWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:JNNTool.Tools.StairModel.Views.Controls"
+        xmlns:engine="clr-namespace:JNNTool.Tools.StairModel.Engine"
+        Title="JNN Auto Structural Stair — Dựng Thang Kết Cấu Bê Tông"
+        Height="720" Width="1060" MinHeight="620" MinWidth="950"
+        WindowStartupLocation="CenterScreen"
+        Topmost="True" ShowInTaskbar="False" ResizeMode="CanResizeWithGrip"
+        Background="#F5F7F9"
+        FontFamily="Segoe UI" FontSize="12"
+        Foreground="#2C3E50"
+        UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="Accent" Color="#2E5C9A"/>
+        <SolidColorBrush x:Key="AccentHover" Color="#24497B"/>
+        <SolidColorBrush x:Key="Border" Color="#DCDDE1"/>
+        <SolidColorBrush x:Key="CardBg" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="Muted" Color="#7F8C8D"/>
+        <SolidColorBrush x:Key="Ink" Color="#2C3E50"/>
+        <SolidColorBrush x:Key="SuccessGreen" Color="#27AE60"/>
+        <SolidColorBrush x:Key="WarningOrange" Color="#E67E22"/>
+
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <!-- Label Style -->
+        <Style TargetType="Label">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="{StaticResource Ink}"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+
+        <!-- Modern TextBox with CornerRadius 5 -->
+        <Style TargetType="TextBox">
+            <Setter Property="Height" Value="26"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="6,0"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Border}"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="{StaticResource Ink}"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="border" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="1" CornerRadius="5">
+                            <ScrollViewer x:Name="PART_ContentHost" Focusable="False"
+                                          HorizontalScrollBarVisibility="Hidden"
+                                          VerticalScrollBarVisibility="Hidden"
+                                          VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Accent}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Modern ComboBox with CornerRadius 5 -->
+        <ControlTemplate x:Key="ComboBoxToggleButton" TargetType="ToggleButton">
+            <Border x:Name="border" Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="1" CornerRadius="5">
+                <Path x:Name="arrow" HorizontalAlignment="Right" VerticalAlignment="Center"
+                      Margin="0,0,8,0" Fill="#7F8C8D" Data="M 0 0 L 4 4 L 8 0 Z"/>
+            </Border>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Accent}"/>
+                </Trigger>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Accent}"/>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
+        <Style TargetType="ComboBox">
+            <Setter Property="Height" Value="26"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Border}"/>
+            <Setter Property="Foreground" Value="{StaticResource Ink}"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="6,0,24,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton Name="ToggleButton"
+                                          Template="{StaticResource ComboBoxToggleButton}"
+                                          Focusable="False"
+                                          IsChecked="{Binding Path=IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                          ClickMode="Press"
+                                          Background="{TemplateBinding Background}"
+                                          BorderBrush="{TemplateBinding BorderBrush}"/>
+                            <ContentPresenter Name="ContentSite"
+                                              IsHitTestVisible="False"
+                                              Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                              ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                              Margin="{TemplateBinding Padding}"
+                                              VerticalAlignment="Center"
+                                              HorizontalAlignment="Left"/>
+                            <Popup Name="Popup"
+                                   Placement="Bottom"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   PopupAnimation="Slide">
+                                <Grid Name="DropDown"
+                                      SnapsToDevicePixels="True"
+                                      MinWidth="{TemplateBinding ActualWidth}"
+                                      MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                    <Border x:Name="DropDownBorder"
+                                            Background="White"
+                                            BorderThickness="1"
+                                            BorderBrush="{StaticResource Border}"
+                                            CornerRadius="5"
+                                            Margin="0,2,0,4">
+                                        <Border.Effect>
+                                            <DropShadowEffect BlurRadius="8" ShadowDepth="2" Direction="270"
+                                                              Color="#20000000" Opacity="0.15"/>
+                                        </Border.Effect>
+                                        <ScrollViewer Margin="2,4" SnapsToDevicePixels="True">
+                                            <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                        </ScrollViewer>
+                                    </Border>
+                                </Grid>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Modern GroupBox / Card Style -->
+        <Style TargetType="GroupBox">
+            <Setter Property="Background" Value="{StaticResource CardBg}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Border}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="GroupBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="5">
+                            <Grid Margin="{TemplateBinding Padding}">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Border Grid.Row="0" Margin="0,0,0,8" Padding="0,0,0,4"
+                                        BorderBrush="{StaticResource Border}" BorderThickness="0,0,0,1">
+                                    <ContentPresenter ContentSource="Header"
+                                                      RecognizesAccessKey="True"
+                                                      TextBlock.Foreground="{StaticResource Accent}"
+                                                      TextBlock.FontWeight="Normal"
+                                                      TextBlock.FontSize="12"/>
+                                </Border>
+                                <ContentPresenter Grid.Row="1"/>
+                            </Grid>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Button Styles -->
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Background" Value="{StaticResource Accent}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="16,0"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="5" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{StaticResource AccentHover}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SecondaryButton" TargetType="Button">
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="{StaticResource Ink}"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="14,0"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Border}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="5" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#F0F3F6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- MAIN 2-COLUMN CONTENT -->
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="480" MinWidth="420"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- LEFT COLUMN: INPUT PARAMETERS (SCROLLABLE) -->
+            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Margin="0,0,10,0">
+                <StackPanel>
+
+                    <!-- GROUP 1: STAIR TYPE & TURNING -->
+                    <GroupBox Header="1. Hình dạng &amp; Hướng di chuyển (Type &amp; Turning)">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="130"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Content="Dạng cầu thang:"/>
+                                <ComboBox Grid.Column="1" SelectedIndex="{Binding StairType, Mode=TwoWay, Converter={x:Null}}">
+                                    <ComboBoxItem Content="Thang chữ U (2 vế 180° đảo chiều)"/>
+                                    <ComboBoxItem Content="Thang chữ L (2 vế 90° vuông góc)"/>
+                                    <ComboBoxItem Content="Thang thẳng (Straight Flight)"/>
+                                </ComboBox>
+                            </Grid>
+
+                            <Grid Margin="0,0,0,4" Visibility="{Binding IsTwoFlight, Converter={StaticResource BoolToVis}}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="130"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Content="Hướng rẽ (Turn):"/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <RadioButton Content="Rẽ Trái (Left - CCW)" Margin="0,0,16,0" VerticalAlignment="Center"
+                                                 IsChecked="{Binding TurnDirection, Mode=TwoWay, Converter={x:Null}, ConverterParameter=0}"/>
+                                    <RadioButton Content="Rẽ Phải (Right - CW)" VerticalAlignment="Center"
+                                                 IsChecked="{Binding TurnDirection, Mode=TwoWay, Converter={x:Null}, ConverterParameter=1}"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <!-- GROUP 2: LEVELS & ELEVATION -->
+                    <GroupBox Header="2. Cao độ &amp; Tầng (Levels &amp; Elevation)">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="130"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="70"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Base Level -->
+                            <Label Grid.Row="0" Grid.Column="0" Content="Tầng chân (Base Level):" Margin="0,0,0,6"/>
+                            <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding Levels}"
+                                      SelectedItem="{Binding SelectedBaseLevel}" Margin="0,0,6,6"/>
+                            <Label Grid.Row="0" Grid.Column="2" Content="Offset (mm):" Margin="0,0,0,6"/>
+                            <TextBox Grid.Row="0" Grid.Column="3" Text="{Binding BaseOffsetMm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"/>
+
+                            <!-- Top Level -->
+                            <Label Grid.Row="1" Grid.Column="0" Content="Tầng đỉnh (Top Level):" Margin="0,0,0,6"/>
+                            <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding Levels}"
+                                      SelectedItem="{Binding SelectedTopLevel}" Margin="0,0,6,6"/>
+                            <Label Grid.Row="1" Grid.Column="2" Content="Offset (mm):" Margin="0,0,0,6"/>
+                            <TextBox Grid.Row="1" Grid.Column="3" Text="{Binding TopOffsetMm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"/>
+
+                            <!-- Total Rise -->
+                            <Label Grid.Row="2" Grid.Column="0" Content="Chiều cao tổng (Rise):"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" VerticalAlignment="Center"
+                                       Text="{Binding TotalRiseMm, StringFormat='{}{0:F1} mm', Mode=OneWay}"
+                                       Foreground="{StaticResource Accent}" FontWeight="Normal"/>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- GROUP 3: STEP GEOMETRY & ERGONOMICS -->
+                    <GroupBox Header="3. Kích thước bậc &amp; Tỷ lệ (Dimensions &amp; Blondel)">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="130"/>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Total Risers & Riser Height -->
+                            <Label Grid.Row="0" Grid.Column="0" Content="Tổng số cổ bậc:" Margin="0,0,0,6"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding TotalRisers, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,6"/>
+                            <Label Grid.Row="0" Grid.Column="2" Content="Chiều cao bậc R:" Margin="0,0,0,6"/>
+                            <TextBlock Grid.Row="0" Grid.Column="3" VerticalAlignment="Center"
+                                       Text="{Binding RiserHeightMm, StringFormat='{}{0:F1} mm', Mode=OneWay}"
+                                       Foreground="{StaticResource Accent}" FontWeight="Normal" Margin="0,0,0,6"/>
+
+                            <!-- Flight 1 & Flight 2 Risers -->
+                            <Label Grid.Row="1" Grid.Column="0" Content="Số bậc vế 1 / vế 2:" Margin="0,0,0,6"/>
+                            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="0,0,8,6">
+                                <TextBox Width="44" Text="{Binding Flight1Risers, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                <TextBlock Text=" / " VerticalAlignment="Center" Margin="2,0"/>
+                                <TextBox Width="44" Text="{Binding Flight2Risers, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                            <Label Grid.Row="1" Grid.Column="2" Content="Chỉ số 2R + T:" Margin="0,0,0,6"/>
+                            <StackPanel Grid.Row="1" Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,6">
+                                <TextBlock Text="{Binding BlondelNumberMm, StringFormat='{}{0:F1} mm', Mode=OneWay}"
+                                           Foreground="{StaticResource SuccessGreen}" FontWeight="Normal" Margin="0,0,6,0"/>
+                                <TextBlock Text="{Binding BlondelStatus, StringFormat='({0})', Mode=OneWay}"
+                                           Foreground="{StaticResource Muted}" FontSize="11" VerticalAlignment="Center"/>
+                            </StackPanel>
+
+                            <!-- Tread Depth & Stair Width -->
+                            <Label Grid.Row="2" Grid.Column="0" Content="Mặt bậc T (Depth mm):" Margin="0,0,0,6"/>
+                            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding TreadDepthMm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,6"/>
+                            <Label Grid.Row="2" Grid.Column="2" Content="Bề rộng vế W (mm):" Margin="0,0,0,6"/>
+                            <TextBox Grid.Row="2" Grid.Column="3" Text="{Binding StairWidthMm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"/>
+
+                            <!-- Landing Length & Gap -->
+                            <Label Grid.Row="3" Grid.Column="0" Content="Dài chiếu nghỉ (mm):" Margin="0,0,0,6"/>
+                            <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding LandingLengthMm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,6"/>
+                            <Label Grid.Row="3" Grid.Column="2" Content="Khe hở giữa vế (mm):" Margin="0,0,0,6"/>
+                            <TextBox Grid.Row="3" Grid.Column="3" Text="{Binding GapBetweenFlightsMm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"/>
+
+                            <!-- Incline Angle -->
+                            <Label Grid.Row="4" Grid.Column="0" Content="Góc dốc bản thang:"/>
+                            <TextBlock Grid.Row="4" Grid.Column="1" VerticalAlignment="Center"
+                                       Text="{Binding InclineAngleDeg, StringFormat='{}{0:F1}°', Mode=OneWay}"
+                                       Foreground="{StaticResource Ink}"/>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- GROUP 4: STRUCTURAL ELEMENTS -->
+                    <GroupBox Header="4. Cấu kiện kết cấu Revit (Structural Elements)">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="130"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="90"/>
+                                <ColumnDefinition Width="70"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Floor Type -->
+                            <Label Grid.Row="0" Grid.Column="0" Content="Loại sàn (Floor Type):" Margin="0,0,0,6"/>
+                            <ComboBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="3" ItemsSource="{Binding FloorTypes}"
+                                      SelectedItem="{Binding SelectedFloorType}" Margin="0,0,0,6"/>
+
+                            <!-- Slab Thickness -->
+                            <Label Grid.Row="1" Grid.Column="0" Content="Dày bản thang (mm):" Margin="0,0,0,6"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding WaistSlabThicknessMm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,6"/>
+                            <Label Grid.Row="1" Grid.Column="2" Content="Dày c.nghỉ (mm):" Margin="0,0,0,6"/>
+                            <TextBox Grid.Row="1" Grid.Column="3" Text="{Binding LandingSlabThicknessMm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"/>
+
+                            <!-- Support Beam Option -->
+                            <Label Grid.Row="2" Grid.Column="0" Content="Bố trí dầm đỡ:" Margin="0,0,0,6"/>
+                            <ComboBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3"
+                                      SelectedIndex="{Binding SupportBeamOption, Mode=TwoWay, Converter={x:Null}}" Margin="0,0,0,6">
+                                <ComboBoxItem Content="Không tạo dầm"/>
+                                <ComboBoxItem Content="Chỉ tạo dầm chiếu nghỉ (Landing Beam Only)"/>
+                                <ComboBoxItem Content="Tạo đầy đủ dầm (Chân thang, Chiếu nghỉ, Đỉnh thang)"/>
+                            </ComboBox>
+
+                            <!-- Beam Symbol -->
+                            <Label Grid.Row="3" Grid.Column="0" Content="Tiết diện dầm (Beam):" Visibility="{Binding HasBeams, Converter={StaticResource BoolToVis}}"/>
+                            <ComboBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3" ItemsSource="{Binding BeamSymbols}"
+                                      SelectedItem="{Binding SelectedBeamSymbol}" Visibility="{Binding HasBeams, Converter={StaticResource BoolToVis}}"/>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- GROUP 5: PLACEMENT & ROTATION -->
+                    <GroupBox Header="5. Vị trí đặt &amp; Góc xoay (Placement &amp; Rotation)">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="130"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="60"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Label Grid.Row="0" Grid.Column="0" Content="Tọa độ X (mm):" Margin="0,0,0,6"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding InsertionPointX, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,6"/>
+                            <Label Grid.Row="0" Grid.Column="2" Content="Y (mm):" Margin="0,0,0,6"/>
+                            <TextBox Grid.Row="0" Grid.Column="3" Text="{Binding InsertionPointY, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,6"/>
+                            <Button Grid.Row="0" Grid.Column="4" Content="Pick..." Command="{Binding PickPointCommand}"
+                                    Style="{StaticResource SecondaryButton}" Height="26" Margin="0,0,0,6"/>
+
+                            <Label Grid.Row="1" Grid.Column="0" Content="Góc xoay (Rotation °):"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding RotationAngleDeg, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"/>
+                        </Grid>
+                    </GroupBox>
+
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- RIGHT COLUMN: INTERACTIVE 2D PREVIEW -->
+            <Border Grid.Column="1" Background="{StaticResource CardBg}"
+                    BorderBrush="{StaticResource Border}" BorderThickness="1" CornerRadius="5" Padding="12">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Preview Header -->
+                    <Border Grid.Row="0" Margin="0,0,0,8" Padding="0,0,0,6"
+                            BorderBrush="{StaticResource Border}" BorderThickness="0,0,0,1">
+                        <Grid>
+                            <TextBlock Text="Mặt bằng trực quan thời gian thực (Interactive 2D Plan Preview)"
+                                       Foreground="{StaticResource Accent}" FontSize="12" FontWeight="Normal"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- 2D Canvas Viewport -->
+                    <Border Grid.Row="1" BorderBrush="{StaticResource Border}" BorderThickness="1"
+                            CornerRadius="5" Background="#FAFBFC" ClipToBounds="True">
+                        <controls:StairPreviewControl x:Name="PreviewCanvas"/>
+                    </Border>
+
+                    <!-- Legend / Chú giải -->
+                    <Border Grid.Row="2" Margin="0,8,0,0" Padding="4">
+                        <WrapPanel HorizontalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Margin="8,0">
+                                <Rectangle Width="14" Height="10" Fill="#2C3E50" Margin="0,0,4,0"/>
+                                <TextBlock Text="Bản thang (Flight)" FontSize="11" Foreground="{StaticResource Muted}"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="8,0">
+                                <Rectangle Width="14" Height="10" Fill="#2E75B6" Margin="0,0,4,0"/>
+                                <TextBlock Text="Chiếu nghỉ (Landing)" FontSize="11" Foreground="{StaticResource Muted}"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="8,0">
+                                <Line X1="0" Y1="5" X2="14" Y2="5" Stroke="#E67E22" StrokeThickness="2" Margin="0,0,4,0"/>
+                                <TextBlock Text="Mũi tên dốc (Slope Arrow)" FontSize="11" Foreground="{StaticResource Muted}"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="8,0">
+                                <Line X1="0" Y1="5" X2="14" Y2="5" Stroke="#C0392B" StrokeThickness="2.5" StrokeDashArray="2,2" Margin="0,0,4,0"/>
+                                <TextBlock Text="Dầm đỡ (Support Beam)" FontSize="11" Foreground="{StaticResource Muted}"/>
+                            </StackPanel>
+                        </WrapPanel>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- BOTTOM ACTION BAR -->
+        <Border Grid.Row="1" Margin="0,10,0,0" Padding="0,8,0,0"
+                BorderBrush="{StaticResource Border}" BorderThickness="0,1,0,0">
+            <Grid>
+                <!-- Status Message -->
+                <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left"
+                           Text="{Binding StatusMessage}" Foreground="{StaticResource Muted}" FontSize="12"/>
+
+                <!-- Action Buttons -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Mặc định (Reset)" Command="{Binding ResetCommand}"
+                            Style="{StaticResource SecondaryButton}" Margin="0,0,8,0"/>
+                    <Button Content="Đóng" Click="OnCloseClicked"
+                            Style="{StaticResource SecondaryButton}" Margin="0,0,8,0"/>
+                    <Button Content="Tạo Cầu Thang (Create Stair)" Command="{Binding CreateStairCommand}"
+                            Style="{StaticResource PrimaryButton}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

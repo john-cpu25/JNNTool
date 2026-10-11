@@ -589,6 +589,32 @@ namespace JNNTool
                 btnRebarCol.Image = img;
             }
 
+            // ------------------- Stair Model (Auto Structural Stair) -------------------
+            string iconPathStairModel = Path.Combine(resourcesPath, "StairModel.png");
+            if (!File.Exists(iconPathStairModel))
+            {
+                iconPathStairModel = Path.Combine(resourcesPath, "StairDetail.png");
+            }
+            PushButtonData btnStairModelData = new PushButtonData(
+                "cmdStairModel",
+                "Stair\nModel",
+                assemblyPath,
+                "JNNTool.Tools.StairModel.Commands.StairModelCommand"
+            );
+            btnStairModelData.ToolTip = "Tự động dựng cầu thang kết cấu bê tông (Straight, U-shaped, L-shaped) gồm bản thang nghiêng, chiếu nghỉ và dầm đỡ với preview 2D trực quan.";
+
+            PushButton btnStairModel = modelingPanel.AddItem(btnStairModelData) as PushButton;
+            if (File.Exists(iconPathStairModel))
+            {
+                BitmapImage img = new BitmapImage();
+                img.BeginInit();
+                img.UriSource = new Uri(iconPathStairModel, UriKind.Absolute);
+                img.CacheOption = BitmapCacheOption.OnLoad;
+                img.EndInit();
+                btnStairModel.LargeImage = img;
+                btnStairModel.Image = img;
+            }
+
             // ------------------- Stair Detail -------------------
             string iconPathStair = Path.Combine(resourcesPath, "StairDetail.png");
             PushButtonData btnStairData = new PushButtonData(
