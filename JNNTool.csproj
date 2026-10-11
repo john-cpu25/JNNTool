@@ -7,7 +7,7 @@
     <EnableDefaultPageItems>true</EnableDefaultPageItems>
     <GenerateAssemblySupportedOSPlatformAttribute>false</GenerateAssemblySupportedOSPlatformAttribute>
     <GenerateAssemblyTargetPlatformAttribute>false</GenerateAssemblyTargetPlatformAttribute>
-    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <AssemblyName>JNNTool</AssemblyName>
     <LangVersion>latest</LangVersion>
     <IncludePackageReferencesDuringMarkupCompilation>true</IncludePackageReferencesDuringMarkupCompilation>
@@ -15,7 +15,7 @@
 
   <!-- Fix WPF temp project not running source generators for CommunityToolkit.Mvvm -->
   <PropertyGroup>
-    <_MvvmAnalyzer>$(NuGetPackageRoot)communitytoolkit.mvvm\8.4.2\analyzers\dotnet\roslyn4.3\cs\CommunityToolkit.Mvvm.SourceGenerators.dll</_MvvmAnalyzer>
+    <_MvvmAnalyzer>$(NuGetPackageRoot)communitytoolkit.mvvm\8.2.2\analyzers\dotnet\roslyn4.3\cs\CommunityToolkit.Mvvm.SourceGenerators.dll</_MvvmAnalyzer>
   </PropertyGroup>
   <Target Name="FixWpfTmpProjectSourceGenerators" AfterTargets="_GenerateCompileDependencyCache" BeforeTargets="MarkupCompilePass1">
     <ItemGroup>
@@ -28,18 +28,28 @@
   <ItemGroup>
     <Compile Remove="Tools\**\obj\**" />
     <Compile Remove="Tools\**\bin\**" />
+    <Compile Remove="Tools\Tool\**" />
     <Compile Remove="Installer\**" />
     <Compile Remove="Tests\**" />
+    <Compile Remove="HtStructural\**" />
     <Page Remove="Tools\**\obj\**" />
     <Page Remove="Tools\**\bin\**" />
+    <Page Remove="Tools\Tool\**" />
     <Page Remove="Installer\**" />
     <Page Remove="Tests\**" />
+    <Page Remove="HtStructural\**" />
+    <EmbeddedResource Remove="Tools\**\obj\**" />
+    <EmbeddedResource Remove="Tools\**\bin\**" />
+    <EmbeddedResource Remove="Tools\Tool\**" />
+    <EmbeddedResource Remove="Installer\**" />
+    <EmbeddedResource Remove="Tests\**" />
+    <EmbeddedResource Remove="HtStructural\**" />
   </ItemGroup>
 
   <!-- Revit API references using Nice3point.Revit.Api -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
-    <PackageReference Include="Nice3point.Revit.Api.RevitAPI" Version="2022.1.1" />
-    <PackageReference Include="Nice3point.Revit.Api.RevitAPIUI" Version="2022.1.1" />
+    <PackageReference Include="Nice3point.Revit.Api.RevitAPI" Version="2022.1.1" PrivateAssets="All" />
+    <PackageReference Include="Nice3point.Revit.Api.RevitAPIUI" Version="2022.1.1" PrivateAssets="All" />
     <Reference Include="System.IO.Compression" />
     <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="PresentationFramework" />
@@ -53,21 +63,21 @@
     <DefineConstants>$(DefineConstants);REVIT2025_OR_GREATER</DefineConstants>
   </PropertyGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0-windows'">
-    <PackageReference Include="Nice3point.Revit.Api.RevitAPI" Version="2025.0.0" />
-    <PackageReference Include="Nice3point.Revit.Api.RevitAPIUI" Version="2025.0.0" />
+    <PackageReference Include="Nice3point.Revit.Api.RevitAPI" Version="2025.0.0" PrivateAssets="All" />
+    <PackageReference Include="Nice3point.Revit.Api.RevitAPIUI" Version="2025.0.0" PrivateAssets="All" />
   </ItemGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows'">
     <DefineConstants>$(DefineConstants);REVIT2027;REVIT2025_OR_GREATER</DefineConstants>
   </PropertyGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows'">
-    <PackageReference Include="Nice3point.Revit.Api.RevitAPI" Version="2027.*" />
-    <PackageReference Include="Nice3point.Revit.Api.RevitAPIUI" Version="2027.*" />
+    <PackageReference Include="Nice3point.Revit.Api.RevitAPI" Version="2027.*" PrivateAssets="All" />
+    <PackageReference Include="Nice3point.Revit.Api.RevitAPIUI" Version="2027.*" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-    <PackageReference Include="System.Text.Json" Version="8.0.0" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
   <!-- Post-build step to assemble the autoloader bundle -->
@@ -88,8 +98,11 @@
 
     <MakeDir Directories="$(BundleFolder)\Contents\%(VersionFolder.Identity)" />
     
-    <Copy SourceFiles="$(TargetDir)$(AssemblyName).dll" DestinationFolder="$(BundleFolder)\Contents\%(VersionFolder.Identity)" />
-    <Copy SourceFiles="$(ProjectDir)JNNTool.addin" DestinationFolder="$(BundleFolder)\Contents\%(VersionFolder.Identity)" />
+    <ItemGroup>
+      <OutputDlls Include="$(TargetDir)*.dll" Exclude="$(TargetDir)RevitAPI*.dll;$(TargetDir)AdWindows*.dll;$(TargetDir)UIFramework*.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(OutputDlls)" DestinationFolder="$(BundleFolder)\Contents\%(VersionFolder.Identity)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(ProjectDir)JNNTool.addin" DestinationFolder="$(BundleFolder)\Contents\%(VersionFolder.Identity)" SkipUnchangedFiles="true" />
     
     <!-- Tự động đóng gói toàn bộ biểu tượng nằm trong thư mục Tools -->
     <MakeDir Directories="$(BundleFolder)\Contents\Resources" />

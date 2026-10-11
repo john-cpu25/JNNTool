@@ -1,12 +1,13 @@
 using System;
 using System.IO;
-using System.Text.Json;
+using Newtonsoft.Json;
 using JNNTool.Core.Logging;
 
 namespace JNNTool.Core.Settings
 {
     /// <summary>
     /// Dịch vụ đọc và ghi cấu hình người dùng (POCO) dưới dạng JSON trong %AppData%\JNNTool\Settings.
+    /// Sử dụng Newtonsoft.Json (đã có sẵn trong Revit 2022-2027) đảm bảo an toàn tuyệt đối.
     /// </summary>
     /// <typeparam name="T">Kiểu dữ liệu cài đặt (POCO)</typeparam>
     public static class SettingsService<T> where T : class, new()
@@ -14,11 +15,6 @@ namespace JNNTool.Core.Settings
         private static readonly object _fileLock = new object();
         private static readonly string _settingsFolder;
         private static readonly string _filePath;
-        private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            PropertyNameCaseInsensitive = true
-        };
 
         static SettingsService()
         {
@@ -53,7 +49,7 @@ namespace JNNTool.Core.Settings
                     if (File.Exists(_filePath))
                     {
                         string json = File.ReadAllText(_filePath);
-                        var data = JsonSerializer.Deserialize<T>(json, _jsonOptions);
+                        var data = JsonConvert.DeserializeObject<T>(json);
                         if (data != null) return data;
                     }
                 }
@@ -79,7 +75,7 @@ namespace JNNTool.Core.Settings
             {
                 try
                 {
-                    string json = JsonSerializer.Serialize(settings, _jsonOptions);
+                    string json = JsonConvert.SerializeObject(settings, Formatting.Indented);
                     File.WriteAllText(_filePath, json);
                 }
                 catch (Exception ex)

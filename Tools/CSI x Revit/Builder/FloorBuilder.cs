@@ -9,16 +9,17 @@ namespace JNNTool.Tools.CSIxRevit.Builder
 {
     public static class FloorBuilder
     {
-        public static void Build(Document doc, FloorData floor, List<Point3D> coords, FloorType floorType, List<Level> allLevels)
+        public static bool Build(Document doc, FloorData floor, List<Point3D> coords, FloorType floorType, List<Level> allLevels)
         {
-            if (doc == null || floor == null || floorType == null || coords == null || coords.Count < 3) return;
-            if (allLevels == null || allLevels.Count == 0) return;
+            // floorType có thể là Foundation Slab (IsFoundationSlab) → Floor.Create tạo đúng category Structural Foundation.
+            if (doc == null || floor == null || floorType == null || coords == null || coords.Count < 3) return false;
+            if (allLevels == null || allLevels.Count == 0) return false;
 
             try
             {
                 double z = floor.Elevation;
                 Level level = allLevels.OrderBy(l => Math.Abs(l.Elevation - z)).FirstOrDefault();
-                if (level == null) return;
+                if (level == null) return false;
             List<Point3D> cleaned = new List<Point3D> { coords[0] };
             for (int i = 1; i < coords.Count; i++)
             {
@@ -48,6 +49,7 @@ namespace JNNTool.Tools.CSIxRevit.Builder
                     {
                         Floor newFloor = Floor.Create(doc, new List<CurveLoop> { profile }, floorType.Id, level.Id);
                         newFloor?.get_Parameter(BuiltInParameter.FLOOR_HEIGHTABOVELEVEL_PARAM)?.Set(z - level.Elevation);
+                        return newFloor != null;
                     }
                     catch (Exception ex)
                     {
@@ -59,6 +61,7 @@ namespace JNNTool.Tools.CSIxRevit.Builder
             {
                 System.Diagnostics.Debug.WriteLine($"Lỗi dựng sàn {floor.Name}: {ex.Message}");
             }
+            return false;
         }
     }
 }

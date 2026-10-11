@@ -84,13 +84,35 @@ namespace JNNTool.Tools.CSIxRevit.Builder
                     }
                 }
 
-                double minX = allX.Any() ? allX.Min() - 15.0 : -15.0;
-                double maxX = allX.Any() ? allX.Max() + 15.0 : 150.0;
-                double minY = allY.Any() ? allY.Min() - 15.0 : -15.0;
-                double maxY = allY.Any() ? allY.Max() + 15.0 : 150.0;
+                double minX = allX.Any() ? allX.Min() - 1.5 : -1.5;
+                double maxX = allX.Any() ? allX.Max() + 1.5 : 150.0;
+                double minY = allY.Any() ? allY.Min() - 1.5 : -1.5;
+                double maxY = allY.Any() ? allY.Max() + 1.5 : 150.0;
 
-                if (Math.Abs(maxX - minX) < 1.0) { minX -= 20.0; maxX += 20.0; }
-                if (Math.Abs(maxY - minY) < 1.0) { minY -= 20.0; maxY += 20.0; }
+                if (Math.Abs(maxX - minX) < 1.0) { minX -= 5.0; maxX += 5.0; }
+                if (Math.Abs(maxY - minY) < 1.0) { minY -= 5.0; maxY += 5.0; }
+
+                // Nếu có Scope Box JNN_SB, dùng trực tiếp mép Scope Box (+ 0.5 ft ~ 150mm sát mép)
+                try
+                {
+                    var sb = new FilteredElementCollector(doc)
+                        .OfCategory(BuiltInCategory.OST_VolumeOfInterest)
+                        .WhereElementIsNotElementType()
+                        .FirstOrDefault(e => string.Equals((e.Name ?? "").Trim(), "JNN_SB", StringComparison.OrdinalIgnoreCase)
+                                          || (e.Name ?? "").IndexOf("JNN_SB", StringComparison.OrdinalIgnoreCase) >= 0);
+                    if (sb != null)
+                    {
+                        var bb = sb.get_BoundingBox(null);
+                        if (bb != null)
+                        {
+                            minX = bb.Min.X - 0.5;
+                            maxX = bb.Max.X + 0.5;
+                            minY = bb.Min.Y - 0.5;
+                            maxY = bb.Max.Y + 0.5;
+                        }
+                    }
+                }
+                catch { }
 
                 // 4. Create each grid
                 foreach (var grid in distinctGrids)
@@ -136,7 +158,7 @@ namespace JNNTool.Tools.CSIxRevit.Builder
                         }
                         catch (Exception ex)
                         {
-                            result.Errors.Add($"Tạo trục '{grid.Name}' ({grid.Direction}) lỗi: {ex.Message}");
+                            result.Errors.Add($"Failed to create grid '{grid.Name}' ({grid.Direction}): {ex.Message}");
                             continue;
                         }
 
@@ -169,10 +191,21 @@ namespace JNNTool.Tools.CSIxRevit.Builder
                         {
                             existingNames.Add(newGrid.Name);
                         }
+
+                        // Đảm bảo bật đầy đủ bóng trục ở cả 2 đầu
+                        try
+                        {
+                            if (doc.ActiveView != null)
+                            {
+                                newGrid.ShowBubbleInView(DatumEnds.End0, doc.ActiveView);
+                                newGrid.ShowBubbleInView(DatumEnds.End1, doc.ActiveView);
+                            }
+                        }
+                        catch { }
                     }
                     catch (Exception ex)
                     {
-                        result.Errors.Add($"Lỗi xử lý trục '{grid.Name}': {ex.Message}");
+                        result.Errors.Add($"Error processing grid '{grid.Name}': {ex.Message}");
                     }
                 }
 
@@ -197,7 +230,7 @@ namespace JNNTool.Tools.CSIxRevit.Builder
             }
             catch (Exception ex)
             {
-                result.Errors.Add($"Lỗi GridBuilder: {ex.Message}");
+                result.Errors.Add($"GridBuilder error: {ex.Message}");
             }
 
             return result;

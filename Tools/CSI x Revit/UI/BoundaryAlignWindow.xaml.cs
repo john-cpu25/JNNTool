@@ -18,6 +18,8 @@ namespace JNNTool.Tools.CSIxRevit.UI
         public BoundaryAlignWindow(UIDocument uidoc, ICollection<ElementId> initialSelection = null)
         {
             InitializeComponent();
+            // SizeToContent không tự giới hạn theo màn hình; màn hình thấp thì để ScrollViewer cuộn
+            MaxHeight = SystemParameters.WorkArea.Height;
             _uidoc = uidoc ?? throw new ArgumentNullException(nameof(uidoc));
             _doc = _uidoc.Document;
 
@@ -96,46 +98,22 @@ namespace JNNTool.Tools.CSIxRevit.UI
             });
         }
 
-        private void BtnUseCurrentSelection_Click(object sender, RoutedEventArgs e)
+        private void Direction_Checked(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                var selIds = _uidoc.Selection.GetElementIds();
-                var validIds = new List<ElementId>();
-                var framingId = new ElementId(BuiltInCategory.OST_StructuralFraming);
-                var colId = new ElementId(BuiltInCategory.OST_StructuralColumns);
-
-                foreach (var id in selIds)
-                {
-                    var elem = _doc.GetElement(id);
-                    var cat = elem?.Category;
-                    if (cat != null && (cat.Id == framingId || cat.Id == colId))
-                    {
-                        validIds.Add(id);
-                    }
-                }
-
-                if (validIds.Count > 0)
-                {
-                    _selectedElementIds = validIds;
-                    UpdateSelectionStatus();
-                }
-                else
-                {
-                    TaskDialog.Show("Thông báo", "Không có Dầm hoặc Cột kết cấu nào trong danh sách đang chọn trên Revit.\n\nVui lòng quét chọn dầm/cột trên mô hình Revit rồi bấm lại nút này.");
-                }
-            }
-            catch (Exception ex)
-            {
-                TaskDialog.Show("Lỗi", $"Không thể lấy lựa chọn hiện tại: {ex.Message}");
-            }
+            if (TxtDirection == null) return;
+            if (RbShiftUpY.IsChecked == true) TxtDirection.Text = "Đang chọn: dời lên phía Bắc (+Y)";
+            else if (RbShiftDownY.IsChecked == true) TxtDirection.Text = "Đang chọn: dời xuống phía Nam (-Y)";
+            else if (RbShiftRightX.IsChecked == true) TxtDirection.Text = "Đang chọn: dời sang phía Đông (+X)";
+            else if (RbShiftLeftX.IsChecked == true) TxtDirection.Text = "Đang chọn: dời sang phía Tây (-X)";
+            TxtDirection.Foreground = new System.Windows.Media.SolidColorBrush(
+                System.Windows.Media.Color.FromRgb(0x1D, 0x4E, 0xD8));
         }
 
         private void UpdateSelectionStatus()
         {
             if (_selectedElementIds == null || _selectedElementIds.Count == 0)
             {
-                TxtSelectionStatus.Text = "Chưa chọn đối tượng nào. Bấm nút 'Quét chọn' để kéo chuột chọn dầm, cột biên trên mặt bằng hoặc 3D.";
+                TxtSelectionStatus.Text = "Chưa chọn đối tượng nào. Bấm 'Quét chọn trên Revit' để kéo chuột chọn dầm, cột biên trên mặt bằng hoặc 3D.";
                 TxtAlignResultLog.Text = "Sẵn sàng thực hiện căn lề biên.";
                 return;
             }
@@ -156,7 +134,7 @@ namespace JNNTool.Tools.CSIxRevit.UI
                 }
             }
 
-            TxtSelectionStatus.Text = $"✅ Đã chọn thành công: {beamCount} Dầm và {colCount} Cột kết cấu.";
+            TxtSelectionStatus.Text = $"Đã chọn: {beamCount} Dầm và {colCount} Cột kết cấu.";
             TxtAlignResultLog.Text = $"Sẵn sàng căn lề cho {beamCount} dầm và {colCount} cột.";
         }
 
@@ -168,11 +146,16 @@ namespace JNNTool.Tools.CSIxRevit.UI
                 return;
             }
 
-            AlignDirection dir = AlignDirection.AutoGrid;
+            AlignDirection dir;
             if (RbShiftUpY.IsChecked == true) dir = AlignDirection.UpY;
             else if (RbShiftDownY.IsChecked == true) dir = AlignDirection.DownY;
             else if (RbShiftRightX.IsChecked == true) dir = AlignDirection.RightX;
             else if (RbShiftLeftX.IsChecked == true) dir = AlignDirection.LeftX;
+            else
+            {
+                TaskDialog.Show("Thông báo", "Vui lòng chọn hướng dời trên la bàn (B / N / Đ / T)!");
+                return;
+            }
 
             double customOffsetFeet = 0;
             if (RbOffsetCustom.IsChecked == true)
@@ -191,7 +174,7 @@ namespace JNNTool.Tools.CSIxRevit.UI
             bool autoExtend = ChkAutoExtendIntersecting.IsChecked == true;
             var targetIds = new List<ElementId>(_selectedElementIds);
 
-            TxtAlignResultLog.Text = "⏳ Đang thực hiện căn lề biên...";
+            TxtAlignResultLog.Text = "Đang thực hiện căn lề biên...";
 
             // Thực thi an toàn 100% trong Revit API context qua ExternalEvent
             ActionEventHandler.Instance.Post(app =>
@@ -211,7 +194,7 @@ namespace JNNTool.Tools.CSIxRevit.UI
                     {
                         TxtAlignResultLog.Text = alignResult.Message;
 
-                        string summary = $"🎉 KẾT QUẢ CĂN LỀ BIÊN:\n\n" +
+                        string summary = $"KẾT QUẢ CĂN LỀ BIÊN:\n\n" +
                                          $"• Dầm đã dời: {alignResult.MovedBeams}\n" +
                                          $"• Cột đã dời: {alignResult.MovedColumns}\n" +
                                          (alignResult.AdjustedIntersectingBeams > 0 ? $"• Dầm ngang tự động co/kéo: {alignResult.AdjustedIntersectingBeams}\n" : "") +
@@ -224,7 +207,7 @@ namespace JNNTool.Tools.CSIxRevit.UI
                 {
                     Dispatcher.Invoke(() =>
                     {
-                        TxtAlignResultLog.Text = "❌ Lỗi: " + ex.Message;
+                        TxtAlignResultLog.Text = "Lỗi: " + ex.Message;
                         TaskDialog.Show("Lỗi Căn Lề Biên", $"Gặp lỗi khi thực hiện căn lề biên: {ex.Message}");
                     });
                 }

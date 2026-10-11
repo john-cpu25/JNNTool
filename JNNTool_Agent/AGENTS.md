@@ -174,8 +174,13 @@ dotnet test Tests/JNNTool.Tests
 - **Đường kính thép**: dùng `BarCatalog` (D6, D8, D10, D12, D14, D16, D18, D20, D22, D25, D28, D32). Map sang `RebarBarType` theo tên, cho phép người dùng chọn type trong dự án.
 - **Family**: tool **không phụ thuộc cứng** vào tên family. Tên mặc định `JNN_*`, nhưng luôn có dropdown cho người dùng chọn lại.
 - **Lỗi**: bắt exception ở Command, ghi log, hiện `TaskDialog` thân thiện. Không để Revit crash.
-- **Transaction**: luôn `using`, rollback khi lỗi. Đặt tên transaction tiếng Việt có dấu, ví dụ `"JNN - Tạo thép sàn"`.
+- **UI/WPF**:
+  - ❌ **TUYỆT ĐỐI KHÔNG TẠO THẺ TIÊU ĐỀ / BANNER TỐI MÀU** trên đầu cửa sổ (`Grid.Row="0"` banner kèm icon). Tiêu đề đã nằm ở thuộc tính `Title` của `Window`. Giữ giao diện thoáng gọn, tối đa hóa diện tích làm việc cho cài đặt và preview.
+  - ❌ **KHÔNG DÙNG FONT CHỮ IN ĐẬM (NO BOLD/SEMIBOLD)**: Toàn bộ chữ bên trong giao diện (label, header nhóm, tab, checkbox, cell bảng, nút bấm) dùng font chữ thường thanh thoát (`FontWeight="Normal"`, `FontSize="12"`), nền sáng `#F5F7F9`, viền `#DCDDE1`, chữ `#2C3E50` chuẩn phong cách của `Auto View & Sheet Tool`.
+  - ✅ **Bo góc 5px đồng bộ**: Tất cả `TabItem` (`5,5,0,0`), `TabControl` (`0,5,5,5`), `GroupBox` card (`5px`), `TextBox` (`5px`), `ComboBox` (`5px`), `Button` (`5px`), `Border` preview (`5px`). Không dùng viền đứt nét mặc định hoặc góc vuông nhọn.
+  - ✅ **Ngôn ngữ UI**: Ưu tiên Tiếng Anh kỹ thuật chuẩn mực (Beam, Column, Floor, General, Naming Structure, Scope, Overwrite...).
 - **Comment**: tiếng Việt hoặc English đều được, ngắn gọn. Giải thích **vì sao**, không giải thích **làm gì**.
+
 
 ---
 

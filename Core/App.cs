@@ -1,7 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 using Autodesk.Revit.UI;
@@ -12,6 +12,9 @@ namespace JNNTool
     {
         public Result OnStartup(UIControlledApplication application)
         {
+            // Tự động resolve các assembly phụ thuộc trong cùng thư mục
+            AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
+
             string tabName = "JNNTool";
             string modelingPanelName = "Modeling";
 
@@ -36,15 +39,15 @@ namespace JNNTool
             }
 
 
-            // Tạo Ribbon Panel Modeling
-            RibbonPanel modelingPanel = application.CreateRibbonPanel(tabName, modelingPanelName);
-
             // Lấy đường dẫn thực thi của tệp DLL
             string assemblyPath = Assembly.GetExecutingAssembly().Location;
             string assemblyDir = Path.GetDirectoryName(assemblyPath);
             
             // Hướng tới thư mục Resources
             string resourcesPath = Path.Combine(Directory.GetParent(assemblyDir).FullName, "Resources");
+
+            // Tạo Ribbon Panel Modeling
+            RibbonPanel modelingPanel = application.CreateRibbonPanel(tabName, modelingPanelName);
 
             // ═══════════════════════════════════════════════════════════════
             //  Panel: JNN Rebar Suite
@@ -379,6 +382,28 @@ namespace JNNTool
                 btnImportE2K.Image = img;
             }
 
+            // ------------------- Fit Scope Box -------------------
+            string iconPathFitScopeBox = Path.Combine(resourcesPath, "DimGrid.png");
+            PushButtonData btnFitScopeBoxData = new PushButtonData(
+                "cmdFitScopeBox",
+                "Fit\nScope Box",
+                assemblyPath,
+                "JNNTool.Tools.CSIxRevit.Commands.FitScopeBoxCommand"
+            );
+            btnFitScopeBoxData.ToolTip = "Khóa và cắt khớp toàn bộ Lưới trục (Grid) và Cao độ (Level) theo Scope Box 'JNN_SB' sau khi bạn đã kéo bao quanh nhà.";
+
+            PushButton btnFitScopeBox = csiPanel.AddItem(btnFitScopeBoxData) as PushButton;
+            if (File.Exists(iconPathFitScopeBox))
+            {
+                BitmapImage img = new BitmapImage();
+                img.BeginInit();
+                img.UriSource = new Uri(iconPathFitScopeBox, UriKind.Absolute);
+                img.CacheOption = BitmapCacheOption.OnLoad;
+                img.EndInit();
+                btnFitScopeBox.LargeImage = img;
+                btnFitScopeBox.Image = img;
+            }
+
             // ------------------- Tạm ẩn Module IFC Etabs (Chưa hoàn thiện) -------------------
             /*
             PushButtonData btnEtabsConverterData = new PushButtonData(
@@ -442,6 +467,60 @@ namespace JNNTool
                 img.EndInit();
                 btnBoundaryAlign.LargeImage = img;
                 btnBoundaryAlign.Image = img;
+            }
+
+            // ------------------- Auto Join -------------------
+            string iconPathAutoJoin = Path.Combine(resourcesPath, "AutoJoin.png");
+            if (!File.Exists(iconPathAutoJoin))
+            {
+                iconPathAutoJoin = Path.Combine(resourcesPath, "JoinElements.png");
+            }
+
+            // SplitButton: 1 nút trên Ribbon gồm Active View (mặc định) và Entire Project
+            SplitButtonData splitBtnData = new SplitButtonData("cmdAutoJoinSplit", "Auto\nJoin");
+            SplitButton splitBtn = csiPanel.AddItem(splitBtnData) as SplitButton;
+
+            if (splitBtn != null)
+            {
+                PushButtonData btnActiveData = new PushButtonData(
+                    "cmdAutoJoinActiveView",
+                    "Auto Join\n(Active View)",
+                    assemblyPath,
+                    "JNNTool.Tools.AutoJoin.AutoJoinActiveViewCommand"
+                );
+                btnActiveData.ToolTip = "Tự động Join và đảo thứ tự ưu tiên (Column > Beam > Floor) trong View hiện hành.\n\n• Cột cắt Dầm và Sàn\n• Dầm cắt Sàn\n• Tự động đảo thứ tự (Switch Order) nếu đang bị ngược.";
+
+                PushButton btnActive = splitBtn.AddPushButton(btnActiveData);
+                if (File.Exists(iconPathAutoJoin))
+                {
+                    BitmapImage img = new BitmapImage();
+                    img.BeginInit();
+                    img.UriSource = new Uri(iconPathAutoJoin, UriKind.Absolute);
+                    img.CacheOption = BitmapCacheOption.OnLoad;
+                    img.EndInit();
+                    btnActive.LargeImage = img;
+                    btnActive.Image = img;
+                }
+
+                PushButtonData btnProjectData = new PushButtonData(
+                    "cmdAutoJoinProject",
+                    "Auto Join\n(Entire Project)",
+                    assemblyPath,
+                    "JNNTool.Tools.AutoJoin.AutoJoinProjectCommand"
+                );
+                btnProjectData.ToolTip = "Tự động Join và đảo thứ tự ưu tiên (Column > Beam > Floor) cho toàn bộ mô hình dự án.\n\n• Cột cắt Dầm và Sàn\n• Dầm cắt Sàn\n• Tự động đảo thứ tự (Switch Order) nếu đang bị ngược.";
+
+                PushButton btnProject = splitBtn.AddPushButton(btnProjectData);
+                if (File.Exists(iconPathAutoJoin))
+                {
+                    BitmapImage img = new BitmapImage();
+                    img.BeginInit();
+                    img.UriSource = new Uri(iconPathAutoJoin, UriKind.Absolute);
+                    img.CacheOption = BitmapCacheOption.OnLoad;
+                    img.EndInit();
+                    btnProject.LargeImage = img;
+                    btnProject.Image = img;
+                }
             }
 
             // ------------------- Connection -------------------
@@ -662,6 +741,149 @@ namespace JNNTool
                 btnExtendBeam.Image = img;
             }
 
+            // ═══════════════════════════════════════════════════════════════
+            //  Panel: Layout (Cùng tab với CSI x Revit & Modeling, không tạo tab riêng)
+            // ═══════════════════════════════════════════════════════════════
+            var targetTabs = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { tabName };
+            try
+            {
+                var ibimPanels = application.GetRibbonPanels("IBIM OS");
+                if (ibimPanels != null && ibimPanels.Count > 0)
+                {
+                    targetTabs.Add("IBIM OS");
+                }
+            }
+            catch { }
+
+            int tabIdx = 0;
+            foreach (var currentTab in targetTabs)
+            {
+                RibbonPanel layoutPanel = null;
+                try
+                {
+                    layoutPanel = application.CreateRibbonPanel(currentTab, "Layout");
+                }
+                catch (Exception)
+                {
+                    try
+                    {
+                        foreach (var p in application.GetRibbonPanels(currentTab))
+                        {
+                            if (p.Name == "Layout") { layoutPanel = p; break; }
+                        }
+                    }
+                    catch { }
+                }
+
+                if (layoutPanel != null)
+                {
+                    string iconPathAutoViewSheet = Path.Combine(resourcesPath, "AutoViewSheet.png");
+                    if (!File.Exists(iconPathAutoViewSheet))
+                    {
+                        iconPathAutoViewSheet = Path.Combine(resourcesPath, "AddViewsToSheets.png");
+                    }
+                    if (!File.Exists(iconPathAutoViewSheet))
+                    {
+                        iconPathAutoViewSheet = Path.Combine(resourcesPath, "views.png");
+                    }
+
+                    string btnId = tabIdx == 0 ? "cmdAutoViewSheet" : $"cmdAutoViewSheet_{tabIdx}";
+                    PushButtonData btnAutoViewSheetData = new PushButtonData(
+                        btnId,
+                        "Auto View\n& Sheet",
+                        assemblyPath,
+                        "RincoNhan.Tools.AutoViewSheet.AutoViewSheetCommand"
+                    );
+                    btnAutoViewSheetData.ToolTip = "Tự động tạo View (OVER) và dàn Sheet hàng loạt theo tầng và Zone cho Mặt bằng kết cấu / Loading Plan.";
+
+                    PushButton btnAutoViewSheet = layoutPanel.AddItem(btnAutoViewSheetData) as PushButton;
+                    if (btnAutoViewSheet != null && File.Exists(iconPathAutoViewSheet))
+                    {
+                        BitmapImage img = new BitmapImage();
+                        img.BeginInit();
+                        img.UriSource = new Uri(iconPathAutoViewSheet, UriKind.Absolute);
+                        img.CacheOption = BitmapCacheOption.OnLoad;
+                        img.EndInit();
+                        btnAutoViewSheet.LargeImage = img;
+                        btnAutoViewSheet.Image = img;
+                    }
+
+                    // ------------------- Auto Dim Grid -------------------
+                    string iconPathDimGrid = Path.Combine(resourcesPath, "DimGrid.png");
+                    string dimGridBtnId = tabIdx == 0 ? "cmdAutoDimGrid" : $"cmdAutoDimGrid_{tabIdx}";
+                    PushButtonData btnDimGridData = new PushButtonData(
+                        dimGridBtnId,
+                        "Dim\nGrid",
+                        assemblyPath,
+                        "JNNTool.Tools.AutoDimGrid.AutoDimGridCommand"
+                    );
+                    btnDimGridData.ToolTip = "Auto Dim Grid: Dim tự động lưới trục 4 cạnh (2 hoặc 3 lớp: Tường / Trục / Tổng), hoặc Dim thủ công theo tường + điểm chọn.";
+
+                    PushButton btnDimGrid = layoutPanel.AddItem(btnDimGridData) as PushButton;
+                    if (btnDimGrid != null && File.Exists(iconPathDimGrid))
+                    {
+                        BitmapImage img = new BitmapImage();
+                        img.BeginInit();
+                        img.UriSource = new Uri(iconPathDimGrid, UriKind.Absolute);
+                        img.CacheOption = BitmapCacheOption.OnLoad;
+                        img.EndInit();
+                        btnDimGrid.LargeImage = img;
+                        btnDimGrid.Image = img;
+                    }
+
+                    // ------------------- Auto Dim Column -------------------
+                    string iconPathDimCol = Path.Combine(resourcesPath, "DimColumn.png");
+                    string dimColBtnId = tabIdx == 0 ? "cmdAutoDimColumn" : $"cmdAutoDimColumn_{tabIdx}";
+                    PushButtonData btnDimColData = new PushButtonData(
+                        dimColBtnId,
+                        "Dim\nColumn",
+                        assemblyPath,
+                        "JNNTool.Tools.AutoDimColumn.Commands.AutoDimColumnCommand"
+                    );
+                    btnDimColData.ToolTip = "Auto Dim Column: Tự động ghi kích thước tiết diện cột (b × h) và định vị cột từ Lưới trục (Grid-to-Column) trên mặt bằng kết cấu.";
+
+                    PushButton btnDimCol = layoutPanel.AddItem(btnDimColData) as PushButton;
+                    if (btnDimCol != null && File.Exists(iconPathDimCol))
+                    {
+                        BitmapImage img = new BitmapImage();
+                        img.BeginInit();
+                        img.UriSource = new Uri(iconPathDimCol, UriKind.Absolute);
+                        img.CacheOption = BitmapCacheOption.OnLoad;
+                        img.EndInit();
+                        btnDimCol.LargeImage = img;
+                        btnDimCol.Image = img;
+                    }
+
+                    // ------------------- Element Mark -------------------
+                    string iconPathElementMark = Path.Combine(resourcesPath, "ElementMark.png");
+                    string elementMarkBtnId = tabIdx == 0 ? "cmdElementMark" : $"cmdElementMark_{tabIdx}";
+                    PushButtonData btnElementMarkData = new PushButtonData(
+                        elementMarkBtnId,
+                        "Element\nMark",
+                        assemblyPath,
+                        "JNNTool.Tools.ElementMark.ElementMarkCommand"
+                    );
+                    btnElementMarkData.ToolTip = "Đánh Mark tự động cho Dầm, Cột, Sàn theo quy tắc người dùng.\n\n" +
+                                                 "• Dầm: DS1X01, dầm liên tục nhiều nhịp DS1X01.1, DS1X01.2…\n" +
+                                                 "• Cột: C1, C2… dùng chung từ móng đến mái\n" +
+                                                 "• Sàn: S1 cho mọi sàn thuộc Level 1\n" +
+                                                 "• Hướng đánh số Trái/Phải, Trên/Dưới theo view đang mở";
+
+                    PushButton btnElementMark = layoutPanel.AddItem(btnElementMarkData) as PushButton;
+                    if (btnElementMark != null && File.Exists(iconPathElementMark))
+                    {
+                        BitmapImage img = new BitmapImage();
+                        img.BeginInit();
+                        img.UriSource = new Uri(iconPathElementMark, UriKind.Absolute);
+                        img.CacheOption = BitmapCacheOption.OnLoad;
+                        img.EndInit();
+                        btnElementMark.LargeImage = img;
+                        btnElementMark.Image = img;
+                    }
+                }
+                tabIdx++;
+            }
+
             // ─── Auto-update check (background, non-blocking) ───────────────
 #if !NET48
             _ = Task.Run(async () =>
@@ -676,7 +898,7 @@ namespace JNNTool
                     if (!File.Exists(installedJson)) return;
 
                     var installedText = await File.ReadAllTextAsync(installedJson);
-                    var installed     = JsonSerializer.Deserialize<VersionInfo>(installedText);
+                    var installed     = Newtonsoft.Json.JsonConvert.DeserializeObject<VersionInfo>(installedText);
                     if (installed == null) return;
 
                     // Nếu có manifestUrl thì check online
@@ -684,7 +906,7 @@ namespace JNNTool
 
                     using var http   = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(5) };
                     var latestJson   = await http.GetStringAsync(installed.ManifestUrl);
-                    var latest       = JsonSerializer.Deserialize<VersionInfo>(latestJson);
+                    var latest       = Newtonsoft.Json.JsonConvert.DeserializeObject<VersionInfo>(latestJson);
                     if (latest == null) return;
 
                     if (Version.TryParse(latest.Version, out var lv) &&
@@ -712,17 +934,54 @@ namespace JNNTool
 
         public Result OnShutdown(UIControlledApplication application)
         {
+            AppDomain.CurrentDomain.AssemblyResolve -= OnAssemblyResolve;
             return Result.Succeeded;
+        }
+
+        private static Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)
+        {
+            try
+            {
+                var requestedName = new AssemblyName(args.Name).Name;
+                if (string.IsNullOrEmpty(requestedName)) return null;
+
+                // 1. Ưu tiên tìm trong thư mục chứa JNNTool.dll (bundle của phiên bản Revit hiện hành)
+                string currentDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                if (!string.IsNullOrEmpty(currentDir))
+                {
+                    string targetFile = Path.Combine(currentDir, requestedName + ".dll");
+                    if (File.Exists(targetFile))
+                    {
+                        try
+                        {
+                            return Assembly.LoadFrom(targetFile);
+                        }
+                        catch { }
+                    }
+                }
+
+                // 2. Tìm trong các assembly đã nạp sẵn trong AppDomain
+                foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+                {
+                    if (string.Equals(asm.GetName().Name, requestedName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return asm;
+                    }
+                }
+            }
+            catch { }
+
+            return null;
         }
     }
 
     /// <summary>Model nhẹ để đọc version.json (tránh dependency nặng).</summary>
     internal sealed class VersionInfo
     {
-        [System.Text.Json.Serialization.JsonPropertyName("version")]
+        [Newtonsoft.Json.JsonProperty("version")]
         public string Version { get; set; } = "0.0.0";
 
-        [System.Text.Json.Serialization.JsonPropertyName("manifestUrl")]
+        [Newtonsoft.Json.JsonProperty("manifestUrl")]
         public string ManifestUrl { get; set; } = "";
     }
 }

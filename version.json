@@ -1,9 +1,9 @@
 {
-    "version":  "2.0.4",
-    "releaseDate":  "2026-10-06",
+    "version":  "2.0.6",
+    "releaseDate":  "2026-10-10",
     "manifestUrl":  "https://raw.githubusercontent.com/john-cpu25/JNNTool/main/version.json",
-    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.0.4/JNNToolSetup_v2.0.4.msi",
+    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.0.6/JNNToolSetup_v2.0.6.msi",
     "changelog":  [
-                      "CSI x Revit: Tool doc lap Can Le Bien (Modeless, tu dong co keo dam ngang, chong xien); Sua triet de loi UI chim sau Revit; Chuan hoa goc xoay cot bien/cot det; Nang cap giao dien JNN Updater theo Brand chuan \u0026 doi Logo JNN"
+                      "General: Auto Join elements (Column > Beam > Floor) 1-click execution for Active View and Entire Project, auto Switch Join Order, high performance BoundingBox filter."
                   ]
 }

@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using System.Text.Json;
+using Newtonsoft.Json;
 using JNNTool.Tools.IFCEtabs.Mapping.Models;
 
 namespace JNNTool.Tools.IFCEtabs.Mapping.Services
@@ -38,7 +38,7 @@ namespace JNNTool.Tools.IFCEtabs.Mapping.Services
                 if (File.Exists(ConfigFilePath))
                 {
                     string json = File.ReadAllText(ConfigFilePath);
-                    var loaded = JsonSerializer.Deserialize<MappingConfig>(json);
+                    var loaded = JsonConvert.DeserializeObject<MappingConfig>(json);
                     if (loaded != null)
                     {
                         Config = loaded;
@@ -60,8 +60,7 @@ namespace JNNTool.Tools.IFCEtabs.Mapping.Services
                     Directory.CreateDirectory(SettingsDir);
                 }
 
-                var options = new JsonSerializerOptions { WriteIndented = true };
-                string json = JsonSerializer.Serialize(Config, options);
+                string json = JsonConvert.SerializeObject(Config, Formatting.Indented);
                 File.WriteAllText(ConfigFilePath, json);
             }
             catch { }

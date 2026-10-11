@@ -16,5 +16,14 @@ namespace JNNTool.Core.Compat
             return id.Value;
 #endif
         }
+
+        public static ElementId Create(long id)
+        {
+#if NET48
+            return new ElementId((int)id);
+#else
+            return new ElementId(id);
+#endif
+        }
     }
 }

@@ -2,6 +2,116 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added - Tool **Auto Dim Column** (panel Layout): Tự động Dimension Cột kết cấu
+- **Kích thước cột**: Dim chiều rộng $b$ và chiều dài $h$ cho cột chữ nhật/vuông; hỗ trợ cột xoay góc bất kỳ trên mặt bằng theo hệ trục cục bộ của cột.
+- **Định vị từ Lưới trục (Grid-to-Column)**: Tự động tìm Grid gần nhất và song song với từng mặt cột trong phạm vi tìm kiếm (`GridSearchRangeMm`). Tạo chuỗi dim định vị `Grid -> Mép cột gần` hoặc chuỗi liên hoàn `Grid -> Mép gần -> Mép xa`.
+- **Chống trùng Dimension**: Quét các dimension hiện hữu trong view và tự động bỏ qua nếu cặp Reference đã tồn tại (`Skip Existing Dimensions`).
+- **Giao diện chuẩn JNN**: Không banner tối màu, không in đậm (`FontWeight="Normal"`), bo góc $5\text{px}$ đồng bộ, Preview DataGrid kiểm soát từng cột trước khi tạo, Undo một lần (`TransactionGroup`).
+- **Engine thuần C#** `AutoDimColumnEngine` + 11 unit test mới (tổng 161 pass). Checklist: `docs/test-checklist-auto-dim-column.md`.
+
+### Added - Tool **Element Mark** (panel Layout): đánh Mark Dầm / Cột / Sàn
+- **Dầm**: mẫu do người dùng đặt, mặc định `{P}{L}{D}{N:00}` → `DS1X01`. Góc ≤ 45° → X, > 45° → Y. Đánh số riêng theo từng tầng và từng phương.
+- **Dầm liên tục**: các nhịp thẳng hàng, khe hở ≤ 1000 mm (cấu hình được) gộp thành một dầm `DS1X01.1`, `DS1X01.2`… Có thể tắt.
+- **Cột**: `C1`, `C2`… dùng chung Mark cho cả chuỗi từ móng đến mái (chịu lệch tâm ≤ 300 mm khi thu tiết diện). Ưu tiên theo hàng hoặc theo cột.
+- **Sàn**: một Mark chung cho mọi sàn của cùng Level (`S1` cho Level 1), tuỳ chọn chỉ sàn kết cấu.
+- **Hướng đánh số** Trên/Dưới, Trái/Phải theo hệ trục view mặt bằng đang mở (đúng cả khi view bị xoay).
+- **Mã tầng `{L}`** lấy từ tên Level (`Tầng 1` → `1`, `Tầng hầm 1` → `B1`, `Mái` → `M`), sửa được trong bảng và được lưu lại.
+- Phạm vi View hiện hành / Toàn dự án; ghi đè tất cả hoặc chỉ phần tử chưa có Mark; ghi vào `Mark` hoặc tham số Text khác.
+- Bảng xem trước (Mark cũ → mới, lọc theo loại, bấm dòng để chọn phần tử). Ghi trong một Transaction `"JNN - Đánh Mark cấu kiện"` (Undo một lần), tự xoá cảnh báo trùng Mark.
+- Engine thuần C# `ElementMarkEngine` + 26 unit test (tổng 150). Checklist: `docs/test-checklist-element-mark.md`.
+
+## [2.0.6] - 2026-10-10
+
+### Changed - Nút **Dim Grid** chuyển sang tool **Auto Dim Grid**
+- Gỡ tool cũ `Tools/Dim Grid` (`JNNTool.Tools.DimGrid`) cùng `GridDimEngineTests` (test còn 115).
+- Nút "Dim Grid" trên Ribbon gọi `JNNTool.Tools.AutoDimGrid.AutoDimGridCommand` (đổi namespace từ `NhanARC.Tools.Auto_Dim_Grid`). Icon `DimGrid.png` chuyển vào `Tools/Auto Dim Grid/`.
+- Transaction đổi thành `"JNN - Dim lưới trục 4 cạnh"` / `"JNN - Dim tường (thủ công)"`, lỗi được ghi log.
+- **Sửa lỗi Auto Dim Grid**:
+  - Lấy đường trục **đang hiển thị trong view** (`GetCurvesInView`), không dùng `Grid.Curve` 3D. Dim đúng khi đã kéo đầu trục và đúng trên **mặt cắt / mặt đứng** (không có trục vuông góc thì Dim đặt vào trong tính từ đầu trục để không đè bóng).
+  - Mỗi Dim tạo độc lập: một tham chiếu lỗi không còn làm mất cả lần chạy. Hộp thoại báo số Dim đã tạo / lỗi / lỗi đầu tiên. Cảnh báo Revit được tự xóa.
+  - Khử tham chiếu trùng vị trí (< 1 mm) để tránh đoạn Dim 0. Dim thủ công chỉ lấy trục thực sự cắt qua tường.
+  - Dim thủ công: chọn liên tục nhiều tường, ESC để kết thúc, mỗi tường 1 lần Undo.
+  - Cửa sổ không tự đóng khi bấm Chạy, bỏ Topmost (gắn Owner Revit), khóa nút khi đang chạy.
+  - Lưu cài đặt (`AutoDimGridSettings.json`): số lớp, khoảng cách, kiểu Dim, tab. Nhập được dấu phẩy thập phân.
+  - Tách `AutoDimGridEngine` thuần C# + 9 unit test (tổng 124).
+
+### Added - CSI x Revit: nút **Fit Scope Box** (đầu trục sát mép `JNN_SB`)
+- Level gắn Scope Box `JNN_SB`. Grid **gỡ khỏi** Scope Box vì Revit khóa extents của Grid đã gắn Scope Box và bỏ qua mọi lệnh chỉnh đầu trục qua API.
+- Grid được cắt 3D đúng biên Scope Box, sau đó kéo đầu 2D vào trong trên từng mặt bằng. Lượt 2 đo khung bao Grid trong view (có cả bóng) rồi bù, để mép bóng chạm sát mép Scope Box ở mọi tỷ lệ view.
+- Bật bóng trục cả 2 đầu. Hộp thoại báo số trục đã cắt / đã ép sát / lỗi đầu tiên (không còn nuốt lỗi im lặng).
+- Kéo lại Scope Box thì bấm Fit Scope Box lần nữa để cập nhật.
+
+### Changed - CSI x Revit (ETABS E2K → Revit): Tạo tiết diện thiếu & phân loại sàn S / F
+- **Template theo loại**: thanh trên Tab 1 có thêm **Template Sàn (S)**, **Template Móng (F)**, **Template Vách** (cạnh Dầm / Cột). Nút "Áp dụng Template" áp đúng template cho từng loại, chỉ trên các dòng chưa có.
+- **Tách 3 cột**: **Family** → **Type mẫu** (lọc theo Family) → **Type Revit** (tên sẽ tạo, mặc định = tên ETABS, sửa được).
+- **Sửa lỗi UI không khớp sau khi tạo**: sau "Tạo các tiết diện đã chọn", dòng hiển thị đúng type vừa nhân bản (vd. `C60X20`), Tab 2 được gán đúng type đó (ghim, AutoMatch không ghi đè). Kiểm tra "Đã có" chỉ theo **tên chính xác** (trước đây `Contains("100")` khớp nhầm `JNN_SanBT_100`).
+- **Phân loại sàn** (`SlabClassifier`, có unit test):
+  - **Sàn móng (F)**: tên `F<số>` hoặc `MODELINGTYPE = ShellThick` → dựng bằng type **Foundation Slab** (category *Structural Foundations*). Không bao giờ dựng thành Floor thường; nếu dự án chưa có type Foundation Slab thì cảnh báo và bỏ qua.
+  - **Sàn (S)**: các sàn còn lại → Floor thường.
+  - **Sàn ảo**: dày ≤ 1 mm (SS1, S1 membrane) → hiển thị nhưng không dựng.
+- Parser đọc thêm `MODELINGTYPE`, `SLABTHICKNESS`, `WALLTHICKNESS` (trước đây dựa vào số đầu tiên).
+- Hộp thoại kết quả đếm riêng Sàn S / Sàn móng F / Sàn ảo bỏ qua.
+- **Modeless**: cửa sổ Import không còn khóa Revit. Tạo tiết diện / Làm mới / Dựng hình đều chạy qua `ExternalEvent` (handler riêng, tạo trong Command nên chạy được cả khi load bằng Add-in Manager). Chặn mở trùng cửa sổ, kiểm tra document còn hợp lệ, con trỏ chờ khi đang chạy.
+- **"Đã có" theo kích thước thực**: đọc chiều dày (Floor/Wall, kể cả nhiều lớp) và b×h / D (FamilySymbol) từ type Revit. Có type cùng kích thước (vd. S200 ↔ `JNN_SanBT_200`) → tự chọn sẵn type đó, bỏ tick, Tab 2 tự gán. Cột cho phép đảo b/h, dầm thì không. Trạng thái vàng đổi thành "Chưa có type cùng kích thước".
+- Nhân bản Floor/Wall: chỉnh lớp lõi để **tổng** chiều dày đúng bằng ETABS (trước đây chỉ đặt lớp lõi).
+- **UI làm lại & chuyển sang tiếng Anh**: thanh template thành card "Default Templates" (lưới 5 cột Beam / Column / Slab (S) / Foundation Slab (F) / Wall), nút bo góc có hover. Toàn bộ nhãn, trạng thái, thông báo, hộp thoại kết quả đều tiếng Anh. Nhãn loại cấu kiện gom về `ElementKinds` (bỏ chuỗi cứng trong Parser / Command).
+- **Tên type mới theo kích thước thực (mm)** (`TypeNameSuggester`, có unit test): tiền tố chữ của tên ETABS + b×h, vd. `C50X20` → `C200x500`, `B30X25` → `B300x250`, cột tròn `C-D50` → `CD500`, sàn/vách `S20` → `S200`. Thiếu kích thước thì giữ tên ETABS. Vẫn sửa tay được ở cột Revit Type.
+- Bỏ tùy chọn "Align perimeter beams/columns inward" (luôn giữ tim theo E2K).
+- **Quy trình 3 bước Scope Box chuẩn**:
+  - *Bước 1 (Build model)*: Dựng đầy đủ cấu kiện, lưới trục, cao độ.
+  - *Bước 2 (Đặt Scope Box tâm nhà)*: Tool tự động tìm Scope Box `JNN_SB` và đặt tại đúng tâm công trình (X, Y, Z) để người dùng mở view lên là thấy ngay ở giữa nhà, thoải mái dùng chuột kéo 4 góc bao quanh căn nhà (chưa khóa vội Grid/Level).
+  - *Bước 3 (Fit Level & Grid)*: Thêm lệnh Ribbon mới **"Fit Scope Box"** (`FitScopeBoxCommand`) trên panel `CSI x Revit`. Sau khi kéo xong Scope Box quanh nhà, bấm nút này là toàn bộ Grid & Level lập tức khóa và cắt khớp khít 100% theo Scope Box.
+
+### Added - Tools: Công cụ 1 nút "Auto Join" (`AutoJoinCommand`)
+- **Vị trí Ribbon**: Tạo Panel mới **"General"** trên Ribbon Tab `JNNTool` (đứng đầu tiên trên thanh Ribbon) chứa nút SplitButton **"Auto Join"**.
+- **Mức độ ưu tiên cấu kiện (TCVN / BIM)**:
+  - **Cột (Column) > Dầm (Beam) > Sàn (Floor)**
+  - Cột cắt Dầm (`Column cuts Beam`) và Cột cắt Sàn (`Column cuts Floor`).
+  - Dầm cắt Sàn (`Beam cuts Floor`).
+  - Tự động kiểm tra và đảo thứ tự ưu tiên (`Switch Join Order`) nếu liên kết trước đó bị ngược (ví dụ Sàn đang cắt Dầm/Cột).
+- **2 chế độ thực thi linh hoạt**:
+  - **Active View (Mặc định)**: Bấm 1 click vào nút to trên Ribbon để quét và liên kết nhanh toàn bộ cấu kiện trong View hiện hành.
+  - **Entire Project**: Bấm mũi tên xổ xuống để quét và liên kết toàn bộ mô hình dự án.
+  - Hỗ trợ gọi `AutoJoinCommand` hiển thị hộp thoại TaskDialog 2 CommandLinks trực quan.
+- **Tối ưu hiệu năng & Ổn định**:
+  - Dùng bộ lọc không gian `BoundingBoxIntersectsFilter` (C++ level trong Revit) để tìm cấu kiện giao cắt siêu tốc.
+  - Tích hợp `DismissWarningsPreprocessor` triệt tiêu mọi popup warning của Revit trong lúc Join hàng loạt.
+  - Đảm bảo tương thích hoàn hảo đa phiên bản Revit (2022-2027) qua `ElementIdCompat.GetIdValue()`.
+
+### Updated - Auto View & Sheet (`AutoViewSheetCommand`):
+- **Luôn luôn bật Collapse**: Cập nhật trạng thái mặc định của Expander thành `IsExpanded="False"` và kích hoạt tự động Collapse khi mở cửa sổ.
+- **Chuẩn hóa nhận diện Tầng (T1 → TẦNG 1)**: Cập nhật bộ lọc Regex nhận diện tên Level bắt đầu bằng `T` (ví dụ `T1`, `T2`... `T7`, `T01`) sẽ tự động lược bỏ chữ `T` để gán tên Sheet chuẩn: `MẶT BẰNG KẾT CẤU TẦNG 1` thay vì bị lặp `TẦNG T1`. Đảm bảo tự động cập nhật lại tên Sheet khi đổi Level trong ComboBox.
+
+
+### Fixed - CSI x Revit: Khắc phục triệt để lỗi căn lề cột (Tự động nhận diện B/2 hoặc H/2 theo hướng dời và góc xoay)
+- **Vấn đề đã xử lý**: Cột có tiết diện $250\text{ mm}$ (hoặc các cột chữ nhật $b \ne h$, $200\times 250$, $250\times 500$) khi căn lề theo phương Y bị dời sai khoảng cách ($100\text{ mm}$ thay vì $125\text{ mm}$) do code cũ hardcode chỉ đọc tham số `b`, bỏ qua tham số `h`, không xét hướng di chuyển và kế thừa mù quáng vector dời của dầm biên.
+- **Giải pháp kỹ thuật**:
+  - Tạo [`ColumnDimensionHelper.cs`](file:///c:/Users/nhann/OneDrive/AI/JNNTool/Tools/CSI%20x%20Revit/Builder/ColumnDimensionHelper.cs) tính toán kích thước phủ bì thực tế $W_X$ và $H_Y$ theo công thức hình học tổng quát:
+    $$W_X = b \cdot |\cos \theta| + h \cdot |\sin \theta|$$
+    $$H_Y = b \cdot |\sin \theta| + h \cdot |\cos \theta|$$
+    kết hợp đối soát với `BoundingBoxXYZ` thực tế trong Revit.
+  - Tách bạch giữa **Hướng di chuyển (Unit Vector)** và **Khoảng dời (Magnitude)**: Khi cột nối với dầm biên, cột chỉ kế thừa hướng vector của dầm biên, còn khoảng cách dời tự động tính theo nửa kích thước của chính cây cột đó theo phương dời ($H/2$ hoặc $B/2$).
+  - Cập nhật [`BoundaryAligner.cs`](file:///c:/Users/nhann/OneDrive/AI/JNNTool/Tools/CSI%20x%20Revit/Builder/BoundaryAligner.cs) và giao diện [`BoundaryAlignWindow.xaml`](file:///c:/Users/nhann/OneDrive/AI/JNNTool/Tools/CSI%20x%20Revit/UI/BoundaryAlignWindow.xaml).
+  - Bổ sung 11 unit test trong [`CSIxRevitTests.cs`](file:///c:/Users/nhann/OneDrive/AI/JNNTool/Tests/JNNTool.Tests/CSIxRevitTests.cs) kiểm tra đầy đủ các góc xoay $0^\circ, 90^\circ$ và phương di chuyển $X, Y$ (`83/83 tests PASS 100%`).
+
+### Added - Tools: Công cụ "Tự Động Dim Grid" (`AutoDimGridCmd`)
+- **Vị trí Ribbon**: Thêm nút **"Dim Grid"** trên Ribbon tab `JNNTool` (Panel `Modeling`, nằm ngay cạnh *Dim Beam*).
+- **Tính năng nổi bật**:
+  - Tự động nhận diện và phân nhóm các hệ lưới trục (Grid) song song theo trục dọc, trục ngang và góc xiên bất kỳ trên mặt bằng (`ViewPlan`).
+  - Hỗ trợ tạo kích thước 4 phía: **Phía Trên (Top)**, **Phía Dưới (Bottom)**, **Phía Trái (Left)**, **Phía Phải (Right)**.
+  - Tự động tạo 2 lớp kích thước:
+    - **Dim chi tiết (Segment Dim)**: Đo khoảng cách giữa từng cặp trục liên tiếp.
+    - **Dim tổng (Overall Dim)**: Đo khoảng cách tổng giữa 2 trục biên ngoài cùng.
+  - Tự động lọc bỏ các trục trùng tim (Duplicate Grids) để chống lỗi Revit API.
+  - Tùy chỉnh khoảng cách offset từ đầu trục và giữa 2 lớp Dim (theo mm trên giấy, tự nhân theo View Scale).
+  - Tự động lưu cấu hình người dùng vào `%AppData%\JNNTool\Settings\DimGridSettings.json`.
+  - Hỗ trợ cả 2 chế độ: Tự động chạy cho toàn bộ trục trong View hoặc Quét chọn trục cụ thể trên màn hình.
+- **Kiến trúc Clean-Room & Đa phiên bản**:
+  - Thuật toán tính toán hình học độc lập `GridDimEngine.cs` (thuần C#, unit test đạt 100%).
+  - Tương thích đầy đủ toàn bộ phiên bản Revit **2022, 2023, 2024, 2025, 2026, 2027**.
+
 ## [2.0.4] - 2026-10-06
 
 ### Added - CSI x Revit: Công cụ độc lập "🎯 Căn Lề Biên" (Boundary Align)

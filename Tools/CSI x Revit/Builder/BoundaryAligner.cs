@@ -117,29 +117,52 @@ namespace JNNTool.Tools.CSIxRevit.Builder
                     XYZ colPt = locPt.Point;
                     XYZ moveVec = XYZ.Zero;
 
-                    // If a moved beam connected to this column, inherit beam's move vector
+                    // Lấy kích thước phủ bì thực tế của cột theo trục World X và Y (tự động xử lý b, h và góc xoay)
+                    ColumnDimensionHelper.GetColumnExtentsFeet(col, out double colExtentXFeet, out double colExtentYFeet);
+
+                    // Kiểm tra dầm biên nối vào cột
                     var nearbyBeamVec = beamMoveVectors.FirstOrDefault(kvp =>
                     {
                         var b = doc.GetElement(kvp.Key) as FamilyInstance;
                         if (b?.Location is LocationCurve lc && lc.Curve is Line bl)
                         {
-                            return bl.Distance(colPt) < 1.0; // Near beam end or on beam line
+                            return bl.Distance(colPt) < 1.0; // Gần đầu dầm hoặc nằm trên trục dầm
                         }
                         return false;
                     });
 
+                    XYZ moveDir;
                     if (nearbyBeamVec.Value != null && !nearbyBeamVec.Value.IsAlmostEqualTo(XYZ.Zero))
                     {
-                        moveVec = nearbyBeamVec.Value;
+                        // Cột kế thừa HƯỚNG di chuyển của dầm biên nối vào nó (Unit Vector)
+                        moveDir = nearbyBeamVec.Value.Normalize();
                     }
                     else
                     {
-                        // Calculate move vector directly for column
-                        double colExtentFeet = GetColumnThicknessFeet(col);
-                        double shiftDist = customOffsetFeet > 0 ? customOffsetFeet : (colExtentFeet / 2.0);
-                        if (shiftDist <= 0.001) shiftDist = UnitUtils.ConvertToInternalUnits(100.0, UnitTypeId.Millimeters);
+                        // Cột đứng độc lập: xác định hướng theo lựa chọn UI
+                        moveDir = DetermineColumnDirection(colPt, direction, structureCenter);
+                    }
 
-                        moveVec = DetermineColumnMoveVector(colPt, direction, shiftDist, allGrids, structureCenter);
+                    if (!moveDir.IsAlmostEqualTo(XYZ.Zero))
+                    {
+                        double shiftDist;
+                        if (customOffsetFeet > 0)
+                        {
+                            shiftDist = customOffsetFeet;
+                        }
+                        else
+                        {
+                            // Tự động: lấy nửa kích thước phủ bì của cột theo phương di chuyển (B/2 hoặc H/2)
+                            bool isMovingAlongY = Math.Abs(moveDir.Y) >= Math.Abs(moveDir.X);
+                            shiftDist = isMovingAlongY ? (colExtentYFeet / 2.0) : (colExtentXFeet / 2.0);
+                        }
+
+                        if (shiftDist <= 0.001)
+                        {
+                            shiftDist = UnitUtils.ConvertToInternalUnits(100.0, UnitTypeId.Millimeters);
+                        }
+
+                        moveVec = moveDir * shiftDist;
                     }
 
                     if (!moveVec.IsAlmostEqualTo(XYZ.Zero))
@@ -220,35 +243,37 @@ namespace JNNTool.Tools.CSIxRevit.Builder
             }
         }
 
-        private static XYZ DetermineColumnMoveVector(
+        private static XYZ DetermineColumnDirection(
             XYZ colPt,
             AlignDirection direction,
-            double shiftDist,
-            List<Grid> grids,
             XYZ structureCenter)
         {
             switch (direction)
             {
                 case AlignDirection.UpY:
-                    return new XYZ(0, shiftDist, 0);
+                    return new XYZ(0, 1, 0);
                 case AlignDirection.DownY:
-                    return new XYZ(0, -shiftDist, 0);
+                    return new XYZ(0, -1, 0);
                 case AlignDirection.RightX:
-                    return new XYZ(shiftDist, 0, 0);
+                    return new XYZ(1, 0, 0);
                 case AlignDirection.LeftX:
-                    return new XYZ(-shiftDist, 0, 0);
+                    return new XYZ(-1, 0, 0);
 
                 case AlignDirection.AutoGrid:
                 default:
                     double dx = structureCenter.X - colPt.X;
                     double dy = structureCenter.Y - colPt.Y;
-                    if (Math.Abs(dy) > Math.Abs(dx))
+                    if (Math.Abs(dy) >= Math.Abs(dx))
                     {
-                        return new XYZ(0, Math.Sign(dy) * shiftDist, 0);
+                        double signY = Math.Sign(dy);
+                        if (Math.Abs(signY) < 1e-4) signY = 1.0;
+                        return new XYZ(0, signY, 0);
                     }
                     else
                     {
-                        return new XYZ(Math.Sign(dx) * shiftDist, 0, 0);
+                        double signX = Math.Sign(dx);
+                        if (Math.Abs(signX) < 1e-4) signX = 1.0;
+                        return new XYZ(signX, 0, 0);
                     }
             }
         }
@@ -325,17 +350,7 @@ namespace JNNTool.Tools.CSIxRevit.Builder
             return UnitUtils.ConvertToInternalUnits(200.0, UnitTypeId.Millimeters);
         }
 
-        private static double GetColumnThicknessFeet(FamilyInstance col)
-        {
-            var symbol = col.Symbol;
-            var pB = col.LookupParameter("b") ?? symbol?.LookupParameter("b")
-                  ?? col.LookupParameter("Width") ?? symbol?.LookupParameter("Width")
-                  ?? col.LookupParameter("B") ?? symbol?.LookupParameter("B")
-                  ?? col.LookupParameter("Chiều rộng") ?? symbol?.LookupParameter("Chiều rộng");
 
-            if (pB != null && pB.AsDouble() > 0) return pB.AsDouble();
-            return UnitUtils.ConvertToInternalUnits(200.0, UnitTypeId.Millimeters);
-        }
 
         private static XYZ CalculateStructureCenter(Document doc)
         {

@@ -145,10 +145,19 @@ namespace JNNTool.Tools.CSIxRevit.Parser
                         if (ptIdx >= 0 && ptIdx + 1 < tokens.Count) propType = Clean(tokens[ptIdx + 1]);
 
                         def.Shape = propType;
-                        def.ElementType = propType.Equals("WALL", StringComparison.OrdinalIgnoreCase) ? "Vách (Wall)" : "Sàn (Floor)";
+                        bool isWallProp = propType.Equals("WALL", StringComparison.OrdinalIgnoreCase);
 
-                        int thickIdx = tokens.FindIndex(t => t.Equals("THICKNESS", StringComparison.OrdinalIgnoreCase) || t.Equals("THICK", StringComparison.OrdinalIgnoreCase));
-                        if (thickIdx >= 0 && thickIdx + 1 < tokens.Count)
+                        int mtIdx = tokens.FindIndex(t => t.Equals("MODELINGTYPE", StringComparison.OrdinalIgnoreCase));
+                        if (mtIdx >= 0 && mtIdx + 1 < tokens.Count) def.ModelingType = Clean(tokens[mtIdx + 1]);
+
+                        // E2K thật dùng SLABTHICKNESS / WALLTHICKNESS (Deck: DECKSLABDEPTH); THICKNESS giữ cho file cũ.
+                        int thickIdx = tokens.FindIndex(t =>
+                            t.Equals("SLABTHICKNESS", StringComparison.OrdinalIgnoreCase) ||
+                            t.Equals("WALLTHICKNESS", StringComparison.OrdinalIgnoreCase) ||
+                            t.Equals("THICKNESS", StringComparison.OrdinalIgnoreCase) ||
+                            t.Equals("THICK", StringComparison.OrdinalIgnoreCase) ||
+                            t.Equals("DECKSLABDEPTH", StringComparison.OrdinalIgnoreCase));
+                        if (thickIdx >= 0 && thickIdx + 1 < tokens.Count && TryParseDouble(tokens[thickIdx + 1], out _))
                         {
                             def.DepthMm = ParseDouble(tokens[thickIdx + 1]) * scaleToMm;
                         }
@@ -158,14 +167,28 @@ namespace JNNTool.Tools.CSIxRevit.Parser
                             if (num != null) def.DepthMm = ParseDouble(num) * scaleToMm;
                         }
 
+                        SlabKind slabKind = SlabKind.Slab;
+                        if (isWallProp)
+                        {
+                            def.ElementType = ElementKinds.Wall;
+                        }
+                        else
+                        {
+                            slabKind = SlabClassifier.Classify(name, def.ModelingType, def.DepthMm);
+                            def.ElementType = SlabClassifier.ToElementKind(slabKind);
+                        }
+
                         sectionDefs[name] = def;
 
                         string detail = "";
+                        if (!isWallProp && slabKind == SlabKind.Foundation) detail = "Foundation (F) - ";
                         if (def.DepthMm > 0)
                         {
-                            if (def.DepthMm <= 1.0) detail = "Dày 1 mm (Sàn ảo/Membrane)";
-                            else detail = $"Dày {Math.Round(def.DepthMm, 0)} mm";
+                            if (!isWallProp && slabKind == SlabKind.Virtual) detail = "Virtual/Membrane - skipped";
+                            else detail += $"Thk {Math.Round(def.DepthMm, 0)} mm";
                         }
+                        detail = detail.TrimEnd(' ', '-');
+
                         if (!string.IsNullOrEmpty(def.Material))
                         {
                             detail += (detail.Length > 0 ? " - Mat: " : "Mat: ") + def.Material;
@@ -210,9 +233,9 @@ namespace JNNTool.Tools.CSIxRevit.Parser
                         if (sectionDefs.TryGetValue(name, out var def))
                         {
                             if (secType.Equals("Column", StringComparison.OrdinalIgnoreCase))
-                                def.ElementType = "Cột (Column)";
+                                def.ElementType = ElementKinds.Column;
                             else if (secType.Equals("Beam", StringComparison.OrdinalIgnoreCase))
-                                def.ElementType = "Dầm (Beam)";
+                                def.ElementType = ElementKinds.Beam;
                         }
                     }
                 }
@@ -596,7 +619,7 @@ namespace JNNTool.Tools.CSIxRevit.Parser
                         colTop = botElev + Math.Max(zOffsetI, zOffsetJ);
                     }
                     if (secDef != null && string.IsNullOrEmpty(secDef.ElementType))
-                        secDef.ElementType = "Cột (Column)";
+                        secDef.ElementType = ElementKinds.Column;
 
                     columns.Add(new ColumnData {
                         Name = instanceName,
@@ -620,7 +643,7 @@ namespace JNNTool.Tools.CSIxRevit.Parser
                         beamElev = botElev + Math.Max(zOffsetI, zOffsetJ);
                     }
                     if (secDef != null && string.IsNullOrEmpty(secDef.ElementType))
-                        secDef.ElementType = "Dầm (Beam)";
+                        secDef.ElementType = ElementKinds.Beam;
 
                     beams.Add(new BeamData {
                         Name = instanceName,
@@ -753,9 +776,9 @@ namespace JNNTool.Tools.CSIxRevit.Parser
                 if (string.IsNullOrEmpty(kv.Value.ElementType))
                 {
                     if (kv.Key.StartsWith("C-", StringComparison.OrdinalIgnoreCase) || kv.Key.StartsWith("C", StringComparison.OrdinalIgnoreCase))
-                        kv.Value.ElementType = "Cột (Column)";
+                        kv.Value.ElementType = ElementKinds.Column;
                     else
-                        kv.Value.ElementType = "Dầm (Beam)";
+                        kv.Value.ElementType = ElementKinds.Beam;
                 }
             }
 

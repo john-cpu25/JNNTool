@@ -19,15 +19,26 @@ namespace JNNTool.Tools.CSIxRevit.UI
         private readonly Document _doc;
         private readonly FamilyMapper _mapper;
         private readonly Dictionary<string, SectionDefinition> _sectionDefs;
+        private readonly ActionEventHandler _eventHandler;
+        private readonly TypeDimensionReader _dimReader = new TypeDimensionReader();
+
+        // Type vừa tạo / đã có ở Tab 1 → ghim cho Tab 2, để AutoMatch không ghi đè khi tên Type Revit khác tên ETABS.
+        private readonly Dictionary<string, ElementId> _pinnedTypes = new Dictionary<string, ElementId>(StringComparer.OrdinalIgnoreCase);
 
         private Func<bool> _importAction;
         private bool _hasImported = false;
+        private bool _busy = false;
+
+        /// <summary>Cửa sổ đang mở (modeless) – chặn mở trùng nhiều cửa sổ cùng lúc.</summary>
+        public static ImportWindow Current { get; private set; }
 
         public ObservableCollection<CreateSectionItem> CreateSectionItems { get; set; }
         public ObservableCollection<SectionMappingItem> MappingItems { get; set; }
 
         public bool ApplyCardinalPoint => ChkApplyCardinalPoint.IsChecked == true;
-        public bool ApplyEdgeAlignment => ChkApplyEdgeAlignment.IsChecked == true;
+        // Đã bỏ tùy chọn căn lề biên khỏi UI: luôn giữ nguyên tim cột/dầm theo E2K.
+        public bool ApplyEdgeAlignment => false;
+        public bool FitScopeBox => ChkFitScopeBox.IsChecked == true;
 
         public void SetImportAction(Func<bool> action) => _importAction = action;
 
@@ -36,13 +47,23 @@ namespace JNNTool.Tools.CSIxRevit.UI
             List<SectionMappingItem> items,
             List<Level> levels,
             FamilyMapper mapper = null,
-            Dictionary<string, SectionDefinition> sectionDefs = null)
+            Dictionary<string, SectionDefinition> sectionDefs = null,
+            ActionEventHandler eventHandler = null)
         {
             InitializeComponent();
 
             _doc = doc;
             _mapper = mapper ?? new FamilyMapper(doc);
             _sectionDefs = sectionDefs ?? new Dictionary<string, SectionDefinition>(StringComparer.OrdinalIgnoreCase);
+            _eventHandler = eventHandler;
+
+            Current = this;
+            Closed += (s, e) =>
+            {
+                if (ReferenceEquals(Current, this)) Current = null;
+                _importAction = null;
+                System.Windows.Input.Mouse.OverrideCursor = null;
+            };
 
             CmbLevels.ItemsSource = levels;
             if (levels.Count > 0) CmbLevels.SelectedIndex = 0;
@@ -64,101 +85,116 @@ namespace JNNTool.Tools.CSIxRevit.UI
             }
         }
 
+        #region Modeless → Revit API context
+
+        /// <summary>
+        /// Đẩy thao tác đọc/ghi model về Revit API context qua ExternalEvent.
+        /// Cửa sổ modeless không được mở Transaction trực tiếp từ sự kiện WPF.
+        /// </summary>
+        private void RunInRevit(Action action)
+        {
+            if (_busy) return;
+            if (_eventHandler == null)
+            {
+                MessageBox.Show(this, "ExternalEvent is not initialized. Please close and re-run the command.", "JNN - CSI x Revit",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            SetBusy(true);
+            _eventHandler.Post(app =>
+            {
+                try
+                {
+                    if (_doc == null || !_doc.IsValidObject)
+                    {
+                        TaskDialog.Show("JNN - CSI x Revit", "The Revit document has been closed. This window will now close.");
+                        SafeClose();
+                        return;
+                    }
+                    action();
+                }
+                catch (Exception ex)
+                {
+                    JNNTool.Core.Logging.Logger.Error("CSI x Revit - lỗi khi thực thi trên Revit", ex);
+                    TaskDialog.Show("JNN - CSI x Revit", "An error occurred: " + ex.Message + "\n\nDetails have been written to the log.");
+                }
+                finally
+                {
+                    SetBusy(false);
+                }
+            });
+        }
+
+        private void SetBusy(bool busy)
+        {
+            try
+            {
+                _busy = busy;
+                MainTabControl.IsEnabled = !busy;
+                BtnAutoMatch.IsEnabled = !busy;
+                BtnReload.IsEnabled = !busy;
+                BtnImport.IsEnabled = !busy;
+                System.Windows.Input.Mouse.OverrideCursor = busy ? System.Windows.Input.Cursors.Wait : null;
+            }
+            catch { }
+        }
+
+        private void SafeClose()
+        {
+            try { Close(); } catch { }
+        }
+
+        #endregion
+
+        #region Tab 1 - Tạo tiết diện thiếu
+
         private void InitCreateSectionsTab()
         {
-            // Set up template selectors
-            CmbDefaultBeamTemplate.ItemsSource = _mapper.BeamSymbols;
-            if (_mapper.BeamSymbols.Count > 0) CmbDefaultBeamTemplate.SelectedIndex = 0;
-
-            CmbDefaultColTemplate.ItemsSource = _mapper.ColumnSymbols;
-            if (_mapper.ColumnSymbols.Count > 0) CmbDefaultColTemplate.SelectedIndex = 0;
-
-            var defaultBeamSymbol = _mapper.BeamSymbols.FirstOrDefault();
-            var defaultColSymbol = _mapper.ColumnSymbols.FirstOrDefault();
-            var defaultFloorType = _mapper.FloorTypes.FirstOrDefault();
-            var defaultWallType = _mapper.WallTypes.FirstOrDefault();
+            BindDefaultTemplateCombos();
 
             var list = new List<CreateSectionItem>();
 
             foreach (var item in MappingItems)
             {
-                string cleanName = CleanName(item.EtabsSectionName);
-                bool exists = false;
-                List<ElementType> availableTemplates = null;
-                ElementType selectedTemplate = null;
-
-                _sectionDefs.TryGetValue(item.EtabsSectionName, out var def);
+                string kind = item.ElementType;
+                _sectionDefs.TryGetValue(item.EtabsSectionName ?? "", out var def);
 
                 double widthMm = def?.WidthMm ?? 0;
                 double depthMm = def?.DepthMm ?? 0;
                 bool isCircular = def?.IsCircular ?? false;
 
-                if (item.ElementType == "Cột (Column)")
+                if (kind == ElementKinds.Column || kind == ElementKinds.Beam)
                 {
-                    exists = _mapper.ColumnSymbols.Any(s => CleanName(s.Name) == cleanName || CleanName(s.Name).Contains(cleanName));
                     if (widthMm <= 0 && depthMm <= 0)
                     {
-                        var matchRect = Regex.Match(item.EtabsSectionName, @"(\d+)[xX*_-](\d+)");
+                        var matchRect = Regex.Match(item.EtabsSectionName ?? "", @"(\d+)[xX*_-](\d+)");
                         if (matchRect.Success)
                         {
                             double.TryParse(matchRect.Groups[1].Value, out widthMm);
                             double.TryParse(matchRect.Groups[2].Value, out depthMm);
                         }
                     }
-                    availableTemplates = _mapper.ColumnSymbols.Cast<ElementType>().ToList();
-                    selectedTemplate = defaultColSymbol;
                 }
-                else if (item.ElementType == "Dầm (Beam)")
-                {
-                    exists = _mapper.BeamSymbols.Any(s => CleanName(s.Name) == cleanName || CleanName(s.Name).Contains(cleanName));
-                    if (widthMm <= 0 && depthMm <= 0)
-                    {
-                        var matchRect = Regex.Match(item.EtabsSectionName, @"(\d+)[xX*_-](\d+)");
-                        if (matchRect.Success)
-                        {
-                            double.TryParse(matchRect.Groups[1].Value, out widthMm);
-                            double.TryParse(matchRect.Groups[2].Value, out depthMm);
-                        }
-                    }
-                    availableTemplates = _mapper.BeamSymbols.Cast<ElementType>().ToList();
-                    selectedTemplate = defaultBeamSymbol;
-                }
-                else if (item.ElementType == "Sàn (Floor)")
+                else if (kind == ElementKinds.Slab || kind == ElementKinds.FoundationSlab || kind == ElementKinds.Wall)
                 {
                     if (depthMm <= 0)
                     {
-                        var m = Regex.Match(item.EtabsSectionName, @"\d+");
+                        var m = Regex.Match(item.EtabsSectionName ?? "", @"\d+");
                         if (m.Success && double.TryParse(m.Value, out double d)) depthMm = d;
-                        else depthMm = 100;
+                        else depthMm = kind == ElementKinds.Wall ? 200 : 100;
                     }
-                    string thickStr = Math.Round(depthMm, 0).ToString();
-                    exists = _mapper.FloorTypes.Any(f => CleanName(f.Name) == cleanName || CleanName(f.Name).Contains(cleanName) || CleanName(f.Name).Contains(thickStr));
-                    availableTemplates = _mapper.FloorTypes.Cast<ElementType>().ToList();
-                    selectedTemplate = defaultFloorType;
                 }
-                else if (item.ElementType == "Vách (Wall)")
-                {
-                    if (depthMm <= 0)
-                    {
-                        var m = Regex.Match(item.EtabsSectionName, @"\d+");
-                        if (m.Success && double.TryParse(m.Value, out double d)) depthMm = d;
-                        else depthMm = 200;
-                    }
-                    string thickStr = Math.Round(depthMm, 0).ToString();
-                    exists = _mapper.WallTypes.Any(w => CleanName(w.Name) == cleanName || CleanName(w.Name).Contains(cleanName) || CleanName(w.Name).Contains(thickStr));
-                    availableTemplates = _mapper.WallTypes.Cast<ElementType>().ToList();
-                    selectedTemplate = defaultWallType;
-                }
-                else
+                else if (kind != ElementKinds.VirtualSlab)
                 {
                     continue;
                 }
 
                 string dimSummary = "";
-                if (item.ElementType == "Sàn (Floor)" || item.ElementType == "Vách (Wall)")
+                if (ElementKinds.IsFloorLike(kind) || kind == ElementKinds.Wall)
                 {
-                    if (depthMm <= 1.0 && depthMm > 0) dimSummary = "Dày 1 mm (Sàn ảo)";
-                    else if (depthMm > 0) dimSummary = $"Dày {Math.Round(depthMm, 0)} mm";
+                    if (kind == ElementKinds.VirtualSlab) dimSummary = "Thk ≤ 1 mm (virtual)";
+                    else if (depthMm > 0) dimSummary = $"Thk {Math.Round(depthMm, 0)} mm";
                 }
                 else
                 {
@@ -169,190 +205,429 @@ namespace JNNTool.Tools.CSIxRevit.UI
 
                 list.Add(new CreateSectionItem
                 {
-                    IsSelected = !exists,
-                    IsMissing = !exists,
                     SectionName = item.EtabsSectionName,
-                    ElementType = item.ElementType,
+                    ElementType = kind,
                     DimensionSummary = dimSummary,
                     WidthMm = widthMm,
                     DepthMm = depthMm,
                     IsCircular = isCircular,
-                    Status = exists ? "✅ Đã có trong Revit" : "⚠️ Chưa có trong Revit",
-                    AvailableTemplates = availableTemplates,
-                    SelectedTemplate = selectedTemplate
+                    TargetTypeName = TypeNameSuggester.Suggest(item.EtabsSectionName, kind, widthMm, depthMm, isCircular)
                 });
             }
 
             CreateSectionItems = new ObservableCollection<CreateSectionItem>(list);
+            foreach (var row in CreateSectionItems)
+            {
+                ApplyRowTemplates(row, null, keepSelection: false);
+            }
             DgCreateSections.ItemsSource = CreateSectionItems;
+        }
+
+        /// <summary>
+        /// Nạp lại danh sách Family / Type mẫu cho 1 dòng và xác định trạng thái "đã có / chưa có".
+        /// "Đã có" = có type trùng tên HOẶC trùng kích thước thực (đọc từ type, không đoán theo tên);
+        /// khi đó chọn sẵn type đó cho người dùng và ghim cho Tab 2.
+        /// </summary>
+        private void ApplyRowTemplates(CreateSectionItem row, ElementId preferredId, bool keepSelection)
+        {
+            if (row.ElementType == ElementKinds.VirtualSlab)
+            {
+                row.SetTemplates(new List<ElementType>(), null);
+                row.CanEdit = false;
+                row.IsSelected = false;
+                row.IsMissing = false;
+                row.Status = "⏭️ Virtual slab – skipped";
+                return;
+            }
+
+            var types = _mapper.GetTypesForKind(row.ElementType);
+            if (types.Count == 0)
+            {
+                row.SetTemplates(types, null);
+                row.CanEdit = false;
+                row.IsSelected = false;
+                row.IsMissing = true;
+                row.Status = row.ElementType == ElementKinds.FoundationSlab
+                    ? "⚠️ No Foundation Slab type in project"
+                    : "⚠️ No base type in project";
+                return;
+            }
+
+            row.CanEdit = true;
+
+            var existing = FindExistingType(row, types);
+            if (existing != null)
+            {
+                row.SetTemplates(types, existing);
+                row.IsMissing = false;
+                row.IsSelected = false;
+                row.TargetTypeName = existing.Name;
+                row.Status = $"✅ Exists: {existing.Name}";
+                _pinnedTypes[PinKey(row.ElementType, row.SectionName)] = existing.Id;
+                return;
+            }
+
+            ElementType preferred = preferredId != null ? types.FirstOrDefault(t => t.Id == preferredId) : null;
+            row.SetTemplates(types, preferred ?? GetDefaultTemplate(row.ElementType, types) ?? types[0]);
+            row.IsMissing = true;
+            if (!keepSelection) row.IsSelected = true;
+            row.Status = "⚠️ No type with matching size";
+        }
+
+        /// <summary>
+        /// Tìm type đã có: ưu tiên trùng tên, sau đó trùng kích thước (ưu tiên family của template mặc định).
+        /// </summary>
+        private ElementType FindExistingType(CreateSectionItem row, List<ElementType> types)
+        {
+            string target = string.IsNullOrWhiteSpace(row.TargetTypeName) ? row.SectionName : row.TargetTypeName.Trim();
+            string cleanTarget = CleanName(target);
+            var byName = types.FirstOrDefault(t => CleanName(t.Name) == cleanTarget);
+            if (byName != null && SizeMatches(row, byName, allowUnknown: true)) return byName;
+
+            var bySize = types.Where(t => SizeMatches(row, t, allowUnknown: false)).ToList();
+            if (bySize.Count == 0) return null;
+
+            var defaultFamily = GetDefaultTemplate(row.ElementType, types)?.FamilyName;
+            return bySize.FirstOrDefault(t => defaultFamily != null && t.FamilyName == defaultFamily)
+                ?? bySize.OrderBy(t => t.Name).First();
+        }
+
+        private bool SizeMatches(CreateSectionItem row, ElementType type, bool allowUnknown)
+        {
+            var size = _dimReader.Get(type);
+            string kind = row.ElementType;
+
+            if (kind == ElementKinds.Slab || kind == ElementKinds.FoundationSlab || kind == ElementKinds.Wall)
+            {
+                if (size.ThicknessMm <= 0) return allowUnknown;
+                return SectionSizeMatcher.ThicknessMatches(row.DepthMm, size.ThicknessMm);
+            }
+
+            if (kind == ElementKinds.Column || kind == ElementKinds.Beam)
+            {
+                if (row.IsCircular)
+                {
+                    double d = size.DiameterMm > 0 ? size.DiameterMm : size.WidthMm;
+                    if (d <= 0) return allowUnknown;
+                    return SectionSizeMatcher.CircleMatches(row.DepthMm, d);
+                }
+                if (size.WidthMm <= 0 || size.HeightMm <= 0) return allowUnknown;
+                return SectionSizeMatcher.RectMatches(row.WidthMm, row.DepthMm, size.WidthMm, size.HeightMm,
+                    allowSwap: kind == ElementKinds.Column);
+            }
+
+            return false;
+        }
+
+        private void BindDefaultTemplateCombos()
+        {
+            BindCombo(CmbDefaultBeamTemplate, _mapper.BeamSymbols.Cast<ElementType>().ToList());
+            BindCombo(CmbDefaultColTemplate, _mapper.ColumnSymbols.Cast<ElementType>().ToList());
+            BindCombo(CmbDefaultSlabTemplate, _mapper.SlabTypes.Cast<ElementType>().ToList());
+            BindCombo(CmbDefaultFoundationTemplate, _mapper.FoundationSlabTypes.Cast<ElementType>().ToList());
+            BindCombo(CmbDefaultWallTemplate, _mapper.WallTypes.Cast<ElementType>().ToList());
+        }
+
+        private static void BindCombo(System.Windows.Controls.ComboBox cmb, List<ElementType> types)
+        {
+            // Giữ lựa chọn theo Id: sau Reload các instance ElementType là object mới.
+            ElementId prevId = (cmb.SelectedItem as ElementType)?.Id;
+            cmb.ItemsSource = types;
+            ElementType keep = prevId != null ? types.FirstOrDefault(t => t.Id == prevId) : null;
+            if (keep != null) cmb.SelectedItem = keep;
+            else if (types.Count > 0) cmb.SelectedIndex = 0;
+            else cmb.SelectedItem = null;
+        }
+
+        private System.Windows.Controls.ComboBox GetDefaultCombo(string kind)
+        {
+            switch (kind)
+            {
+                case ElementKinds.Beam: return CmbDefaultBeamTemplate;
+                case ElementKinds.Column: return CmbDefaultColTemplate;
+                case ElementKinds.Slab: return CmbDefaultSlabTemplate;
+                case ElementKinds.FoundationSlab: return CmbDefaultFoundationTemplate;
+                case ElementKinds.Wall: return CmbDefaultWallTemplate;
+                default: return null;
+            }
+        }
+
+        private ElementType GetDefaultTemplate(string kind, List<ElementType> candidates)
+        {
+            var sel = GetDefaultCombo(kind)?.SelectedItem as ElementType;
+            if (sel == null) return null;
+            return candidates.FirstOrDefault(t => t.Id == sel.Id);
         }
 
         private void BtnApplyGlobalTemplate_Click(object sender, RoutedEventArgs e)
         {
-            var beamTemplate = CmbDefaultBeamTemplate.SelectedItem as FamilySymbol;
-            var colTemplate = CmbDefaultColTemplate.SelectedItem as FamilySymbol;
+            CommitGridEdits(DgCreateSections);
 
             foreach (var item in CreateSectionItems)
             {
-                if (item.ElementType == "Dầm (Beam)" && beamTemplate != null)
-                {
-                    item.SelectedTemplate = beamTemplate;
-                }
-                else if (item.ElementType == "Cột (Column)" && colTemplate != null)
-                {
-                    item.SelectedTemplate = colTemplate;
-                }
+                // Chỉ áp cho dòng chưa có, để không làm mất hiển thị type đã tạo / đã có.
+                if (!item.CanEdit || !item.IsMissing) continue;
+                var sel = GetDefaultCombo(item.ElementType)?.SelectedItem as ElementType;
+                if (sel != null) item.SelectTemplateById(sel.Id);
             }
-
-            DgCreateSections.Items.Refresh();
         }
 
         private void BtnSelectAllMissing_Click(object sender, RoutedEventArgs e)
         {
-            bool anyUnchecked = CreateSectionItems.Any(x => x.IsMissing && !x.IsSelected);
+            CommitGridEdits(DgCreateSections);
+
+            bool anyUnchecked = CreateSectionItems.Any(x => x.IsMissing && x.CanEdit && !x.IsSelected);
             foreach (var item in CreateSectionItems)
             {
-                if (item.IsMissing) item.IsSelected = anyUnchecked;
+                if (item.IsMissing && item.CanEdit) item.IsSelected = anyUnchecked;
             }
-            DgCreateSections.Items.Refresh();
         }
 
         private void BtnCreateSelected_Click(object sender, RoutedEventArgs e)
         {
-            var selectedItems = CreateSectionItems.Where(x => x.IsSelected).ToList();
+            CommitGridEdits(DgCreateSections);
+
+            var selectedItems = CreateSectionItems.Where(x => x.IsSelected && x.CanEdit).ToList();
             if (selectedItems.Count == 0)
             {
-                TaskDialog.Show("Thông báo", "Vui lòng chọn ít nhất một tiết diện để tạo.");
+                MessageBox.Show(this, "Please select at least one section to create.", "JNN - CSI x Revit",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
+            RunInRevit(() => CreateSelectedTypes(selectedItems));
+        }
+
+        /// <summary>Chạy trong Revit API context (qua ExternalEvent).</summary>
+        private void CreateSelectedTypes(List<CreateSectionItem> selectedItems)
+        {
             int createdCount = 0;
             int errorCount = 0;
+            var createdIds = new Dictionary<CreateSectionItem, ElementId>();
+            var errorMessages = new Dictionary<CreateSectionItem, string>();
 
             using (Transaction tx = new Transaction(_doc, "JNN - Tạo tiết diện từ ETABS"))
             {
-                tx.Start();
-
-                foreach (var item in selectedItems)
+                try
                 {
-                    if (item.SelectedTemplate == null)
-                    {
-                        errorCount++;
-                        continue;
-                    }
+                    tx.Start();
 
-                    try
+                    foreach (var item in selectedItems)
                     {
-                        if (item.SelectedTemplate is FamilySymbol symbolTemplate)
+                        if (item.SelectedTemplate == null || !item.SelectedTemplate.IsValidObject)
                         {
-                            FamilySymbol targetSymbol = null;
-                            var family = symbolTemplate.Family;
+                            errorCount++;
+                            errorMessages[item] = "❌ No base type selected";
+                            continue;
+                        }
 
-                            foreach (ElementId id in family.GetFamilySymbolIds())
-                            {
-                                var s = _doc.GetElement(id) as FamilySymbol;
-                                if (s != null && s.Name.Equals(item.SectionName, StringComparison.OrdinalIgnoreCase))
-                                {
-                                    targetSymbol = s;
-                                    break;
-                                }
-                            }
+                        string targetName = (item.TargetTypeName ?? "").Trim();
+                        if (string.IsNullOrEmpty(targetName)) targetName = item.SectionName;
 
-                            if (targetSymbol == null)
+                        try
+                        {
+                            ElementType created = CreateOrUpdateType(item, targetName);
+                            if (created != null)
                             {
-                                targetSymbol = symbolTemplate.Duplicate(item.SectionName) as FamilySymbol;
-                            }
-
-                            if (targetSymbol != null)
-                            {
-                                SetSymbolDimensionParameters(targetSymbol, item.IsCircular, item.WidthMm, item.DepthMm);
-                                item.Status = "✅ Đã tạo trong Revit";
-                                item.IsMissing = false;
-                                item.IsSelected = false;
+                                createdIds[item] = created.Id;
                                 createdCount++;
                             }
-                        }
-                        else if (item.SelectedTemplate is FloorType floorTemplate)
-                        {
-                            FloorType targetFloor = _mapper.FloorTypes.FirstOrDefault(f => f.Name.Equals(item.SectionName, StringComparison.OrdinalIgnoreCase));
-                            if (targetFloor == null)
+                            else
                             {
-                                targetFloor = floorTemplate.Duplicate(item.SectionName) as FloorType;
-                            }
-
-                            if (targetFloor != null)
-                            {
-                                var cs = targetFloor.GetCompoundStructure();
-                                if (cs != null)
-                                {
-                                    int layerIdx = cs.GetFirstCoreLayerIndex();
-                                    if (layerIdx < 0) layerIdx = 0;
-                                    double thickFeet = UnitUtils.ConvertToInternalUnits(item.DepthMm > 0 ? item.DepthMm : 100, UnitTypeId.Millimeters);
-                                    cs.SetLayerWidth(layerIdx, thickFeet);
-                                    targetFloor.SetCompoundStructure(cs);
-                                }
-                                item.Status = "✅ Đã tạo trong Revit";
-                                item.IsMissing = false;
-                                item.IsSelected = false;
-                                createdCount++;
+                                errorCount++;
+                                errorMessages[item] = "❌ Could not duplicate type";
                             }
                         }
-                        else if (item.SelectedTemplate is WallType wallTemplate)
+                        catch (Exception ex)
                         {
-                            WallType targetWall = _mapper.WallTypes.FirstOrDefault(w => w.Name.Equals(item.SectionName, StringComparison.OrdinalIgnoreCase));
-                            if (targetWall == null)
-                            {
-                                targetWall = wallTemplate.Duplicate(item.SectionName) as WallType;
-                            }
-
-                            if (targetWall != null)
-                            {
-                                var cs = targetWall.GetCompoundStructure();
-                                if (cs != null)
-                                {
-                                    int layerIdx = cs.GetFirstCoreLayerIndex();
-                                    if (layerIdx < 0) layerIdx = 0;
-                                    double thickFeet = UnitUtils.ConvertToInternalUnits(item.DepthMm > 0 ? item.DepthMm : 200, UnitTypeId.Millimeters);
-                                    cs.SetLayerWidth(layerIdx, thickFeet);
-                                    targetWall.SetCompoundStructure(cs);
-                                }
-                                item.Status = "✅ Đã tạo trong Revit";
-                                item.IsMissing = false;
-                                item.IsSelected = false;
-                                createdCount++;
-                            }
+                            errorCount++;
+                            errorMessages[item] = "❌ Error: " + ex.Message;
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        errorCount++;
-                        item.Status = "❌ Lỗi: " + ex.Message;
-                    }
+
+                    tx.Commit();
                 }
-
-                tx.Commit();
+                catch (Exception ex)
+                {
+                    if (tx.HasStarted() && !tx.HasEnded()) tx.RollBack();
+                    JNNTool.Core.Logging.Logger.Error("CSI x Revit - tạo tiết diện thất bại", ex);
+                    TaskDialog.Show("JNN - CSI x Revit", "Could not create sections: " + ex.Message);
+                    return;
+                }
             }
 
-            // Reload FamilyMapper
-            _mapper.Reload();
+            // Nạp lại type từ document, rồi gán đúng type vừa tạo cho dòng (Tab 1) và cho mapping (Tab 2).
+            RefreshAfterTypeChange(createdIds);
 
-            // Refresh available types in mapping tab
-            RefreshMappingAvailableTypes();
-
-            // Re-run automatch
-            AutoMatch();
-
-            DgCreateSections.Items.Refresh();
-            DgMapping.Items.Refresh();
+            foreach (var kv in errorMessages)
+            {
+                kv.Key.Status = kv.Value;
+            }
 
             // Switch to mapping tab
             MainTabControl.SelectedIndex = 1;
 
-            string msg = $"Đã tạo thành công {createdCount} tiết diện trong Revit!";
-            if (errorCount > 0) msg += $"\nCó {errorCount} tiết diện gặp lỗi.";
-            msg += "\n\nĐã chuyển sang Tab 'Khớp tiết diện' và tự động khớp.";
-            TaskDialog.Show("Thành công", msg);
+            string msg = $"Successfully created {createdCount} section(s) in Revit!";
+            if (errorCount > 0) msg += $"\n{errorCount} section(s) failed (see the Status column in Tab 1).";
+            msg += "\n\nSwitched to 'Section Mapping' with the new types assigned.";
+            TaskDialog.Show("JNN - CSI x Revit", msg);
         }
+
+        private ElementType CreateOrUpdateType(CreateSectionItem item, string targetName)
+        {
+            if (item.SelectedTemplate is FamilySymbol symbolTemplate)
+            {
+                FamilySymbol targetSymbol = null;
+                var family = symbolTemplate.Family;
+
+                foreach (ElementId id in family.GetFamilySymbolIds())
+                {
+                    var s = _doc.GetElement(id) as FamilySymbol;
+                    if (s != null && s.Name.Equals(targetName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        targetSymbol = s;
+                        break;
+                    }
+                }
+
+                if (targetSymbol == null)
+                {
+                    targetSymbol = symbolTemplate.Duplicate(targetName) as FamilySymbol;
+                }
+
+                if (targetSymbol != null)
+                {
+                    SetSymbolDimensionParameters(targetSymbol, item.IsCircular, item.WidthMm, item.DepthMm);
+                }
+                return targetSymbol;
+            }
+
+            if (item.SelectedTemplate is FloorType floorTemplate)
+            {
+                bool wantFoundation = item.ElementType == ElementKinds.FoundationSlab;
+                // IsFoundationSlab read-only: chỉ nhân bản từ type cùng loại mới ra đúng category.
+                if (wantFoundation && !floorTemplate.IsFoundationSlab)
+                    throw new InvalidOperationException("Base type for a foundation slab (F) must be a Foundation Slab");
+                if (!wantFoundation && floorTemplate.IsFoundationSlab)
+                    throw new InvalidOperationException("Base type for a slab (S) must be a regular Floor");
+
+                // Collector mới (không dùng cache _mapper) để thấy cả type vừa tạo trong cùng Transaction.
+                FloorType targetFloor = new FilteredElementCollector(_doc)
+                    .OfClass(typeof(FloorType))
+                    .Cast<FloorType>()
+                    .FirstOrDefault(f => f.IsFoundationSlab == floorTemplate.IsFoundationSlab &&
+                                         f.Name.Equals(targetName, StringComparison.OrdinalIgnoreCase));
+                if (targetFloor == null)
+                {
+                    targetFloor = floorTemplate.Duplicate(targetName) as FloorType;
+                }
+
+                if (targetFloor != null)
+                {
+                    var cs = targetFloor.GetCompoundStructure();
+                    if (cs != null && SetTotalThickness(cs, item.DepthMm > 0 ? item.DepthMm : 100))
+                    {
+                        targetFloor.SetCompoundStructure(cs);
+                    }
+                }
+                return targetFloor;
+            }
+
+            if (item.SelectedTemplate is WallType wallTemplate)
+            {
+                WallType targetWall = new FilteredElementCollector(_doc)
+                    .OfClass(typeof(WallType))
+                    .Cast<WallType>()
+                    .FirstOrDefault(w => w.Kind == wallTemplate.Kind &&
+                                         w.Name.Equals(targetName, StringComparison.OrdinalIgnoreCase));
+                if (targetWall == null)
+                {
+                    targetWall = wallTemplate.Duplicate(targetName) as WallType;
+                }
+
+                if (targetWall != null)
+                {
+                    var cs = targetWall.GetCompoundStructure();
+                    if (cs != null && SetTotalThickness(cs, item.DepthMm > 0 ? item.DepthMm : 200))
+                    {
+                        targetWall.SetCompoundStructure(cs);
+                    }
+                }
+                return targetWall;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Đặt TỔNG chiều dày bằng cách chỉnh lớp lõi (các lớp hoàn thiện giữ nguyên),
+        /// để type tạo ra khớp đúng tiết diện ETABS khi đối soát "đã có" theo kích thước.
+        /// </summary>
+        private static bool SetTotalThickness(CompoundStructure cs, double totalMm)
+        {
+            int layerIdx = cs.GetFirstCoreLayerIndex();
+            if (layerIdx < 0) layerIdx = 0;
+            if (layerIdx >= cs.LayerCount) return false;
+
+            double totalFeet = UnitUtils.ConvertToInternalUnits(totalMm, UnitTypeId.Millimeters);
+            double otherFeet = cs.GetWidth() - cs.GetLayerWidth(layerIdx);
+            double minFeet = UnitUtils.ConvertToInternalUnits(1.0, UnitTypeId.Millimeters);
+            double coreFeet = Math.Max(totalFeet - otherFeet, minFeet);
+            cs.SetLayerWidth(layerIdx, coreFeet);
+            return true;
+        }
+
+        private void RefreshAfterTypeChange(Dictionary<CreateSectionItem, ElementId> createdIds)
+        {
+            _mapper.Reload();
+            _dimReader.Clear();
+            BindDefaultTemplateCombos();
+
+            foreach (var row in CreateSectionItems)
+            {
+                if (createdIds != null && createdIds.TryGetValue(row, out var newId))
+                {
+                    var types = _mapper.GetTypesForKind(row.ElementType);
+                    var created = types.FirstOrDefault(t => t.Id == newId);
+                    row.CanEdit = types.Count > 0;
+                    if (created != null)
+                    {
+                        row.SetTemplates(types, created);
+                        row.TargetTypeName = created.Name;
+                        row.Status = $"✅ Created: {created.Name}";
+                    }
+                    else
+                    {
+                        ApplyRowTemplates(row, newId, keepSelection: false);
+                    }
+                    row.IsMissing = false;
+                    row.IsSelected = false;
+                    _pinnedTypes[PinKey(row.ElementType, row.SectionName)] = newId;
+                }
+                else
+                {
+                    ApplyRowTemplates(row, row.SelectedTemplate?.Id, keepSelection: true);
+                }
+            }
+
+            RefreshMappingAvailableTypes();
+            AutoMatch();
+        }
+
+        private static string PinKey(string kind, string sectionName) => (kind ?? "") + "|" + (sectionName ?? "");
+
+        private static void CommitGridEdits(System.Windows.Controls.DataGrid dg)
+        {
+            // Checkbox/TextBox trong DataGrid có thể còn ở trạng thái edit → commit trước khi đọc dữ liệu.
+            try
+            {
+                dg.CommitEdit(System.Windows.Controls.DataGridEditingUnit.Cell, true);
+                dg.CommitEdit(System.Windows.Controls.DataGridEditingUnit.Row, true);
+            }
+            catch { }
+        }
+
+        #endregion
 
         private static void SetSymbolDimensionParameters(FamilySymbol symbol, bool isCircular, double widthMm, double depthMm)
         {
@@ -392,14 +667,10 @@ namespace JNNTool.Tools.CSIxRevit.UI
         {
             foreach (var item in MappingItems)
             {
-                if (item.ElementType == "Dầm (Beam)")
-                    item.AvailableTypes = _mapper.BeamSymbols.Cast<ElementType>().ToList();
-                else if (item.ElementType == "Cột (Column)")
-                    item.AvailableTypes = _mapper.ColumnSymbols.Cast<ElementType>().ToList();
-                else if (item.ElementType == "Vách (Wall)")
-                    item.AvailableTypes = _mapper.WallTypes.Cast<ElementType>().ToList();
-                else if (item.ElementType == "Sàn (Floor)")
-                    item.AvailableTypes = _mapper.FloorTypes.Cast<ElementType>().ToList();
+                ElementId prevId = item.SelectedType?.Id;
+                var types = _mapper.GetTypesForKind(item.ElementType);
+                item.AvailableTypes = types;
+                item.SelectedType = prevId != null ? types.FirstOrDefault(t => t.Id == prevId) : null;
             }
         }
 
@@ -413,6 +684,17 @@ namespace JNNTool.Tools.CSIxRevit.UI
             foreach (var item in MappingItems)
             {
                 if (item.AvailableTypes == null || item.AvailableTypes.Count == 0) continue;
+
+                // 0. Type vừa tạo ở Tab 1 cho chính tiết diện này
+                if (_pinnedTypes.TryGetValue(PinKey(item.ElementType, item.EtabsSectionName), out var pinId))
+                {
+                    var pinned = item.AvailableTypes.FirstOrDefault(t => t.Id == pinId);
+                    if (pinned != null)
+                    {
+                        item.SelectedType = pinned;
+                        continue;
+                    }
+                }
 
                 string etabsName = CleanName(item.EtabsSectionName);
 
@@ -437,17 +719,17 @@ namespace JNNTool.Tools.CSIxRevit.UI
                     continue;
                 }
 
-                // 3. Smart thickness match for Sàn (Floor) & Vách (Wall)
-                if (item.ElementType == "Sàn (Floor)" || item.ElementType == "Vách (Wall)")
+                // 3. Smart thickness match for Sàn (S / F) & Vách (Wall)
+                if (ElementKinds.IsFloorLike(item.ElementType) || item.ElementType == ElementKinds.Wall)
                 {
                     double targetThickMm = 0;
-                    if (_sectionDefs.TryGetValue(item.EtabsSectionName, out var def) && def.DepthMm > 0)
+                    if (_sectionDefs.TryGetValue(item.EtabsSectionName ?? "", out var def) && def.DepthMm > 0)
                     {
                         targetThickMm = def.DepthMm;
                     }
                     else
                     {
-                        var match = Regex.Match(item.EtabsSectionName, @"\d+");
+                        var match = Regex.Match(item.EtabsSectionName ?? "", @"\d+");
                         if (match.Success && double.TryParse(match.Value, out double parsed))
                         {
                             targetThickMm = parsed;
@@ -471,9 +753,9 @@ namespace JNNTool.Tools.CSIxRevit.UI
                     }
                 }
                 // 4. Smart dimension match for Cột (Column) & Dầm (Beam)
-                else if (item.ElementType == "Cột (Column)" || item.ElementType == "Dầm (Beam)")
+                else if (item.ElementType == ElementKinds.Column || item.ElementType == ElementKinds.Beam)
                 {
-                    if (_sectionDefs.TryGetValue(item.EtabsSectionName, out var def) && def.WidthMm > 0 && def.DepthMm > 0)
+                    if (_sectionDefs.TryGetValue(item.EtabsSectionName ?? "", out var def) && def.WidthMm > 0 && def.DepthMm > 0)
                     {
                         string wStr = Math.Round(def.WidthMm, 0).ToString();
                         string dStr = Math.Round(def.DepthMm, 0).ToString();
@@ -492,7 +774,7 @@ namespace JNNTool.Tools.CSIxRevit.UI
                     }
                     else
                     {
-                        var match = Regex.Match(item.EtabsSectionName, @"(\d+)[xX*_-](\d+)");
+                        var match = Regex.Match(item.EtabsSectionName ?? "", @"(\d+)[xX*_-](\d+)");
                         if (match.Success)
                         {
                             string g1 = match.Groups[1].Value;
@@ -524,93 +806,103 @@ namespace JNNTool.Tools.CSIxRevit.UI
 
         private void BtnAutoMatch_Click(object sender, RoutedEventArgs e)
         {
+            CommitGridEdits(DgMapping);
             AutoMatch();
-            DgMapping.Items.Refresh();
         }
 
         private void BtnReload_Click(object sender, RoutedEventArgs e)
         {
-            _mapper.Reload();
-            RefreshMappingAvailableTypes();
-            AutoMatch();
-            DgMapping.Items.Refresh();
+            CommitGridEdits(DgCreateSections);
+            CommitGridEdits(DgMapping);
+            // Đọc lại document cũng đi qua API context cho an toàn (modeless).
+            RunInRevit(() => RefreshAfterTypeChange(null));
         }
 
         private void BtnImport_Click(object sender, RoutedEventArgs e)
         {
             if (_hasImported)
             {
-                // Already imported, user clicked to finish
-                DialogResult = true;
-                Close();
+                SafeClose();
                 return;
             }
 
-            // Verify if any active section is unmapped
-            var unmapped = MappingItems.Where(x => x.SelectedType == null).ToList();
+            CommitGridEdits(DgMapping);
+
+            // Verify if any active section is unmapped (sàn ảo cố ý bỏ qua nên không cảnh báo)
+            var unmapped = MappingItems.Where(x => x.SelectedType == null && x.ElementType != ElementKinds.VirtualSlab).ToList();
             if (unmapped.Count > 0)
             {
                 string unmappedNames = string.Join(", ", unmapped.Take(5).Select(x => x.EtabsSectionName));
                 if (unmapped.Count > 5) unmappedNames += $", ... (+{unmapped.Count - 5})";
 
-                var res = TaskDialog.Show("Cảnh báo",
-                    $"Có {unmapped.Count} tiết diện chưa được khớp Family Revit:\n{unmappedNames}\n\nCác đối tượng này sẽ bị bỏ qua khi dựng hình. Bạn có muốn tiếp tục không?",
-                    TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No);
+                var res = MessageBox.Show(this,
+                    $"{unmapped.Count} section(s) are not mapped to a Revit family:\n{unmappedNames}\n\nThese elements will be skipped when building the model. Do you want to continue?",
+                    "JNN - CSI x Revit", MessageBoxButton.YesNo, MessageBoxImage.Warning);
 
-                if (res != TaskDialogResult.Yes) return;
+                if (res != MessageBoxResult.Yes) return;
             }
 
-            if (_importAction != null)
+            if (_importAction == null)
+            {
+                SafeClose();
+                return;
+            }
+
+            RunInRevit(() =>
             {
                 bool success = false;
                 try
                 {
-                    success = _importAction();
+                    success = _importAction?.Invoke() ?? false;
                 }
                 catch (Exception ex)
                 {
-                    TaskDialog.Show("Lỗi Dựng Hình", $"Gặp lỗi trong quá trình dựng hình: {ex.Message}");
+                    JNNTool.Core.Logging.Logger.Error("CSI x Revit - lỗi dựng hình", ex);
+                    TaskDialog.Show("JNN - CSI x Revit", $"An error occurred while building the model: {ex.Message}");
                     return;
                 }
 
                 if (success)
                 {
                     _hasImported = true;
-                    DialogResult = true;
-                    Close();
+                    SafeClose();
                 }
-            }
-            else
-            {
-                DialogResult = true;
-                Close();
-            }
+            });
         }
 
         private void BtnCancel_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = false;
-            Close();
+            SafeClose();
+        }
+
+        private Dictionary<string, ElementType> BuildMapping(Func<SectionMappingItem, bool> predicate)
+        {
+            // GroupBy để không vỡ ToDictionary nếu một tên tiết diện xuất hiện 2 lần.
+            return MappingItems
+                .Where(x => predicate(x) && x.SelectedType != null && !string.IsNullOrEmpty(x.EtabsSectionName))
+                .GroupBy(x => x.EtabsSectionName)
+                .ToDictionary(g => g.Key, g => g.First().SelectedType);
         }
 
         public Dictionary<string, ElementType> GetBeamMapping()
         {
-            return MappingItems.Where(x => x.ElementType == "Dầm (Beam)" && x.SelectedType != null).ToDictionary(x => x.EtabsSectionName, x => x.SelectedType);
+            return BuildMapping(x => x.ElementType == ElementKinds.Beam);
         }
 
         public Dictionary<string, ElementType> GetColumnMapping()
         {
-            return MappingItems.Where(x => x.ElementType == "Cột (Column)" && x.SelectedType != null).ToDictionary(x => x.EtabsSectionName, x => x.SelectedType);
+            return BuildMapping(x => x.ElementType == ElementKinds.Column);
         }
 
+        /// <summary>Gồm cả sàn S và sàn móng F; sàn ảo không bao giờ được map.</summary>
         public Dictionary<string, ElementType> GetFloorMapping()
         {
-            return MappingItems.Where(x => x.ElementType == "Sàn (Floor)" && x.SelectedType != null).ToDictionary(x => x.EtabsSectionName, x => x.SelectedType);
+            return BuildMapping(x => x.ElementType == ElementKinds.Slab || x.ElementType == ElementKinds.FoundationSlab);
         }
 
         public Dictionary<string, ElementType> GetWallMapping()
         {
-            return MappingItems.Where(x => x.ElementType == "Vách (Wall)" && x.SelectedType != null).ToDictionary(x => x.EtabsSectionName, x => x.SelectedType);
+            return BuildMapping(x => x.ElementType == ElementKinds.Wall);
         }
 
         public ElementId GetSelectedLevelId()
@@ -622,14 +914,31 @@ namespace JNNTool.Tools.CSIxRevit.UI
 
     public class CreateSectionItem : INotifyPropertyChanged
     {
+        private const string UnknownFamily = "(Unknown family)";
+
         private bool _isSelected = true;
+        private bool _canEdit = true;
+        private string _status = "Not in Revit yet";
+        private string _targetTypeName = "";
+        private List<ElementType> _allTemplates = new List<ElementType>();
+        private List<string> _availableFamilies = new List<string>();
+        private List<ElementType> _availableTemplates = new List<ElementType>();
+        private string _selectedFamily;
         private ElementType _selectedTemplate;
-        private string _status = "Chưa có trong Revit";
+
+        // Khi đổi ItemsSource, ComboBox WPF đẩy null ngược về binding → bỏ qua null trong lúc đang nạp lại.
+        private bool _suppressNull;
 
         public bool IsSelected
         {
             get => _isSelected;
             set { _isSelected = value; OnPropertyChanged(nameof(IsSelected)); }
+        }
+
+        public bool CanEdit
+        {
+            get => _canEdit;
+            set { _canEdit = value; OnPropertyChanged(nameof(CanEdit)); }
         }
 
         public bool IsMissing { get; set; } = true;
@@ -643,15 +952,168 @@ namespace JNNTool.Tools.CSIxRevit.UI
         public string Status
         {
             get => _status;
-            set { _status = value; OnPropertyChanged(nameof(Status)); }
+            set
+            {
+                _status = value ?? "";
+                OnPropertyChanged(nameof(Status));
+                OnPropertyChanged(nameof(StatusLevel));
+                OnPropertyChanged(nameof(StatusText));
+            }
         }
 
-        public List<ElementType> AvailableTemplates { get; set; } = new List<ElementType>();
+        // WPF (.NET Framework) vẽ emoji đơn sắc → suy ra mức trạng thái từ tiền tố để XAML tô màu huy hiệu.
+        public string StatusLevel
+        {
+            get
+            {
+                if (_status.StartsWith("✅", StringComparison.Ordinal)) return "Ok";
+                if (_status.StartsWith("⚠", StringComparison.Ordinal)) return "Missing";
+                if (_status.StartsWith("⏭", StringComparison.Ordinal)) return "Skip";
+                if (_status.StartsWith("❌", StringComparison.Ordinal)) return "Error";
+                return "Missing";
+            }
+        }
+
+        public string StatusText
+        {
+            get
+            {
+                string s = _status;
+                foreach (var prefix in new[] { "✅", "⚠️", "⚠", "⏭️", "⏭", "❌" })
+                {
+                    if (s.StartsWith(prefix, StringComparison.Ordinal)) { s = s.Substring(prefix.Length); break; }
+                }
+                return s.Trim();
+            }
+        }
+
+        /// <summary>Tên type sẽ tạo trong Revit. Mặc định = tên tiết diện ETABS.</summary>
+        public string TargetTypeName
+        {
+            get => _targetTypeName;
+            set { _targetTypeName = value; OnPropertyChanged(nameof(TargetTypeName)); }
+        }
+
+        public List<string> AvailableFamilies
+        {
+            get => _availableFamilies;
+            private set { _availableFamilies = value; OnPropertyChanged(nameof(AvailableFamilies)); }
+        }
+
+        public List<ElementType> AvailableTemplates
+        {
+            get => _availableTemplates;
+            private set { _availableTemplates = value; OnPropertyChanged(nameof(AvailableTemplates)); }
+        }
+
+        public string SelectedFamily
+        {
+            get => _selectedFamily;
+            set
+            {
+                if (value == null && _suppressNull) return;
+                if (string.Equals(value, _selectedFamily, StringComparison.Ordinal)) return;
+
+                _selectedFamily = value;
+                OnPropertyChanged(nameof(SelectedFamily));
+
+                var filtered = FilterByFamily(value);
+                var keep = _selectedTemplate != null && filtered.Contains(_selectedTemplate) ? _selectedTemplate : filtered.FirstOrDefault();
+                UpdateTemplateList(filtered, keep);
+            }
+        }
 
         public ElementType SelectedTemplate
         {
             get => _selectedTemplate;
-            set { _selectedTemplate = value; OnPropertyChanged(nameof(SelectedTemplate)); }
+            set
+            {
+                if (value == null && _suppressNull) return;
+                if (ReferenceEquals(value, _selectedTemplate)) return;
+
+                if (value != null)
+                {
+                    string fam = GetFamilyName(value);
+                    if (!string.Equals(fam, _selectedFamily, StringComparison.Ordinal))
+                    {
+                        // Type thuộc family khác (vd. Áp dụng Template) → đổi luôn family và lọc lại danh sách.
+                        _selectedFamily = fam;
+                        OnPropertyChanged(nameof(SelectedFamily));
+                        UpdateTemplateList(FilterByFamily(fam), value);
+                        return;
+                    }
+                }
+
+                _selectedTemplate = value;
+                OnPropertyChanged(nameof(SelectedTemplate));
+            }
+        }
+
+        /// <summary>Nạp toàn bộ type ứng viên cho dòng, chọn sẵn <paramref name="selected"/>.</summary>
+        public void SetTemplates(List<ElementType> all, ElementType selected)
+        {
+            _allTemplates = all ?? new List<ElementType>();
+            var families = _allTemplates.Select(GetFamilyName).Distinct().OrderBy(x => x).ToList();
+            string family = selected != null ? GetFamilyName(selected) : families.FirstOrDefault();
+
+            _suppressNull = true;
+            try
+            {
+                _selectedFamily = family;
+                AvailableFamilies = families;
+                OnPropertyChanged(nameof(SelectedFamily));
+            }
+            finally
+            {
+                _suppressNull = false;
+            }
+
+            var filtered = FilterByFamily(family);
+            UpdateTemplateList(filtered, selected ?? filtered.FirstOrDefault());
+        }
+
+        public void SelectTemplateById(ElementId id)
+        {
+            if (id == null) return;
+            var t = _allTemplates.FirstOrDefault(x => x.Id == id);
+            if (t != null) SelectedTemplate = t;
+        }
+
+        private void UpdateTemplateList(List<ElementType> list, ElementType selected)
+        {
+            _suppressNull = true;
+            try
+            {
+                _selectedTemplate = selected;
+                AvailableTemplates = list;
+                OnPropertyChanged(nameof(SelectedTemplate));
+            }
+            finally
+            {
+                _suppressNull = false;
+            }
+        }
+
+        private List<ElementType> FilterByFamily(string family)
+        {
+            if (family == null) return new List<ElementType>();
+            return _allTemplates
+                .Where(t => string.Equals(GetFamilyName(t), family, StringComparison.Ordinal))
+                .OrderBy(t => t.Name)
+                .ToList();
+        }
+
+        private static string GetFamilyName(ElementType t)
+        {
+            try
+            {
+                string name = t?.FamilyName;
+                return string.IsNullOrEmpty(name) ? UnknownFamily : name;
+            }
+            catch
+            {
+                return UnknownFamily;
+            }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -661,6 +1123,7 @@ namespace JNNTool.Tools.CSIxRevit.UI
     public class SectionMappingItem : INotifyPropertyChanged
     {
         private ElementType _selectedType;
+        private List<ElementType> _availableTypes;
 
         public string EtabsSectionName { get; set; }
         public string SectionDetails { get; set; }
@@ -673,7 +1136,11 @@ namespace JNNTool.Tools.CSIxRevit.UI
             set { _selectedType = value; OnPropertyChanged(nameof(SelectedType)); }
         }
 
-        public List<ElementType> AvailableTypes { get; set; }
+        public List<ElementType> AvailableTypes
+        {
+            get => _availableTypes;
+            set { _availableTypes = value; OnPropertyChanged(nameof(AvailableTypes)); }
+        }
 
         public event PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
