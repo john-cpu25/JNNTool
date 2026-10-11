@@ -44,7 +44,7 @@ namespace JNNTool.Tools.AutoDimColumn.Services
                 CollectExistingDimSignatures(doc, activeView, existingSignatures);
             }
 
-            double z = (activeView as ViewPlan)?.GenLevel?.Elevation ?? 0.0;
+            double z = activeView.Origin != null ? activeView.Origin.Z : ((activeView as ViewPlan)?.GenLevel?.Elevation ?? 0.0);
             double baseOffsetFt = AutoDimColumnEngine.MmToFt(settings.BaseOffsetMm);
             double chainSpacingFt = AutoDimColumnEngine.MmToFt(settings.ChainSpacingMm);
 
@@ -71,10 +71,14 @@ namespace JNNTool.Tools.AutoDimColumn.Services
                         XYZ offsetDir = col.LengthPair != null ? col.LengthPair.Normal : new XYZ(-measureDir.Y, measureDir.X, 0);
                         offsetDir = OrientOffsetDir(offsetDir, activeView, settings.PlacementSide);
 
-                        double halfOtherFt = col.LengthMm > 0 ? AutoDimColumnEngine.MmToFt(col.LengthMm / 2.0) : 0.5;
+                        double halfOtherFt = col.BoundingBox != null
+                            ? Math.Abs(col.BoundingBox.Max.Y - col.BoundingBox.Min.Y) * 0.5
+                            : (col.LengthMm > 0 ? AutoDimColumnEngine.MmToFt(col.LengthMm / 2.0) : 0.5);
                         double totalOffset = halfOtherFt + baseOffsetFt;
 
-                        double halfExtent = col.WidthPair.DistanceFt / 2.0;
+                        double halfExtent = col.BoundingBox != null
+                            ? Math.Abs(col.BoundingBox.Max.X - col.BoundingBox.Min.X) * 0.5
+                            : col.WidthPair.DistanceFt / 2.0;
                         var (sx, sy, ex, ey) = AutoDimColumnEngine.CalculateDimLine2D(
                             center.X, center.Y,
                             measureDir.X, measureDir.Y,
@@ -127,10 +131,14 @@ namespace JNNTool.Tools.AutoDimColumn.Services
                         XYZ offsetDir = col.WidthPair != null ? col.WidthPair.Normal : new XYZ(-measureDir.Y, measureDir.X, 0);
                         offsetDir = OrientOffsetDir(offsetDir, activeView, settings.PlacementSide);
 
-                        double halfOtherFt = col.WidthMm > 0 ? AutoDimColumnEngine.MmToFt(col.WidthMm / 2.0) : 0.5;
+                        double halfOtherFt = col.BoundingBox != null
+                            ? Math.Abs(col.BoundingBox.Max.X - col.BoundingBox.Min.X) * 0.5
+                            : (col.WidthMm > 0 ? AutoDimColumnEngine.MmToFt(col.WidthMm / 2.0) : 0.5);
                         double totalOffset = halfOtherFt + baseOffsetFt;
 
-                        double halfExtent = col.LengthPair.DistanceFt / 2.0;
+                        double halfExtent = col.BoundingBox != null
+                            ? Math.Abs(col.BoundingBox.Max.Y - col.BoundingBox.Min.Y) * 0.5
+                            : col.LengthPair.DistanceFt / 2.0;
                         var (sx, sy, ex, ey) = AutoDimColumnEngine.CalculateDimLine2D(
                             center.X, center.Y,
                             measureDir.X, measureDir.Y,
@@ -193,9 +201,11 @@ namespace JNNTool.Tools.AutoDimColumn.Services
                             offsetDir = OrientOffsetDir(offsetDir, activeView, settings.PlacementSide);
 
                             // Lớp chuỗi dim định vị nằm bên ngoài lớp dim tiết diện một khoảng chainSpacing
-                            double halfOtherFt = (grid.TargetDirection == 0 ? col.LengthMm : col.WidthMm) > 0
-                                ? AutoDimColumnEngine.MmToFt((grid.TargetDirection == 0 ? col.LengthMm : col.WidthMm) / 2.0)
-                                : 0.5;
+                            double halfOtherFt = col.BoundingBox != null
+                                ? (grid.TargetDirection == 0 ? Math.Abs(col.BoundingBox.Max.Y - col.BoundingBox.Min.Y) * 0.5 : Math.Abs(col.BoundingBox.Max.X - col.BoundingBox.Min.X) * 0.5)
+                                : ((grid.TargetDirection == 0 ? col.LengthMm : col.WidthMm) > 0
+                                    ? AutoDimColumnEngine.MmToFt((grid.TargetDirection == 0 ? col.LengthMm : col.WidthMm) / 2.0)
+                                    : 0.5);
                             double totalOffset = halfOtherFt + baseOffsetFt + chainSpacingFt;
 
                             // Sắp xếp mặt gần Grid nhất và mặt xa Grid nhất

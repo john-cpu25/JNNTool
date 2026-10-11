@@ -13,6 +13,7 @@ namespace JNNTool.Tools.AutoDimColumn.Models
         public string TypeName { get; set; } = string.Empty;
 
         public XYZ Center { get; set; } = XYZ.Zero;
+        public BoundingBoxXYZ? BoundingBox { get; set; }
         public double WidthMm { get; set; }
         public double LengthMm { get; set; }
         public double RotationAngleDeg { get; set; }

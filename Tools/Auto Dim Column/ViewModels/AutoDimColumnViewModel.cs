@@ -51,24 +51,14 @@ namespace JNNTool.Tools.AutoDimColumn.ViewModels
         [ObservableProperty] private DimensionTypeOption? _selectedDimensionType;
         [ObservableProperty] private PlacementSideOption? _selectedPlacementSide;
 
-        [ObservableProperty] private int _totalColumnsCount;
-        [ObservableProperty] private int _readyColumnsCount;
-        [ObservableProperty] private int _plannedDimsCount;
-        [ObservableProperty] private int _skippedCount;
-
         [ObservableProperty] private string _statusText = "Ready";
         [ObservableProperty] private bool _isBusy;
-        [ObservableProperty] private string _resultReport = string.Empty;
 
         public ObservableCollection<DimensionTypeOption> DimensionTypes { get; } = new ObservableCollection<DimensionTypeOption>();
         public ObservableCollection<PlacementSideOption> PlacementSides { get; } = new ObservableCollection<PlacementSideOption>();
-        public ObservableCollection<ColumnDimPreviewItem> PreviewItems { get; } = new ObservableCollection<ColumnDimPreviewItem>();
 
-        public ICommand PreviewCommand { get; }
         public ICommand CreateDimensionsCommand { get; }
         public ICommand ResetSettingsCommand { get; }
-        public ICommand SelectAllCommand { get; }
-        public ICommand UnselectAllCommand { get; }
 
         public AutoDimColumnViewModel()
         {
@@ -80,11 +70,8 @@ namespace JNNTool.Tools.AutoDimColumn.ViewModels
             PlacementSides.Add(new PlacementSideOption { Value = ColumnPlacementSide.BottomRight, Label = "Bottom - Right" });
             SelectedPlacementSide = PlacementSides.FirstOrDefault(p => p.Value == _settings.PlacementSide) ?? PlacementSides[0];
 
-            PreviewCommand = new RelayCommand(RunPreview);
             CreateDimensionsCommand = new RelayCommand(RunCreateDimensions);
             ResetSettingsCommand = new RelayCommand(ResetSettings);
-            SelectAllCommand = new RelayCommand(() => SetSelection(true));
-            UnselectAllCommand = new RelayCommand(() => SetSelection(false));
         }
 
         public void Initialize(UIApplication app, AutoDimColumnHandler handler, ExternalEvent exEvent)
@@ -124,38 +111,39 @@ namespace JNNTool.Tools.AutoDimColumn.ViewModels
                 SelectedDimensionType = DimensionTypes[0];
             }
 
-            // Chạy phân tích cột đồng bộ ngay trên Revit UI thread trong Command.Execute
-            DoAnalyze(app);
+            StatusText = "Ready";
+            IsBusy = false;
         }
 
-        public void RunPreview()
+        public void RunCreateDimensions()
         {
             if (IsBusy) return;
             IsBusy = true;
-            StatusText = "Analyzing columns and grids...";
+            StatusText = "Creating dimensions in model...";
 
             SavePropertiesToSettings();
             SettingsService<AutoDimColumnSettings>.Save(_settings);
 
             if (_handler != null && _exEvent != null)
             {
-                _handler.RequestAction = app => DoAnalyze(app);
+                _handler.RequestAction = app => DoCreate(app);
                 _exEvent.Raise();
             }
             else
             {
                 IsBusy = false;
+                StatusText = "External event handler not initialized.";
             }
         }
 
-        public void DoAnalyze(UIApplication app)
+        private void DoCreate(UIApplication app)
         {
             try
             {
                 var uidoc = app.ActiveUIDocument;
                 if (uidoc == null)
                 {
-                    UpdateUiAfterAnalyze(new List<ColumnDimPreviewItem>(), 0, 0, 0, 0, "No active document.");
+                    UpdateStatus("No active document.");
                     return;
                 }
 
@@ -164,98 +152,80 @@ namespace JNNTool.Tools.AutoDimColumn.ViewModels
 
                 if (view is not ViewPlan)
                 {
-                    UpdateUiAfterAnalyze(new List<ColumnDimPreviewItem>(), 0, 0, 0, 0, "Please open a Structural / Floor Plan View.");
+                    UpdateStatus("Please open a Structural / Floor Plan View.");
                     return;
                 }
 
                 SavePropertiesToSettings();
 
+                // 1. Thu thập danh sách cột
                 var rawCols = ColumnCollector.CollectColumns(uidoc, doc, view, _settings.ScopeMode);
+                if (rawCols.Count == 0)
+                {
+                    string msg = _settings.ScopeMode == ColumnScopeMode.SelectedElements
+                        ? "No columns selected in model."
+                        : "No columns found in active view.";
+                    UpdateStatus(msg);
+                    return;
+                }
+
+                // 2. Thu thập danh sách lưới trục
                 var grids = GridDetectionService.CollectGridsInView(doc, view);
 
-                var items = new List<ColumnDimPreviewItem>();
-                int plannedTotal = 0;
-                int readyTotal = 0;
-                int skippedTotal = 0;
-
+                // 3. Trích xuất hình học và bounding box cho từng cột
+                var readyCols = new List<ColumnGeometryInfo>();
                 foreach (var c in rawCols)
                 {
                     var geo = ColumnGeometryService.ExtractGeometry(c, view);
                     if (geo.IsSupported)
                     {
-                        var matchedGrids = GridDetectionService.FindAssociatedGrids(geo, grids, _settings);
-                        geo.AssociatedGrids = matchedGrids;
-
-                        int count = 0;
-                        if (_settings.DimWidth && geo.WidthPair != null) count++;
-                        if (_settings.DimLength && geo.LengthPair != null) count++;
-                        if (_settings.DimGridToColumn) count += matchedGrids.Count;
-
-                        plannedTotal += count;
-                        readyTotal++;
-
-                        string gridNames = matchedGrids.Count > 0
-                            ? string.Join(", ", matchedGrids.Select(g => g.GridName))
-                            : "None";
-
-                        items.Add(new ColumnDimPreviewItem
+                        if (_settings.DimGridToColumn)
                         {
-                            IsSelected = true,
-                            IdText = ColumnCollector.GetIdValue(geo.ColumnId).ToString(),
-                            Mark = string.IsNullOrEmpty(geo.Mark) ? "-" : geo.Mark,
-                            TypeName = geo.TypeName,
-                            SizeText = $"{Math.Round(geo.WidthMm)} × {Math.Round(geo.LengthMm)} mm",
-                            RotationText = $"{geo.RotationAngleDeg}°",
-                            GridsText = gridNames,
-                            PlannedDimsCount = count,
-                            Status = "Ready",
-                            RawInfo = geo
-                        });
-                    }
-                    else
-                    {
-                        skippedTotal++;
-                        items.Add(new ColumnDimPreviewItem
-                        {
-                            IsSelected = false,
-                            IdText = ColumnCollector.GetIdValue(c.Id).ToString(),
-                            Mark = c.get_Parameter(BuiltInParameter.ALL_MODEL_MARK)?.AsString() ?? "-",
-                            TypeName = c.Symbol?.Name ?? "Column",
-                            SizeText = "-",
-                            RotationText = "-",
-                            GridsText = "-",
-                            PlannedDimsCount = 0,
-                            Status = geo.StatusMessage,
-                            RawInfo = geo
-                        });
+                            geo.AssociatedGrids = GridDetectionService.FindAssociatedGrids(geo, grids, _settings);
+                        }
+                        readyCols.Add(geo);
                     }
                 }
 
-                string statusMsg = rawCols.Count == 0
-                    ? (_settings.ScopeMode == ColumnScopeMode.SelectedElements ? "No columns selected in model." : "No columns found in active view.")
-                    : $"Found {rawCols.Count} columns ({readyTotal} ready, {skippedTotal} skipped), {plannedTotal} dims planned.";
+                if (readyCols.Count == 0)
+                {
+                    UpdateStatus("No supported rectangular columns found.");
+                    return;
+                }
 
-                UpdateUiAfterAnalyze(items, rawCols.Count, readyTotal, plannedTotal, skippedTotal, statusMsg);
+                // 4. Tạo Dimension trong Transaction
+                ColumnDimExecutionReport report;
+                using (var tg = new TransactionGroup(doc, "JNN - Auto Column Dimension"))
+                {
+                    tg.Start();
+                    using (var tx = new Transaction(doc, "Create Column Dimensions"))
+                    {
+                        tx.Start();
+                        report = ColumnDimensionBuilder.CreateDimensions(doc, view, readyCols, _settings);
+                        tx.Commit();
+                    }
+                    tg.Assimilate();
+                }
+
+                string summary = $"Done: Created {report.SuccessDims} dimensions ({readyCols.Count} columns).";
+                if (report.FailedCount > 0)
+                {
+                    summary += $" ({report.FailedCount} failed)";
+                }
+                UpdateStatus(summary);
             }
             catch (Exception ex)
             {
-                Logger.Error("Error in DoAnalyze", ex);
-                UpdateUiAfterAnalyze(new List<ColumnDimPreviewItem>(), 0, 0, 0, 0, $"Analysis Error: {ex.Message}");
+                Logger.Error("Error in DoCreate Auto Column Dimension", ex);
+                UpdateStatus($"Creation Error: {ex.Message}");
             }
         }
 
-        private void UpdateUiAfterAnalyze(List<ColumnDimPreviewItem> items, int total, int ready, int planned, int skipped, string status)
+        private void UpdateStatus(string message)
         {
             void Apply()
             {
-                PreviewItems.Clear();
-                foreach (var it in items) PreviewItems.Add(it);
-
-                TotalColumnsCount = total;
-                ReadyColumnsCount = ready;
-                PlannedDimsCount = planned;
-                SkippedCount = skipped;
-                StatusText = status;
+                StatusText = message;
                 IsBusy = false;
             }
 
@@ -269,112 +239,12 @@ namespace JNNTool.Tools.AutoDimColumn.ViewModels
             }
         }
 
-        public void RunCreateDimensions()
-        {
-            if (IsBusy) return;
-            IsBusy = true;
-            StatusText = "Creating dimensions in model...";
-
-            SavePropertiesToSettings();
-            SettingsService<AutoDimColumnSettings>.Save(_settings);
-
-            var selectedInfos = PreviewItems
-                .Where(p => p.IsSelected && p.RawInfo != null && p.RawInfo.IsSupported)
-                .Select(p => p.RawInfo!)
-                .ToList();
-
-            if (selectedInfos.Count == 0)
-            {
-                StatusText = "No ready columns selected.";
-                IsBusy = false;
-                return;
-            }
-
-            if (_handler != null && _exEvent != null)
-            {
-                _handler.RequestAction = app => DoCreate(app, selectedInfos);
-                _exEvent.Raise();
-            }
-            else
-            {
-                IsBusy = false;
-            }
-        }
-
-        private void DoCreate(UIApplication app, List<ColumnGeometryInfo> selectedInfos)
-        {
-            try
-            {
-                var uidoc = app.ActiveUIDocument;
-                if (uidoc == null) return;
-                var doc = uidoc.Document;
-                var view = doc.ActiveView;
-
-                ColumnDimExecutionReport report;
-                using (var tg = new TransactionGroup(doc, "JNN - Auto Column Dimension"))
-                {
-                    tg.Start();
-                    using (var tx = new Transaction(doc, "Create Column Dimensions"))
-                    {
-                        tx.Start();
-                        report = ColumnDimensionBuilder.CreateDimensions(doc, view, selectedInfos, _settings);
-                        tx.Commit();
-                    }
-                    tg.Assimilate();
-                }
-
-                void Update()
-                {
-                    StatusText = $"Done: Created {report.SuccessDims} dimensions. ({report.SkippedDims} skipped, {report.FailedCount} failed).";
-                    ResultReport = $"Created {report.SuccessDims} dims across {report.TotalColumns} columns.";
-                    IsBusy = false;
-
-                    // Cập nhật lại phân tích
-                    RunPreview();
-                }
-
-                if (System.Windows.Application.Current?.Dispatcher?.CheckAccess() == false)
-                {
-                    System.Windows.Application.Current.Dispatcher.Invoke(Update);
-                }
-                else
-                {
-                    Update();
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("Error in DoCreate", ex);
-                void Fail()
-                {
-                    StatusText = $"Creation Error: {ex.Message}";
-                    IsBusy = false;
-                }
-                if (System.Windows.Application.Current?.Dispatcher?.CheckAccess() == false)
-                    System.Windows.Application.Current.Dispatcher.Invoke(Fail);
-                else
-                    Fail();
-            }
-        }
-
-        private void SetSelection(bool select)
-        {
-            foreach (var item in PreviewItems)
-            {
-                if (item.RawInfo != null && item.RawInfo.IsSupported)
-                {
-                    item.IsSelected = select;
-                }
-            }
-        }
-
         private void ResetSettings()
         {
             _settings = new AutoDimColumnSettings();
             LoadSettingsToProperties(_settings);
             SettingsService<AutoDimColumnSettings>.Save(_settings);
             StatusText = "Settings reset to defaults.";
-            RunPreview();
         }
 
         private void LoadSettingsToProperties(AutoDimColumnSettings s)

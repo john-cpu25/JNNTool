@@ -24,13 +24,72 @@ namespace JNNTool.Tools.AutoDimColumn.Services
                 TypeName = column.Symbol?.Name ?? "Column"
             };
 
-            // 1. Lấy điểm tâm từ LocationPoint nếu có
-            if (column.Location is LocationPoint lp)
+            // 1. Kiểm tra BoundingBox của cột
+            var bbox = column.get_BoundingBox(activeView) ?? column.get_BoundingBox(null);
+            if (bbox != null)
             {
-                info.Center = lp.Point;
+                info.BoundingBox = bbox;
+                info.Center = (bbox.Min + bbox.Max) * 0.5;
+            }
+            else if (column.Location is LocationPoint lpCenter)
+            {
+                info.Center = lpCenter.Point;
             }
 
-            // 2. Lấy Geometry với Options phù hợp
+            double bbWidthFt = bbox != null ? Math.Abs(bbox.Max.X - bbox.Min.X) : 0.0;
+            double bbLengthFt = bbox != null ? Math.Abs(bbox.Max.Y - bbox.Min.Y) : 0.0;
+
+            // 2. Góc xoay từ LocationPoint nếu có
+            if (column.Location is LocationPoint lp)
+            {
+                double deg = lp.Rotation * AutoDimColumnEngine.RadToDeg;
+                if (deg < 0) deg += 180.0;
+                if (deg >= 180.0) deg -= 180.0;
+                info.RotationAngleDeg = Math.Round(deg, 1);
+            }
+
+            // 3. Thử lấy Reference Planes chuẩn của FamilyInstance (Left, Right, Front, Back)
+            try
+            {
+                var leftRefs = column.GetReferences(FamilyInstanceReferenceType.Left);
+                var rightRefs = column.GetReferences(FamilyInstanceReferenceType.Right);
+                var frontRefs = column.GetReferences(FamilyInstanceReferenceType.Front);
+                var backRefs = column.GetReferences(FamilyInstanceReferenceType.Back);
+
+                bool hasWidth = leftRefs != null && leftRefs.Count > 0 && rightRefs != null && rightRefs.Count > 0;
+                bool hasLength = frontRefs != null && frontRefs.Count > 0 && backRefs != null && backRefs.Count > 0;
+
+                if (hasWidth && hasLength)
+                {
+                    info.WidthPair = new ColumnFacePair
+                    {
+                        Ref1 = leftRefs![0],
+                        Ref2 = rightRefs![0],
+                        Normal = XYZ.BasisX,
+                        DistanceFt = bbWidthFt > 0 ? bbWidthFt : 1.0
+                    };
+                    info.WidthMm = info.WidthPair.DistanceMm;
+
+                    info.LengthPair = new ColumnFacePair
+                    {
+                        Ref1 = frontRefs![0],
+                        Ref2 = backRefs![0],
+                        Normal = XYZ.BasisY,
+                        DistanceFt = bbLengthFt > 0 ? bbLengthFt : 1.0
+                    };
+                    info.LengthMm = info.LengthPair.DistanceMm;
+
+                    info.IsSupported = true;
+                    info.StatusMessage = "Ready";
+                    return info;
+                }
+            }
+            catch
+            {
+                // Fall back to Solid geometry
+            }
+
+            // 4. Fallback: Lấy Geometry với Options phù hợp
             var opt = new Options
             {
                 ComputeReferences = true,
@@ -129,7 +188,6 @@ namespace JNNTool.Tools.AutoDimColumn.Services
             // 6. Tính tâm nếu LocationPoint chưa có hoặc là Zero
             if (info.Center == XYZ.Zero)
             {
-                var bbox = column.get_BoundingBox(activeView) ?? column.get_BoundingBox(null);
                 if (bbox != null)
                 {
                     info.Center = (bbox.Min + bbox.Max) * 0.5;
