@@ -210,6 +210,177 @@ namespace JNNTool.Tools.AutoDimColumn.Services
             return info;
         }
 
+        /// <summary>
+        /// Trích xuất hình học, BoundingBox và các cặp mặt bên / mặt đầu của Vách (Wall).
+        /// </summary>
+        public static ColumnGeometryInfo ExtractWallGeometry(Wall wall, View activeView)
+        {
+            var info = new ColumnGeometryInfo
+            {
+                ColumnId = wall.Id,
+                Mark = wall.get_Parameter(BuiltInParameter.ALL_MODEL_MARK)?.AsString() ?? string.Empty,
+                TypeName = wall.WallType?.Name ?? "Wall"
+            };
+
+            // 1. Kiểm tra BoundingBox của vách trên view
+            var bbox = wall.get_BoundingBox(activeView) ?? wall.get_BoundingBox(null);
+            if (bbox != null)
+            {
+                info.BoundingBox = bbox;
+                info.Center = (bbox.Min + bbox.Max) * 0.5;
+            }
+
+            // 2. Chiều dài và hướng của vách từ LocationCurve
+            XYZ wallDir = XYZ.BasisX;
+            XYZ wallNormal = XYZ.BasisY;
+            double wallLengthFt = 0.0;
+
+            if (wall.Location is LocationCurve lc && lc.Curve is Line line)
+            {
+                XYZ p0 = line.GetEndPoint(0);
+                XYZ p1 = line.GetEndPoint(1);
+                wallLengthFt = (p1 - p0).GetLength();
+                wallDir = new XYZ(p1.X - p0.X, p1.Y - p0.Y, 0).Normalize();
+                wallNormal = new XYZ(-wallDir.Y, wallDir.X, 0).Normalize();
+                if (info.Center == XYZ.Zero)
+                {
+                    info.Center = (p0 + p1) * 0.5;
+                }
+            }
+            else if (bbox != null)
+            {
+                wallLengthFt = Math.Max(Math.Abs(bbox.Max.X - bbox.Min.X), Math.Abs(bbox.Max.Y - bbox.Min.Y));
+            }
+
+            // 3. Góc xoay của vách (tính theo wallDir)
+            double rotRad = Math.Atan2(wallDir.Y, wallDir.X);
+            double rotDeg = rotRad * AutoDimColumnEngine.RadToDeg;
+            if (rotDeg < 0) rotDeg += 180.0;
+            if (rotDeg >= 180.0) rotDeg -= 180.0;
+            info.RotationAngleDeg = Math.Round(rotDeg, 1);
+
+            // 4. Bề dày vách (Width / Thickness): Lấy mặt bên qua HostObjectUtils
+            IList<Reference>? extFaces = null;
+            IList<Reference>? intFaces = null;
+            try
+            {
+                extFaces = HostObjectUtils.GetSideFaces(wall, ShellLayerType.Exterior);
+                intFaces = HostObjectUtils.GetSideFaces(wall, ShellLayerType.Interior);
+            }
+            catch { }
+
+            double thicknessFt = wall.Width;
+
+            if (extFaces != null && extFaces.Count > 0 && intFaces != null && intFaces.Count > 0)
+            {
+                info.WidthPair = new ColumnFacePair
+                {
+                    Ref1 = extFaces[0],
+                    Ref2 = intFaces[0],
+                    Normal = wallNormal,
+                    DistanceFt = thicknessFt
+                };
+                info.WidthMm = thicknessFt * 304.8;
+            }
+
+            // 5. Chiều dài vách (Length): Tìm 2 mặt đầu (End faces) từ Solid
+            var opt = new Options
+            {
+                ComputeReferences = true,
+                View = activeView,
+                IncludeNonVisibleObjects = false
+            };
+            var geoElem = wall.get_Geometry(opt);
+            var solids = geoElem != null ? EnumerateSolids(geoElem).ToList() : new List<Solid>();
+            if (solids.Count == 0)
+            {
+                var fallbackOpt = new Options
+                {
+                    ComputeReferences = true,
+                    DetailLevel = ViewDetailLevel.Fine,
+                    IncludeNonVisibleObjects = false
+                };
+                geoElem = wall.get_Geometry(fallbackOpt);
+                if (geoElem != null)
+                {
+                    solids = EnumerateSolids(geoElem).ToList();
+                }
+            }
+
+            PlanarFace? endFace1 = null;
+            PlanarFace? endFace2 = null;
+
+            foreach (var s in solids)
+            {
+                foreach (Face f in s.Faces)
+                {
+                    if (f is PlanarFace pf && pf.Reference != null)
+                    {
+                        if (Math.Abs(pf.FaceNormal.Z) < 0.1)
+                        {
+                            XYZ fn2D = new XYZ(pf.FaceNormal.X, pf.FaceNormal.Y, 0).Normalize();
+                            double dot = fn2D.DotProduct(wallDir);
+                            if (dot > 0.85 && endFace1 == null)
+                            {
+                                endFace1 = pf;
+                            }
+                            else if (dot < -0.85 && endFace2 == null)
+                            {
+                                endFace2 = pf;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (endFace1 != null && endFace2 != null)
+            {
+                double dist = Math.Abs((endFace2.Origin - endFace1.Origin).DotProduct(wallDir));
+                if (dist < 0.1 && wallLengthFt > 0) dist = wallLengthFt;
+
+                info.LengthPair = new ColumnFacePair
+                {
+                    Face1 = endFace1,
+                    Face2 = endFace2,
+                    Ref1 = endFace1.Reference,
+                    Ref2 = endFace2.Reference,
+                    Normal = wallDir,
+                    DistanceFt = dist
+                };
+                info.LengthMm = dist * 304.8;
+            }
+            else
+            {
+                info.LengthMm = wallLengthFt * 304.8;
+            }
+
+            // Fallback nếu WidthPair chưa lấy được từ HostObjectUtils
+            if (info.WidthPair == null && solids.Count > 0)
+            {
+                var verticalFaces = new List<PlanarFace>();
+                foreach (var s in solids)
+                {
+                    foreach (Face f in s.Faces)
+                    {
+                        if (f is PlanarFace pf && pf.Reference != null && Math.Abs(pf.FaceNormal.Z) < 0.1)
+                        {
+                            verticalFaces.Add(pf);
+                        }
+                    }
+                }
+                var pairs = FindOppositeFacePairs(verticalFaces);
+                if (pairs.Count > 0)
+                {
+                    info.WidthPair = pairs[0];
+                    info.WidthMm = pairs[0].DistanceMm;
+                }
+            }
+
+            info.IsSupported = info.WidthPair != null && info.WidthPair.IsValid;
+            info.StatusMessage = info.IsSupported ? "Ready" : "Unable to get wall side faces";
+            return info;
+        }
+
         private static List<ColumnFacePair> FindOppositeFacePairs(List<PlanarFace> faces)
         {
             var pairs = new List<ColumnFacePair>();

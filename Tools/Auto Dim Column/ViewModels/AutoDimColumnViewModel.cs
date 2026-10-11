@@ -37,6 +37,9 @@ namespace JNNTool.Tools.AutoDimColumn.ViewModels
         [ObservableProperty] private bool _isActiveViewScope = true;
         [ObservableProperty] private bool _isSelectionScope = false;
 
+        [ObservableProperty] private bool _includeColumns = true;
+        [ObservableProperty] private bool _includeWalls = true;
+
         [ObservableProperty] private bool _dimWidth = true;
         [ObservableProperty] private bool _dimLength = true;
         [ObservableProperty] private bool _dimGridToColumn = true;
@@ -158,13 +161,13 @@ namespace JNNTool.Tools.AutoDimColumn.ViewModels
 
                 SavePropertiesToSettings();
 
-                // 1. Thu thập danh sách cột
-                var rawCols = ColumnCollector.CollectColumns(uidoc, doc, view, _settings.ScopeMode);
-                if (rawCols.Count == 0)
+                // 1. Thu thập danh sách cột và vách
+                var rawElems = ColumnCollector.CollectElements(uidoc, doc, view, _settings);
+                if (rawElems.Count == 0)
                 {
                     string msg = _settings.ScopeMode == ColumnScopeMode.SelectedElements
-                        ? "No columns selected in model."
-                        : "No columns found in active view.";
+                        ? "No columns or walls selected in model."
+                        : "No columns or walls found in active view.";
                     UpdateStatus(msg);
                     return;
                 }
@@ -172,42 +175,51 @@ namespace JNNTool.Tools.AutoDimColumn.ViewModels
                 // 2. Thu thập danh sách lưới trục
                 var grids = GridDetectionService.CollectGridsInView(doc, view);
 
-                // 3. Trích xuất hình học và bounding box cho từng cột
-                var readyCols = new List<ColumnGeometryInfo>();
-                foreach (var c in rawCols)
+                // 3. Trích xuất hình học và bounding box cho từng cấu kiện
+                var readyElements = new List<ColumnGeometryInfo>();
+                foreach (var elem in rawElems)
                 {
-                    var geo = ColumnGeometryService.ExtractGeometry(c, view);
-                    if (geo.IsSupported)
+                    ColumnGeometryInfo? geo = null;
+                    if (elem is FamilyInstance fi)
+                    {
+                        geo = ColumnGeometryService.ExtractGeometry(fi, view);
+                    }
+                    else if (elem is Wall wall)
+                    {
+                        geo = ColumnGeometryService.ExtractWallGeometry(wall, view);
+                    }
+
+                    if (geo != null && geo.IsSupported)
                     {
                         if (_settings.DimGridToColumn)
                         {
                             geo.AssociatedGrids = GridDetectionService.FindAssociatedGrids(geo, grids, _settings);
                         }
-                        readyCols.Add(geo);
+                        readyElements.Add(geo);
                     }
                 }
 
-                if (readyCols.Count == 0)
+                if (readyElements.Count == 0)
                 {
-                    UpdateStatus("No supported rectangular columns found.");
+                    UpdateStatus("No supported rectangular columns or walls found.");
                     return;
                 }
 
                 // 4. Tạo Dimension trong Transaction
                 ColumnDimExecutionReport report;
-                using (var tg = new TransactionGroup(doc, "JNN - Auto Column Dimension"))
+                using (var tg = new TransactionGroup(doc, "JNN - Auto Column & Wall Dimension"))
                 {
                     tg.Start();
-                    using (var tx = new Transaction(doc, "Create Column Dimensions"))
+                    using (var tx = new Transaction(doc, "Create Dimensions"))
                     {
                         tx.Start();
-                        report = ColumnDimensionBuilder.CreateDimensions(doc, view, readyCols, _settings);
+                        report = ColumnDimensionBuilder.CreateDimensions(doc, view, readyElements, _settings);
                         tx.Commit();
                     }
                     tg.Assimilate();
                 }
 
-                string summary = $"Done: Created {report.SuccessDims} dimensions ({readyCols.Count} columns).";
+                string summary = $"Done: Created {report.SuccessDims} dimensions ({readyElements.Count} elements).";
                 if (report.FailedCount > 0)
                 {
                     summary += $" ({report.FailedCount} failed)";
@@ -216,7 +228,7 @@ namespace JNNTool.Tools.AutoDimColumn.ViewModels
             }
             catch (Exception ex)
             {
-                Logger.Error("Error in DoCreate Auto Column Dimension", ex);
+                Logger.Error("Error in DoCreate Auto Column & Wall Dimension", ex);
                 UpdateStatus($"Creation Error: {ex.Message}");
             }
         }
@@ -252,6 +264,9 @@ namespace JNNTool.Tools.AutoDimColumn.ViewModels
             IsActiveViewScope = s.ScopeMode == ColumnScopeMode.ActiveView;
             IsSelectionScope = s.ScopeMode == ColumnScopeMode.SelectedElements;
 
+            IncludeColumns = s.IncludeColumns;
+            IncludeWalls = s.IncludeWalls;
+
             DimWidth = s.DimWidth;
             DimLength = s.DimLength;
             DimGridToColumn = s.DimGridToColumn;
@@ -267,6 +282,10 @@ namespace JNNTool.Tools.AutoDimColumn.ViewModels
         private void SavePropertiesToSettings()
         {
             _settings.ScopeMode = IsActiveViewScope ? ColumnScopeMode.ActiveView : ColumnScopeMode.SelectedElements;
+
+            _settings.IncludeColumns = IncludeColumns;
+            _settings.IncludeWalls = IncludeWalls;
+
             _settings.DimWidth = DimWidth;
             _settings.DimLength = DimLength;
             _settings.DimGridToColumn = DimGridToColumn;

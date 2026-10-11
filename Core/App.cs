@@ -836,11 +836,11 @@ namespace JNNTool
                     string dimColBtnId = tabIdx == 0 ? "cmdAutoDimColumn" : $"cmdAutoDimColumn_{tabIdx}";
                     PushButtonData btnDimColData = new PushButtonData(
                         dimColBtnId,
-                        "Dim\nColumn",
+                        "Dim\nCol/Wall",
                         assemblyPath,
                         "JNNTool.Tools.AutoDimColumn.Commands.AutoDimColumnCommand"
                     );
-                    btnDimColData.ToolTip = "Auto Dim Column: Tự động ghi kích thước tiết diện cột (b × h) và định vị cột từ Lưới trục (Grid-to-Column) trên mặt bằng kết cấu.";
+                    btnDimColData.ToolTip = "Auto Dim Column & Wall: Tự động ghi kích thước tiết diện Cột, Vách (b × h / L) và định vị từ Lưới trục (Grid) trên mặt bằng kết cấu.";
 
                     PushButton btnDimCol = layoutPanel.AddItem(btnDimColData) as PushButton;
                     if (btnDimCol != null && File.Exists(iconPathDimCol))

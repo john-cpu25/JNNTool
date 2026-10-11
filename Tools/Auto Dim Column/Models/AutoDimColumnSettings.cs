@@ -22,6 +22,8 @@ namespace JNNTool.Tools.AutoDimColumn.Models
     public class AutoDimColumnSettings
     {
         public ColumnScopeMode ScopeMode { get; set; } = ColumnScopeMode.ActiveView;
+        public bool IncludeColumns { get; set; } = true;
+        public bool IncludeWalls { get; set; } = true;
 
         public bool DimWidth { get; set; } = true;
         public bool DimLength { get; set; } = true;
