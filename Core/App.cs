@@ -906,6 +906,33 @@ namespace JNNTool
                         btnElementMark.LargeImage = img;
                         btnElementMark.Image = img;
                     }
+
+                    // ------------------- Stair Model (Auto Structural Stair) -------------------
+                    string iconPathStairModelLayout = Path.Combine(resourcesPath, "StairModel.png");
+                    if (!File.Exists(iconPathStairModelLayout))
+                    {
+                        iconPathStairModelLayout = Path.Combine(resourcesPath, "StairDetail.png");
+                    }
+                    string stairModelBtnId = tabIdx == 0 ? "cmdStairModel_Layout" : $"cmdStairModel_Layout_{tabIdx}";
+                    PushButtonData btnStairModelLayoutData = new PushButtonData(
+                        stairModelBtnId,
+                        "Stair\nModel",
+                        assemblyPath,
+                        "JNNTool.Tools.StairModel.Commands.StairModelCommand"
+                    );
+                    btnStairModelLayoutData.ToolTip = "Tự động dựng cầu thang kết cấu bê tông cốt thép (Straight, U-shaped, L-shaped) gồm bản thang nghiêng, chiếu nghỉ và dầm đỡ với preview 2D trực quan.";
+
+                    PushButton btnStairModelLayout = layoutPanel.AddItem(btnStairModelLayoutData) as PushButton;
+                    if (btnStairModelLayout != null && File.Exists(iconPathStairModelLayout))
+                    {
+                        BitmapImage img = new BitmapImage();
+                        img.BeginInit();
+                        img.UriSource = new Uri(iconPathStairModelLayout, UriKind.Absolute);
+                        img.CacheOption = BitmapCacheOption.OnLoad;
+                        img.EndInit();
+                        btnStairModelLayout.LargeImage = img;
+                        btnStairModelLayout.Image = img;
+                    }
                 }
                 tabIdx++;
             }
