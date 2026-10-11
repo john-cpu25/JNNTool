@@ -642,7 +642,23 @@ namespace JNNTool.Tools.StairModel.ViewModels
 
                 if (success)
                 {
-                    TaskDialog.Show("JNN Auto Structural Stair", message);
+                    if (createdIds != null && createdIds.Count > 0)
+                    {
+                        try
+                        {
+                            uidoc.Selection.SetElementIds(createdIds);
+                            uidoc.ShowElements(createdIds);
+                        }
+                        catch { }
+                    }
+
+                    string idListStr = (createdIds != null && createdIds.Count > 0) 
+                        ? string.Join(", ", createdIds.Select(id => id.GetIdValue())) 
+                        : string.Empty;
+
+                    TaskDialog.Show("JNN Auto Structural Stair", 
+                        $"{message}\n\nĐã tự động chọn (Select) và Zoom tới {createdIds?.Count ?? 0} cấu kiện vừa tạo (IDs: {idListStr}).\n\n" +
+                        "Lưu ý: Thang kết cấu được tạo dưới dạng Floors (Sàn nghiêng + Chiếu nghỉ) và Structural Framing (Dầm đỡ), không phải category Stairs kiến trúc.");
                 }
                 else
                 {

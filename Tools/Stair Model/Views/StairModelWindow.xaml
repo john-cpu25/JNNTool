@@ -516,6 +516,9 @@
 
                 <!-- Action Buttons -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Pick Điểm Đặt..." Command="{Binding PickPointCommand}"
+                            ToolTip="Click chọn một điểm trên mặt bằng hoặc view 3D để đặt chân thang"
+                            Style="{StaticResource SecondaryButton}" Margin="0,0,8,0"/>
                     <Button Content="Mặc định (Reset)" Command="{Binding ResetCommand}"
                             Style="{StaticResource SecondaryButton}" Margin="0,0,8,0"/>
                     <Button Content="Đóng" Click="OnCloseClicked"
