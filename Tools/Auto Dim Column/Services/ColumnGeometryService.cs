@@ -24,12 +24,13 @@ namespace JNNTool.Tools.AutoDimColumn.Services
                 TypeName = column.Symbol?.Name ?? "Column"
             };
 
-            // Điểm tâm từ LocationPoint nếu có
+            // 1. Lấy điểm tâm từ LocationPoint nếu có
             if (column.Location is LocationPoint lp)
             {
                 info.Center = lp.Point;
             }
 
+            // 2. Lấy Geometry với Options phù hợp
             var opt = new Options
             {
                 ComputeReferences = true,
@@ -38,23 +39,42 @@ namespace JNNTool.Tools.AutoDimColumn.Services
             };
 
             GeometryElement? geoElem = column.get_Geometry(opt);
-            if (geoElem == null)
+
+            // Nếu không tìm thấy Solid qua View hiện hành (ví dụ Family dùng Symbolic line trên mặt bằng),
+            // fallback sang lấy hình học 3D chi tiết (Fine Detail)
+            var solids = geoElem != null ? EnumerateSolids(geoElem).ToList() : new List<Solid>();
+            if (solids.Count == 0)
+            {
+                var fallbackOpt = new Options
+                {
+                    ComputeReferences = true,
+                    DetailLevel = ViewDetailLevel.Fine,
+                    IncludeNonVisibleObjects = false
+                };
+                geoElem = column.get_Geometry(fallbackOpt);
+                if (geoElem != null)
+                {
+                    solids = EnumerateSolids(geoElem).ToList();
+                }
+            }
+
+            if (solids.Count == 0)
             {
                 info.IsSupported = false;
-                info.StatusMessage = "No geometry found in view";
+                info.StatusMessage = "No solids found in column family";
                 return info;
             }
 
-            // Thu thập các PlanarFace đứng
+            // 3. Thu thập các PlanarFace đứng
             var verticalFaces = new List<PlanarFace>();
-            foreach (Solid solid in EnumerateSolids(geoElem))
+            foreach (Solid solid in solids)
             {
                 foreach (Face face in solid.Faces)
                 {
                     if (face is PlanarFace pf && pf.Reference != null)
                     {
                         // Mặt đứng: pháp tuyến Z gần bằng 0
-                        if (Math.Abs(pf.FaceNormal.Z) < 0.05)
+                        if (Math.Abs(pf.FaceNormal.Z) < 0.1)
                         {
                             verticalFaces.Add(pf);
                         }
@@ -69,7 +89,7 @@ namespace JNNTool.Tools.AutoDimColumn.Services
                 return info;
             }
 
-            // Nhóm các mặt theo phương đối đỉnh
+            // 4. Nhóm các mặt theo phương đối đỉnh
             var facePairs = FindOppositeFacePairs(verticalFaces);
             if (facePairs.Count == 0)
             {
@@ -78,7 +98,7 @@ namespace JNNTool.Tools.AutoDimColumn.Services
                 return info;
             }
 
-            // Lấy 2 cặp mặt vuông góc với nhau (U và V)
+            // 5. Lấy 2 cặp mặt vuông góc với nhau (U và V)
             var pairU = facePairs[0];
             ColumnFacePair? pairV = null;
 
@@ -86,7 +106,7 @@ namespace JNNTool.Tools.AutoDimColumn.Services
             {
                 double dot = Math.Abs(pairU.Normal.DotProduct(facePairs[i].Normal));
                 // Vuông góc: dot ≈ 0
-                if (dot < 0.2)
+                if (dot < 0.25)
                 {
                     pairV = facePairs[i];
                     break;
@@ -103,11 +123,24 @@ namespace JNNTool.Tools.AutoDimColumn.Services
             }
             else
             {
-                // Chỉ tìm được 1 cặp mặt (ví dụ vách mỏng hoặc 1 phương)
                 info.LengthMm = 0;
             }
 
-            // Tính góc xoay của cột theo phương U
+            // 6. Tính tâm nếu LocationPoint chưa có hoặc là Zero
+            if (info.Center == XYZ.Zero)
+            {
+                var bbox = column.get_BoundingBox(activeView) ?? column.get_BoundingBox(null);
+                if (bbox != null)
+                {
+                    info.Center = (bbox.Min + bbox.Max) * 0.5;
+                }
+                else if (pairU.Face1 != null && pairU.Face2 != null)
+                {
+                    info.Center = (pairU.Face1.Origin + pairU.Face2.Origin) * 0.5;
+                }
+            }
+
+            // 7. Tính góc xoay của cột theo phương U
             double rotRad = Math.Atan2(pairU.Normal.Y, pairU.Normal.X);
             double rotDeg = rotRad * AutoDimColumnEngine.RadToDeg;
             if (rotDeg < 0) rotDeg += 180.0;
@@ -155,7 +188,7 @@ namespace JNNTool.Tools.AutoDimColumn.Services
                 }
             }
 
-            // Sắp xếp ưu tiên các cặp mặt có diện tích mặt lớn nhất hoặc khoảng cách hợp lý
+            // Sắp xếp ưu tiên các cặp mặt có diện tích mặt lớn nhất
             return pairs
                 .OrderByDescending(p => (p.Face1?.Area ?? 0) + (p.Face2?.Area ?? 0))
                 .ToList();
@@ -172,10 +205,12 @@ namespace JNNTool.Tools.AutoDimColumn.Services
                 else if (obj is GeometryInstance gi)
                 {
                     GeometryElement? instGeo = gi.GetInstanceGeometry();
-                    if (instGeo == null) continue;
-                    foreach (Solid inner in EnumerateSolids(instGeo))
+                    if (instGeo != null)
                     {
-                        yield return inner;
+                        foreach (Solid inner in EnumerateSolids(instGeo))
+                        {
+                            yield return inner;
+                        }
                     }
                 }
             }

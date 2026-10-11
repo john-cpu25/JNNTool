@@ -4,13 +4,12 @@ using System.Collections.Generic;
 using System.Linq;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
-using Autodesk.Revit.UI.Selection;
 using JNNTool.Tools.AutoDimColumn.Models;
 
 namespace JNNTool.Tools.AutoDimColumn.Services
 {
     /// <summary>
-    /// Thu thập và lọc các cấu kiện Cột kết cấu (OST_StructuralColumns).
+    /// Thu thập và lọc các cấu kiện Cột kết cấu (OST_StructuralColumns) và Cột kiến trúc (OST_Columns).
     /// </summary>
     public static class ColumnCollector
     {
@@ -24,7 +23,7 @@ namespace JNNTool.Tools.AutoDimColumn.Services
                 var selIds = uidoc.Selection.GetElementIds();
                 foreach (var id in selIds)
                 {
-                    if (doc.GetElement(id) is FamilyInstance fi && IsValidStructuralColumn(fi))
+                    if (doc.GetElement(id) is FamilyInstance fi && IsValidColumn(fi))
                     {
                         long val = GetIdValue(id);
                         if (seenIds.Add(val))
@@ -36,14 +35,22 @@ namespace JNNTool.Tools.AutoDimColumn.Services
             }
             else
             {
-                // Toàn bộ cột hiển thị trong Active View
+                // Toàn bộ cột hiển thị trong Active View (hỗ trợ cả cột kết cấu và cột kiến trúc)
+                var catFilters = new List<BuiltInCategory>
+                {
+                    BuiltInCategory.OST_StructuralColumns,
+                    BuiltInCategory.OST_Columns
+                };
+
+                var multicatFilter = new ElementMulticategoryFilter(catFilters);
+
                 var col = new FilteredElementCollector(doc, activeView.Id)
-                    .OfCategory(BuiltInCategory.OST_StructuralColumns)
+                    .WherePasses(multicatFilter)
                     .WhereElementIsNotElementType();
 
                 foreach (var elem in col)
                 {
-                    if (elem is FamilyInstance fi && IsValidStructuralColumn(fi))
+                    if (elem is FamilyInstance fi && IsValidColumn(fi))
                     {
                         long val = GetIdValue(fi.Id);
                         if (seenIds.Add(val))
@@ -57,16 +64,11 @@ namespace JNNTool.Tools.AutoDimColumn.Services
             return results;
         }
 
-        public static bool IsValidStructuralColumn(FamilyInstance fi)
+        public static bool IsValidColumn(FamilyInstance fi)
         {
             if (fi.Category == null) return false;
-#if NET48
-            if (fi.Category.Id.IntegerValue != (int)BuiltInCategory.OST_StructuralColumns) return false;
-#else
-            if (fi.Category.Id.Value != (long)BuiltInCategory.OST_StructuralColumns) return false;
-#endif
-            // Bỏ qua cột đang bị ẩn trong view
-            return true;
+            long catId = GetIdValue(fi.Category.Id);
+            return catId == (long)BuiltInCategory.OST_StructuralColumns || catId == (long)BuiltInCategory.OST_Columns;
         }
 
         public static long GetIdValue(ElementId id)

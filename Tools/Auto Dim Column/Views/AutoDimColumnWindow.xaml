@@ -315,10 +315,10 @@
                     <GroupBox Header="Target Columns">
                         <StackPanel Margin="0,4,0,2">
                             <RadioButton Content="All Columns in Active View"
-                                         IsChecked="{Binding ScopeModeIndex, ConverterParameter=0, Mode=TwoWay, Converter={x:Null}}"
+                                         IsChecked="{Binding IsActiveViewScope, Mode=TwoWay}"
                                          GroupName="ScopeGroup" Margin="0,2,0,6"/>
                             <RadioButton Content="Selected Columns"
-                                         IsChecked="{Binding ScopeModeIndex, ConverterParameter=1, Mode=TwoWay, Converter={x:Null}}"
+                                         IsChecked="{Binding IsSelectionScope, Mode=TwoWay}"
                                          GroupName="ScopeGroup" Margin="0,0,0,4"/>
                         </StackPanel>
                     </GroupBox>

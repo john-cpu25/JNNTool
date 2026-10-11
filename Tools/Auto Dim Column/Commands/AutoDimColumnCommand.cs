@@ -47,8 +47,11 @@ namespace JNNTool.Tools.AutoDimColumn.Commands
                     return Result.Cancelled;
                 }
 
+                var handler = new AutoDimColumnHandler();
+                var exEvent = ExternalEvent.Create(handler);
+
                 var vm = new AutoDimColumnViewModel();
-                vm.InitializeFromRevit(doc, activeView);
+                vm.Initialize(uiApp, handler, exEvent);
 
                 var window = new AutoDimColumnWindow { DataContext = vm };
 

@@ -121,11 +121,14 @@
     <!-- Tự động đồng bộ toàn bộ Bundle tới %APPDATA%\Autodesk\ApplicationPlugins để Revit tự nhận diện không cần quyền Admin -->
     <PropertyGroup>
       <UserPluginsBundle>$(AppData)\Autodesk\ApplicationPlugins\JNNTool.bundle</UserPluginsBundle>
+      <ProgramDataBundle>C:\ProgramData\Autodesk\ApplicationPlugins\JNNTool.bundle</ProgramDataBundle>
     </PropertyGroup>
     <MakeDir Directories="$(UserPluginsBundle)" />
     <ItemGroup>
       <BundleFiles Include="$(BundleFolder)\**\*.*" />
     </ItemGroup>
     <Copy SourceFiles="@(BundleFiles)" DestinationFiles="@(BundleFiles->'$(UserPluginsBundle)\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="false" ContinueOnError="true" />
+    <!-- Đồng bộ thêm tới C:\ProgramData nếu tồn tại để tránh Revit ưu tiên nạp bản cũ -->
+    <Copy SourceFiles="@(BundleFiles)" DestinationFiles="@(BundleFiles->'$(ProgramDataBundle)\%(RecursiveDir)%(Filename)%(Extension)')" Condition="Exists('$(ProgramDataBundle)')" SkipUnchangedFiles="false" ContinueOnError="true" />
   </Target>
 </Project>
