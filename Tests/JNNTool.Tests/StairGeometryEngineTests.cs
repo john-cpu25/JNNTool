@@ -67,11 +67,11 @@ namespace JNNTool.Tests
             Assert.Equal(3, result.Beams.Count); // Landing, Foot, Top
 
             double r = 3570.0 / 21.0; // 170.0 mm
-            Assert.Equal(170.0, result.RiserHeightMm, 2);
+            Assert.Equal(r, result.RiserHeightMm, 2);
 
             // Flight 1
             var f1 = result.Flights[0];
-            double expectedH1 = 11 * 170.0; // 1870.0 mm
+            double expectedH1 = 11 * r; // 1870.0 mm
             double expectedRun1 = 10 * 270.0; // 2700.0 mm
             Assert.Equal(expectedRun1, f1.RunLengthMm, 2);
             Assert.Equal(expectedH1 / expectedRun1, f1.Slope, 4);

@@ -262,7 +262,7 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <Label Grid.Column="0" Content="Dạng cầu thang:"/>
-                                <ComboBox Grid.Column="1" SelectedIndex="{Binding StairType, Mode=TwoWay, Converter={x:Null}}">
+                                <ComboBox Grid.Column="1" SelectedIndex="{Binding SelectedStairTypeIndex, Mode=TwoWay}">
                                     <ComboBoxItem Content="Thang chữ U (2 vế 180° đảo chiều)"/>
                                     <ComboBoxItem Content="Thang chữ L (2 vế 90° vuông góc)"/>
                                     <ComboBoxItem Content="Thang thẳng (Straight Flight)"/>
@@ -277,9 +277,9 @@
                                 <Label Grid.Column="0" Content="Hướng rẽ (Turn):"/>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                                     <RadioButton Content="Rẽ Trái (Left - CCW)" Margin="0,0,16,0" VerticalAlignment="Center"
-                                                 IsChecked="{Binding TurnDirection, Mode=TwoWay, Converter={x:Null}, ConverterParameter=0}"/>
+                                                 IsChecked="{Binding IsTurnLeft, Mode=TwoWay}"/>
                                     <RadioButton Content="Rẽ Phải (Right - CW)" VerticalAlignment="Center"
-                                                 IsChecked="{Binding TurnDirection, Mode=TwoWay, Converter={x:Null}, ConverterParameter=1}"/>
+                                                 IsChecked="{Binding IsTurnRight, Mode=TwoWay}"/>
                                 </StackPanel>
                             </Grid>
                         </StackPanel>
@@ -413,7 +413,7 @@
                             <!-- Support Beam Option -->
                             <Label Grid.Row="2" Grid.Column="0" Content="Bố trí dầm đỡ:" Margin="0,0,0,6"/>
                             <ComboBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3"
-                                      SelectedIndex="{Binding SupportBeamOption, Mode=TwoWay, Converter={x:Null}}" Margin="0,0,0,6">
+                                      SelectedIndex="{Binding SelectedSupportBeamOptionIndex, Mode=TwoWay}" Margin="0,0,0,6">
                                 <ComboBoxItem Content="Không tạo dầm"/>
                                 <ComboBoxItem Content="Chỉ tạo dầm chiếu nghỉ (Landing Beam Only)"/>
                                 <ComboBoxItem Content="Tạo đầy đủ dầm (Chân thang, Chiếu nghỉ, Đỉnh thang)"/>

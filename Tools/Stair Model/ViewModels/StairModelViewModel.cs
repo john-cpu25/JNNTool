@@ -8,6 +8,7 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using JNNTool.Core.Compat;
 using JNNTool.Core.ExternalEvents;
 using JNNTool.Tools.StairModel.Engine;
 using JNNTool.Tools.StairModel.Services;
@@ -92,10 +93,23 @@ namespace JNNTool.Tools.StairModel.ViewModels
             {
                 if (SetProperty(ref _stairType, value))
                 {
+                    OnPropertyChanged(nameof(SelectedStairTypeIndex));
                     OnPropertyChanged(nameof(IsTwoFlight));
                     OnPropertyChanged(nameof(IsUShaped));
                     OnPropertyChanged(nameof(IsLShaped));
                     Recalculate();
+                }
+            }
+        }
+
+        public int SelectedStairTypeIndex
+        {
+            get => (int)StairType;
+            set
+            {
+                if (value >= 0 && value <= 2 && (int)StairType != value)
+                {
+                    StairType = (StairType)value;
                 }
             }
         }
@@ -110,7 +124,35 @@ namespace JNNTool.Tools.StairModel.ViewModels
             set
             {
                 if (SetProperty(ref _turnDirection, value))
+                {
+                    OnPropertyChanged(nameof(IsTurnLeft));
+                    OnPropertyChanged(nameof(IsTurnRight));
                     Recalculate();
+                }
+            }
+        }
+
+        public bool IsTurnLeft
+        {
+            get => TurnDirection == TurnDirection.Left;
+            set
+            {
+                if (value)
+                {
+                    TurnDirection = TurnDirection.Left;
+                }
+            }
+        }
+
+        public bool IsTurnRight
+        {
+            get => TurnDirection == TurnDirection.Right;
+            set
+            {
+                if (value)
+                {
+                    TurnDirection = TurnDirection.Right;
+                }
             }
         }
 
@@ -121,8 +163,21 @@ namespace JNNTool.Tools.StairModel.ViewModels
             {
                 if (SetProperty(ref _supportBeamOption, value))
                 {
+                    OnPropertyChanged(nameof(SelectedSupportBeamOptionIndex));
                     OnPropertyChanged(nameof(HasBeams));
                     Recalculate();
+                }
+            }
+        }
+
+        public int SelectedSupportBeamOptionIndex
+        {
+            get => (int)SupportBeamOption;
+            set
+            {
+                if (value >= 0 && value <= 2 && (int)SupportBeamOption != value)
+                {
+                    SupportBeamOption = (SupportBeamOption)value;
                 }
             }
         }
@@ -461,7 +516,7 @@ namespace JNNTool.Tools.StairModel.ViewModels
                 double elevMm = UnitUtils.ConvertFromInternalUnits(lvl.Elevation, UnitTypeId.Millimeters);
                 Levels.Add(new LevelComboItem
                 {
-                    Id = lvl.Id.ToString(),
+                    Id = lvl.Id.GetIdValue().ToString(),
                     Name = $"{lvl.Name} ({elevMm:F0} mm)",
                     ElevationMm = elevMm
                 });
@@ -490,7 +545,7 @@ namespace JNNTool.Tools.StairModel.ViewModels
             {
                 FloorTypes.Add(new NamedItem
                 {
-                    Id = ft.Id.ToString(),
+                    Id = ft.Id.GetIdValue().ToString(),
                     Name = ft.Name
                 });
             }
@@ -518,7 +573,7 @@ namespace JNNTool.Tools.StairModel.ViewModels
             {
                 BeamSymbols.Add(new NamedItem
                 {
-                    Id = sym.Id.ToString(),
+                    Id = sym.Id.GetIdValue().ToString(),
                     Name = $"{sym.FamilyName}: {sym.Name}"
                 });
             }

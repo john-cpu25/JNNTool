@@ -5,9 +5,9 @@ namespace JNNTool.Tools.StairModel.Engine
     /// </summary>
     public enum StairType
     {
-        Straight = 0,   // Thang thẳng (1 vế hoặc 2 vế thẳng có chiếu nghỉ)
-        UShaped = 1,    // Thang chữ U (2 vế song song đảo chiều 180° có chiếu nghỉ giữa)
-        LShaped = 2     // Thang chữ L (2 vế vuông góc 90° có chiếu nghỉ góc)
+        UShaped = 0,    // Thang chữ U (2 vế song song đảo chiều 180° có chiếu nghỉ giữa)
+        LShaped = 1,    // Thang chữ L (2 vế vuông góc 90° có chiếu nghỉ góc)
+        Straight = 2    // Thang thẳng (1 vế hoặc 2 vế thẳng có chiếu nghỉ)
     }
 
     /// <summary>
