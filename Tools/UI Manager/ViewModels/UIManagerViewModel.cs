@@ -82,7 +82,7 @@ namespace JNNTool.Tools.UIManager.ViewModels
 
         public List<string> Panels { get; } = new List<string>
         {
-            "All", "JNN Rebar", "Modeling", "CSI x Revit", "Layout", "Stair", "Quantity", "General"
+            "All", "Modeling", "CSI x Revit", "Layout", "Stair", "Quantity", "General"
         };
 
         private List<RibbonButtonItem> _allButtons = new List<RibbonButtonItem>();

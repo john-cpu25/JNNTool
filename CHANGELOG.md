@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added - **Command Palette (Dockable Pane)** (panel General): Bảng lệnh tìm kiếm nhanh toàn bộ công cụ JNNTool
+- **Kiến trúc Dockable Pane Modeless**:
+  - Tích hợp Dockable Pane chuẩn Revit API (`IDockablePaneProvider`), có thể neo cố định hoặc dock bên cạnh màn hình Revit.
+  - Nút **Command Palette** trên Panel **General** của Ribbon, hỗ trợ bật/tắt nhanh qua lệnh `TogglePaletteCmd`.
+- **Tìm kiếm thông minh & Đa ngôn ngữ**:
+  - Hỗ trợ gõ tiếng Việt có dấu và không dấu (chuẩn hóa `NormalizationForm.FormD`) cho toàn bộ công cụ.
+  - Hỗ trợ ghim lệnh yêu thích (Favorites ★), tự động lưu trữ cấu hình tại `%AppData%\JNNTool\palette_favorites.txt`.
+  - Phím tắt: `Enter` để thực thi ngay lệnh đầu tiên, `Esc` để xóa nhanh từ khóa, `Ctrl + F` để focus vào ô tìm kiếm.
+- **Tuân thủ chuẩn thiết kế AGENTS.md**:
+  - Không sử dụng banner tối màu, không dùng font in đậm. Nền sáng `#F5F7F9`, Card trắng `#FFFFFF`, viền `#DCDDE1`, chữ `#2C3E50`, bo góc 5px đồng bộ.
+- **Tối ưu hóa bố cục Ribbon theo nhu cầu thực tế**:
+  - Chuyển công cụ **Stair Model** từ panel Layout sang panel **Stair**.
+  - Tạm ẩn các công cụ chưa dùng tới: Floor By Room, Rebar Beam, Steel Connection, Clash Detection, Dim Beam, Extend Beam, Stair Rebar và panel JNN Rebar.
+
 ### Added - Module **Account & License Manager** (panel General): Quản lý bản quyền, đăng nhập tài khoản và kích hoạt JNNTool
 - **Vị trí Ribbon**: Bố trí trên Panel **General** của Tab `JNNTool` (nút **Account / License** kèm icon nhận diện `Login.png`).
 - **Tái cấu trúc Clean-room & Rebrand 100%**:

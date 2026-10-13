@@ -15,6 +15,9 @@ namespace JNNTool
             // Tự động resolve các assembly phụ thuộc trong cùng thư mục
             AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
 
+            // Chốt UI Dispatcher cho Command Palette và các Modeless UI
+            JNNTool.Core.UI.UiDispatcher.Capture();
+
             string tabName = "JNNTool";
             string modelingPanelName = "Modeling";
 
@@ -48,6 +51,20 @@ namespace JNNTool
                 JNNTool.Core.Logging.Logger.Error("Lỗi khởi tạo WpfWindowHelper", ex);
             }
 
+            // Đăng ký Dockable Pane cho Command Palette
+            try
+            {
+                application.RegisterDockablePane(
+                    JNNTool.Core.Palette.CommandPalettePage.PaneId,
+                    JNNTool.Core.Palette.CommandPalettePage.PaneTitle,
+                    new JNNTool.Core.Palette.CommandPalettePage()
+                );
+            }
+            catch (Exception ex)
+            {
+                JNNTool.Core.Logging.Logger.Error("Lỗi đăng ký Dockable Pane Command Palette", ex);
+            }
+
 
             // Lấy đường dẫn thực thi của tệp DLL
             string assemblyPath = Assembly.GetExecutingAssembly().Location;
@@ -62,6 +79,33 @@ namespace JNNTool
             try
             {
                 RibbonPanel generalPanel = application.CreateRibbonPanel(tabName, "General");
+
+                // ------------------- Command Palette -------------------
+                PushButtonData btnPaletteData = new PushButtonData(
+                    "cmdPalette",
+                    "Command\nPalette",
+                    assemblyPath,
+                    "JNNTool.Core.Palette.TogglePaletteCmd"
+                );
+                btnPaletteData.AvailabilityClassName = "JNNTool.Core.Palette.AlwaysAvailable";
+                btnPaletteData.ToolTip = "Mở bảng Command Palette (Ctrl+F) tra cứu và thực thi nhanh toàn bộ công cụ JNNTool.";
+
+                PushButton btnPalette = generalPanel.AddItem(btnPaletteData) as PushButton;
+                if (btnPalette != null)
+                {
+                    string iconPathPalette = Path.Combine(resourcesPath, "CommandPalette.png");
+                    if (!File.Exists(iconPathPalette)) iconPathPalette = Path.Combine(resourcesPath, "UIManager.png");
+                    if (File.Exists(iconPathPalette))
+                    {
+                        BitmapImage img = new BitmapImage();
+                        img.BeginInit();
+                        img.UriSource = new Uri(iconPathPalette, UriKind.Absolute);
+                        img.CacheOption = BitmapCacheOption.OnLoad;
+                        img.EndInit();
+                        btnPalette.LargeImage = img;
+                        btnPalette.Image = img;
+                    }
+                }
 
                 // ------------------- Account / License -------------------
                 PushButtonData btnLicenseData = new PushButtonData(
@@ -123,8 +167,9 @@ namespace JNNTool
             RibbonPanel modelingPanel = application.CreateRibbonPanel(tabName, modelingPanelName);
 
             // ═══════════════════════════════════════════════════════════════
-            //  Panel: JNN Rebar Suite
+            //  Panel: JNN Rebar Suite (Tạm ẩn theo yêu cầu người dùng)
             // ═══════════════════════════════════════════════════════════════
+#if false
             RibbonPanel rebarPanel = application.CreateRibbonPanel(tabName, "JNN Rebar");
 
             // ------------------- Rebar Slab -------------------
@@ -340,11 +385,13 @@ namespace JNNTool
                 assemblyPath,
                 "JNNTool.RebarSuite.Utilities.Commands.RebarTypeManagerCommand"
             ));
+#endif
 
 
 
 
 
+#if false
             // ------------------- Floor By Room -------------------
             string iconPathFloorByRoom = Path.Combine(resourcesPath, "FloorByRoom.png");
             PushButtonData btnFloorByRoomData = new PushButtonData(
@@ -366,6 +413,7 @@ namespace JNNTool
                 btnFloorByRoom.LargeImage = img;
                 btnFloorByRoom.Image = img;
             }
+#endif
 
             // ------------------- Split Beam By Column -------------------
             string iconPathSplitBeam = Path.Combine(resourcesPath, "SplitBeam.png");
@@ -389,6 +437,7 @@ namespace JNNTool
                 btnSplitBeam.Image = img;
             }
 
+#if false
             // ------------------- Rebar Beam -------------------
             string iconPathRebarBeam = Path.Combine(resourcesPath, "RebarBeam.png");
             PushButtonData btnRebarBeamData = new PushButtonData(
@@ -410,6 +459,7 @@ namespace JNNTool
                 btnRebarBeam.LargeImage = img;
                 btnRebarBeam.Image = img;
             }
+#endif
 
             // ------------------- Create Section -------------------
             string iconPathCreateSection = Path.Combine(resourcesPath, "CreateSection.png");
@@ -601,6 +651,7 @@ namespace JNNTool
                 }
             }
 
+#if false
             // ------------------- Connection -------------------
             string iconPathConnection = Path.Combine(resourcesPath, "Connection.png");
             PushButtonData btnConnectionData = new PushButtonData(
@@ -644,6 +695,7 @@ namespace JNNTool
                 btnClash.LargeImage = img;
                 btnClash.Image = img;
             }
+#endif
 
             // ------------------- Rebar Column -------------------
             string iconPathRebarCol = Path.Combine(resourcesPath, "RebarColumn.png");
@@ -754,6 +806,7 @@ namespace JNNTool
                 btnPileLocation.Image = img;
             }
 
+#if false
             // ------------------- Create Dim (Beam) -------------------
             string iconPathCreateDim = Path.Combine(resourcesPath, "CreateDim.png");
             PushButtonData btnCreateDimData = new PushButtonData(
@@ -797,6 +850,7 @@ namespace JNNTool
                 btnExtendBeam.LargeImage = img;
                 btnExtendBeam.Image = img;
             }
+#endif
 
             // ═══════════════════════════════════════════════════════════════
             //  Panel: Layout (Cùng tab với CSI x Revit & Modeling, không tạo tab riêng)
@@ -938,7 +992,8 @@ namespace JNNTool
                         btnElementMark.Image = img;
                     }
 
-                    // ------------------- Stair Model (Auto Structural Stair) -------------------
+#if false
+                    // ------------------- Stair Model (Chuyển sang panel Stair) -------------------
                     string iconPathStairModelLayout = Path.Combine(resourcesPath, "StairModel.png");
                     if (!File.Exists(iconPathStairModelLayout))
                     {
@@ -964,6 +1019,7 @@ namespace JNNTool
                         btnStairModelLayout.LargeImage = img;
                         btnStairModelLayout.Image = img;
                     }
+#endif
                 }
                 tabIdx++;
             }
@@ -974,6 +1030,32 @@ namespace JNNTool
             try
             {
                 RibbonPanel stairPanel = application.CreateRibbonPanel(tabName, "Stair");
+
+                // ------------------- Stair Model -------------------
+                string iconPathStairModel = Path.Combine(resourcesPath, "StairModel.png");
+                if (!File.Exists(iconPathStairModel))
+                {
+                    iconPathStairModel = Path.Combine(resourcesPath, "StairDetail.png");
+                }
+                PushButtonData btnStairModelData = new PushButtonData(
+                    "cmdStairModel",
+                    "Stair\nModel",
+                    assemblyPath,
+                    "JNNTool.Tools.StairModel.Commands.StairModelCommand"
+                );
+                btnStairModelData.ToolTip = "Tự động dựng cầu thang kết cấu bê tông cốt thép (Straight, U-shaped, L-shaped) gồm bản thang nghiêng, chiếu nghỉ và dầm đỡ với preview 2D trực quan.";
+
+                PushButton btnStairModel = stairPanel.AddItem(btnStairModelData) as PushButton;
+                if (btnStairModel != null && File.Exists(iconPathStairModel))
+                {
+                    BitmapImage img = new BitmapImage();
+                    img.BeginInit();
+                    img.UriSource = new Uri(iconPathStairModel, UriKind.Absolute);
+                    img.CacheOption = BitmapCacheOption.OnLoad;
+                    img.EndInit();
+                    btnStairModel.LargeImage = img;
+                    btnStairModel.Image = img;
+                }
 
                 // ------------------- Stair Designer -------------------
                 string iconPathStairDesigner = Path.Combine(resourcesPath, "StairModel.png");
@@ -997,6 +1079,7 @@ namespace JNNTool
                     btnStairDesigner.Image = img;
                 }
 
+#if false
                 // ------------------- Stair Rebar -------------------
                 string iconPathStairRebar = Path.Combine(resourcesPath, "StairDetail.png");
                 if (!File.Exists(iconPathStairRebar))
@@ -1022,6 +1105,7 @@ namespace JNNTool
                     btnStairRebar.LargeImage = img;
                     btnStairRebar.Image = img;
                 }
+#endif
             }
             catch (Exception ex)
             {
