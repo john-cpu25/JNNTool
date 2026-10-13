@@ -49,6 +49,7 @@ namespace JNNTool.Tests
 
             Assert.Equal(RibbonThemeSettings.DefaultColor, settings.PrimaryColorHex);
             Assert.Equal(RibbonIconStyle.Badge, settings.IconStyle);
+            Assert.True(settings.UseVectorTheme);
             Assert.NotNull(settings.PanelColors);
         }
 

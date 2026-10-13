@@ -29,6 +29,7 @@ namespace JNNTool.Tools.UIManager.Models
         Quantity,
         Check,
         Refresh,
-        Settings
+        Settings,
+        Key
     }
 }

@@ -37,8 +37,8 @@ namespace JNNTool.Tools.UIManager.Models
         /// <summary>Kiểu hiển thị icon được chọn.</summary>
         public RibbonIconStyle IconStyle { get; set; } = RibbonIconStyle.Badge;
 
-        /// <summary>Sử dụng bộ Icon Vector phẳng tùy biến màu (Mặc định: false - Ưu tiên giữ bộ Icon 3D ảnh màu chuyên nghiệp).</summary>
-        public bool UseVectorTheme { get; set; } = false;
+        /// <summary>Sử dụng bộ Icon Vector phẳng tùy biến màu (Mặc định: true - Đồng bộ sắc nét toàn bộ thanh Ribbon).</summary>
+        public bool UseVectorTheme { get; set; } = true;
 
         /// <summary>Ghi đè màu theo từng Panel (Tùy chọn: PanelName -> HexColor).</summary>
         public Dictionary<string, string> PanelColors { get; set; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);

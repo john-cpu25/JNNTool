@@ -26,6 +26,14 @@ All notable changes to this project will be documented in this file.
   - `LicenseExpiredWindow`: Thông báo hết hạn lịch sự, nút gia hạn (Renew) hoặc nhập Key mới (Enter New Key).
 - **Kiểm thử**: Viết mới `Tests/JNNTool.Tests/LoginTests.cs` (5 unit tests pass, tổng 174 tests), checklist kiểm thử tay tại `docs/test-checklist-login.md`.
 
+### Enhanced - **Bộ Icon Vector 3x Supersampling làm mặc định 100% cho toàn bộ thanh Ribbon JNNTool**
+- **Sắc nét tuyệt đối & Đồng bộ giao diện**:
+  - Chuyển `UseVectorTheme = true` làm mặc định cho toàn bộ thanh Ribbon khi khởi động (`App.OnStartup`), loại bỏ hoàn toàn các icon PNG mờ nhòe, mất hình hoặc viền răng cưa.
+  - Bổ sung biểu tượng `JNNIcon.Key` hình chìa khóa sắc nét cho nút **Account / License** (`cmdLicense`).
+  - Bao phủ toàn diện 100% các nút trên Ribbon vào danh mục `_knownButtons`: bao gồm `cmdLicense`, `cmdRebarBeam`, `cmdRebarColumn`, `cmdRebarUtilsSuite`, `cmdAutoJoinSplit`.
+  - Cập nhật hiển thị biểu tượng vector trực tiếp cho cả nút chính của `PulldownButton` và `SplitButton` cùng toàn bộ nút con bên trong menu xổ xuống.
+  - Tự động nạp và giữ nguyên mọi tùy biến màu sắc (12 theme màu) và phong cách đồ họa (Badge, Glyph, Circle, Outline) của người dùng qua `RibbonThemeSettings`.
+
 ### Added - Tool **Ribbon Theme & Icon Color Manager** (panel General): Tùy biến màu sắc và kiểu Icon Ribbon JNNTool
 - **Vị trí Ribbon**: Bố trí trên Panel **General** của Tab `JNNTool` (nút **Ribbon Theme**).
 - **Bộ Icon Vector chuẩn Icons8 (Solid Filled + Rounded Corners)**:

@@ -17,6 +17,10 @@ namespace JNNTool.Tools.UIManager.Services
     {
         private static readonly List<RibbonButtonItem> _knownButtons = new List<RibbonButtonItem>
         {
+            // ───────────────── Panel: General ─────────────────
+            new RibbonButtonItem { CommandId = "cmdLicense", DisplayName = "Account\nLicense", PanelName = "General", Icon = JNNIcon.Key, ToolTip = "Quản lý bản quyền, đăng nhập tài khoản và kích hoạt JNNTool." },
+            new RibbonButtonItem { CommandId = "cmdUIManager", DisplayName = "Ribbon\nTheme", PanelName = "General", Icon = JNNIcon.Palette, ToolTip = "Tùy biến màu sắc theme và kiểu hiển thị Icon trên thanh Ribbon JNNTool." },
+
             // ───────────────── Panel: JNN Rebar ─────────────────
             new RibbonButtonItem { CommandId = "cmdSlabRebar", DisplayName = "Rebar\nSlab", PanelName = "JNN Rebar", Icon = JNNIcon.Slab, ToolTip = "Bố trí thép sàn tự động: Lớp dưới, lớp trên và thép mũ gối L/4 theo TCVN 5574:2018." },
             new RibbonButtonItem { CommandId = "cmdBeamRebarSuite", DisplayName = "Rebar\nBeam", PanelName = "JNN Rebar", Icon = JNNIcon.Beam, ToolTip = "Bố trí thép dầm liên tục: Thép chủ, gia cường gối L/4, đai dày/thưa và tạo mặt cắt tự động." },
@@ -25,6 +29,7 @@ namespace JNNTool.Tools.UIManager.Services
             new RibbonButtonItem { CommandId = "cmdFoundationRebarSuite", DisplayName = "Rebar\nFooting", PanelName = "JNN Rebar", Icon = JNNIcon.Foundation, ToolTip = "Bố trí thép móng & đài cọc: Lưới đáy móc uốn 90°, lưới trên, thép chờ cột chân vịt." },
             new RibbonButtonItem { CommandId = "cmdPileRebarSuite", DisplayName = "Rebar\nPile", PanelName = "JNN Rebar", Icon = JNNIcon.Pile, ToolTip = "Bố trí thép cọc khoan nhồi / cọc vuông: Lồng thép, đai phân vùng và xuất tọa độ CSV." },
             new RibbonButtonItem { CommandId = "cmdStairRebarSuite", DisplayName = "Rebar\nStair", PanelName = "JNN Rebar", Icon = JNNIcon.Stair, ToolTip = "Bố trí thép bản thang: Thép lớp dưới chịu nhịp, thép mũ gối trên neo dầm và thép phân bố ngang." },
+            new RibbonButtonItem { CommandId = "cmdRebarUtilsSuite", DisplayName = "Rebar\nUtils", PanelName = "JNN Rebar", Icon = JNNIcon.Settings, ToolTip = "Bộ tiện ích cốt thép: Thống kê khối lượng, đánh số hiệu Mark, Unobscured, Isolate và chuẩn hóa RebarType." },
             new RibbonButtonItem { CommandId = "cmdRebarVolume", DisplayName = "Rebar\nVolume", PanelName = "JNN Rebar", Icon = JNNIcon.Quantity, ToolTip = "Thống kê khối lượng thép (CSV) theo đường kính, cấu kiện và tầng." },
             new RibbonButtonItem { CommandId = "cmdRebarNumber", DisplayName = "Rebar\nNumber", PanelName = "JNN Rebar", Icon = JNNIcon.Mark, ToolTip = "Đánh số hiệu thép tự động (Auto Mark)." },
             new RibbonButtonItem { CommandId = "cmdRebarUnobscured", DisplayName = "View\nUnobscured", PanelName = "JNN Rebar", Icon = JNNIcon.Check, ToolTip = "Bật/Tắt hiển thị nhìn xuyên cốt thép (View Unobscured) trong 3D." },
@@ -34,9 +39,11 @@ namespace JNNTool.Tools.UIManager.Services
             // ───────────────── Panel: Modeling ─────────────────
             new RibbonButtonItem { CommandId = "cmdFloorByRoom", DisplayName = "Floor By\nRoom", PanelName = "Modeling", Icon = JNNIcon.Floor, ToolTip = "Vẽ sàn tự động theo Boundary của Room." },
             new RibbonButtonItem { CommandId = "cmdSplitBeamByColumn", DisplayName = "Split\nBeam", PanelName = "Modeling", Icon = JNNIcon.Beam, ToolTip = "Ngắt dầm thành từng đoạn tại vị trí cột hoặc dầm giao cắt ngang." },
+            new RibbonButtonItem { CommandId = "cmdRebarBeam", DisplayName = "Rebar\nBeam", PanelName = "Modeling", Icon = JNNIcon.Beam, ToolTip = "Bố trí thép dầm liên tục (Lớp trên, dưới, và đai theo L0/4)." },
             new RibbonButtonItem { CommandId = "cmdCreateSection", DisplayName = "Create\nSection", PanelName = "Modeling", Icon = JNNIcon.Section, ToolTip = "Duplicate hàng loạt type dầm/cột với kích thước b×h mới." },
             new RibbonButtonItem { CommandId = "cmdConnection", DisplayName = "Steel\nConnection", PanelName = "Modeling", Icon = JNNIcon.Connection, ToolTip = "Tạo liên kết thép (Steel Connection) cho dầm và cột." },
             new RibbonButtonItem { CommandId = "cmdClashDetection", DisplayName = "Clash\nDetection", PanelName = "Modeling", Icon = JNNIcon.Clash, ToolTip = "Kiểm tra va chạm giữa model và Revit Link." },
+            new RibbonButtonItem { CommandId = "cmdRebarColumn", DisplayName = "Rebar\nColumn", PanelName = "Modeling", Icon = JNNIcon.Column, ToolTip = "Bố trí thép cột (thép dọc, đai, nối thép)." },
             new RibbonButtonItem { CommandId = "cmdDisallowJoinBeam", DisplayName = "Disallow\nJoin Beam", PanelName = "Modeling", Icon = JNNIcon.Join, ToolTip = "Quét chọn nhiều dầm và thực hiện Disallow Join ở 2 đầu." },
             new RibbonButtonItem { CommandId = "cmdCreateFilter", DisplayName = "Create\nFilter", PanelName = "Modeling", Icon = JNNIcon.Filter, ToolTip = "Tạo bộ lọc tự động từ danh sách phần tử và gán màu nhanh." },
             new RibbonButtonItem { CommandId = "cmdSpeedOverriderElement", DisplayName = "Speed\nOverrider", PanelName = "Modeling", Icon = JNNIcon.Palette, ToolTip = "Override hiển thị phần tử nhanh (Speed Overrider)." },
@@ -48,6 +55,7 @@ namespace JNNTool.Tools.UIManager.Services
             new RibbonButtonItem { CommandId = "cmdImportE2K", DisplayName = "Import\nE2K", PanelName = "CSI x Revit", Icon = JNNIcon.Cad, ToolTip = "Import mô hình từ file E2K (ETABS/SAP2000) vào Revit." },
             new RibbonButtonItem { CommandId = "cmdFitScopeBox", DisplayName = "Fit\nScope Box", PanelName = "CSI x Revit", Icon = JNNIcon.ScopeBox, ToolTip = "Khóa và cắt khớp Grid & Level theo Scope Box." },
             new RibbonButtonItem { CommandId = "cmdBoundaryAlign", DisplayName = "Căn Lề\nBiên", PanelName = "CSI x Revit", Icon = JNNIcon.Align, ToolTip = "Dời dầm và cột biên vào trong ranh đất / lưới trục, tự co kéo dầm ngang kết nối." },
+            new RibbonButtonItem { CommandId = "cmdAutoJoinSplit", DisplayName = "Auto\nJoin", PanelName = "CSI x Revit", Icon = JNNIcon.Join, ToolTip = "Tự động Join và đảo thứ tự ưu tiên (Column > Beam > Floor)." },
             new RibbonButtonItem { CommandId = "cmdAutoJoinActiveView", DisplayName = "Auto Join\n(View)", PanelName = "CSI x Revit", Icon = JNNIcon.Join, ToolTip = "Auto Join và đảo thứ tự ưu tiên (Column > Beam > Floor) trong Active View." },
             new RibbonButtonItem { CommandId = "cmdAutoJoinProject", DisplayName = "Auto Join\n(Project)", PanelName = "CSI x Revit", Icon = JNNIcon.Join, ToolTip = "Auto Join và đảo thứ tự ưu tiên cho toàn bộ mô hình dự án." },
 
@@ -63,10 +71,7 @@ namespace JNNTool.Tools.UIManager.Services
             new RibbonButtonItem { CommandId = "cmdStairRebarSuiteNew", DisplayName = "Stair\nRebar", PanelName = "Stair", Icon = JNNIcon.Stair, ToolTip = "Bố trí uốn thép thang đan chéo góc lõm chống bung nổ bê tông." },
 
             // ───────────────── Panel: Quantity ─────────────────
-            new RibbonButtonItem { CommandId = "cmdQuantityTakeoff", DisplayName = "Quantity\nTakeoff", PanelName = "Quantity", Icon = JNNIcon.Quantity, ToolTip = "Bóc tách khối lượng toàn diện (Bê tông, Ván khuôn, Thép) và tạo 3D Section Box." },
-
-            // ───────────────── Panel: Settings ─────────────────
-            new RibbonButtonItem { CommandId = "cmdUIManager", DisplayName = "Ribbon\nTheme", PanelName = "General", Icon = JNNIcon.Palette, ToolTip = "Tùy biến màu sắc theme và kiểu hiển thị Icon trên thanh Ribbon JNNTool." }
+            new RibbonButtonItem { CommandId = "cmdQuantityTakeoff", DisplayName = "Quantity\nTakeoff", PanelName = "Quantity", Icon = JNNIcon.Quantity, ToolTip = "Bóc tách khối lượng toàn diện (Bê tông, Ván khuôn, Thép) và tạo 3D Section Box." }
         };
 
         private static readonly Dictionary<string, RibbonButtonItem> _buttonLookup =
@@ -346,9 +351,14 @@ namespace JNNTool.Tools.UIManager.Services
             }
             else if (item is SplitButton split)
             {
+                // Cập nhật biểu tượng cho nút chính SplitButton
+                if (TryApplyButtonImage(split, panelColor, style))
+                {
+                    count++;
+                }
                 foreach (var sub in split.GetItems())
                 {
-                    if (sub is PushButton subBtn && TryApplyButtonImage(subBtn, panelColor, style))
+                    if (sub is RibbonButton subBtn && TryApplyButtonImage(subBtn, panelColor, style))
                     {
                         count++;
                     }
@@ -356,9 +366,14 @@ namespace JNNTool.Tools.UIManager.Services
             }
             else if (item is PulldownButton pull)
             {
+                // Cập nhật biểu tượng cho nút chính PulldownButton
+                if (TryApplyButtonImage(pull, panelColor, style))
+                {
+                    count++;
+                }
                 foreach (var sub in pull.GetItems())
                 {
-                    if (sub is PushButton subBtn && TryApplyButtonImage(subBtn, panelColor, style))
+                    if (sub is RibbonButton subBtn && TryApplyButtonImage(subBtn, panelColor, style))
                     {
                         count++;
                     }
@@ -368,9 +383,9 @@ namespace JNNTool.Tools.UIManager.Services
             return count;
         }
 
-        private static bool TryApplyButtonImage(PushButton btn, string panelColor, RibbonIconStyle style)
+        private static bool TryApplyButtonImage(RibbonButton btn, string panelColor, RibbonIconStyle style)
         {
-            // Tìm metadata dựa theo Name của PushButton (ví dụ cmdSlabRebar)
+            // Tìm metadata dựa theo Name của RibbonButton (ví dụ cmdSlabRebar)
             string btnName = btn.Name ?? string.Empty;
             // Xử lý các suffix nút nhân bản như _0, _1 nếu có
             string baseName = btnName.Contains("_") ? btnName.Split('_')[0] : btnName;

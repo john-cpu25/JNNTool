@@ -1063,14 +1063,13 @@ namespace JNNTool
 
 
 
-            // ─── Tự động nạp theme Ribbon đã lưu (nếu người dùng bật Vector Theme) ───
+            // ─── Tự động nạp theme Ribbon (Mặc định áp dụng bộ Vector Icon siêu sắc nét 3x) ───
             try
             {
-                var savedTheme = JNNTool.Tools.UIManager.Models.RibbonThemeSettings.Load();
-                if (savedTheme != null && savedTheme.UseVectorTheme)
-                {
-                    JNNTool.Tools.UIManager.Services.RibbonThemeService.ApplyThemeToRibbon(application, savedTheme);
-                }
+                var savedTheme = JNNTool.Tools.UIManager.Models.RibbonThemeSettings.Load() 
+                              ?? new JNNTool.Tools.UIManager.Models.RibbonThemeSettings();
+                savedTheme.UseVectorTheme = true;
+                JNNTool.Tools.UIManager.Services.RibbonThemeService.ApplyThemeToRibbon(application, savedTheme);
             }
             catch (Exception ex)
             {
