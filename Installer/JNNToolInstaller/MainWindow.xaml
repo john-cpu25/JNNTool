@@ -344,11 +344,9 @@
                         <ColumnDefinition Width="Auto"/> <!-- Right Actions: Check Git, Install -->
                     </Grid.ColumnDefinitions>
 
-                    <!-- Left Buttons: Gỡ cài đặt, Hướng dẫn, Ngôn ngữ -->
+                    <!-- Left Buttons: Gỡ cài đặt, Ngôn ngữ -->
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button x:Name="BtnUninstall" Content="🗑 Gỡ cài đặt" Style="{StaticResource SecondaryBtn}" Click="BtnUninstall_Click" Margin="0,0,6,0"/>
-                        <Button Content="⚡ Hướng dẫn nhanh" Style="{StaticResource SecondaryBtn}" Click="BtnQuickGuide_Click" Margin="0,0,6,0"/>
-                        <Button Content="▶ HD cài đặt" Style="{StaticResource SecondaryBtn}" Click="BtnInstallGuide_Click" Margin="0,0,10,0"/>
+                        <Button x:Name="BtnUninstall" Content="🗑 Gỡ cài đặt" Style="{StaticResource SecondaryBtn}" Click="BtnUninstall_Click" Margin="0,0,10,0"/>
                         <TextBlock Text="🌐 VI" Foreground="#475569" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
                     </StackPanel>
 

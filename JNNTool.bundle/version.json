@@ -4,6 +4,6 @@
     "manifestUrl":  "https://raw.githubusercontent.com/john-cpu25/JNNTool/main/version.json",
     "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.0.7/JNNToolSetup_v2.0.7.msi",
     "changelog":  [
-                      "Account \u0026 License Manager (Render online server, DPAPI hardware encryption), Ribbon Theme Manager with Icons8 Solid Filled + Rounded Corners vector icons and 3x Supersampling (288 DPI) high-res rendering"
+                      "Removed Quick Guide and Install Guide buttons from JNN Updater UI; updated MSI package"
                   ]
 }

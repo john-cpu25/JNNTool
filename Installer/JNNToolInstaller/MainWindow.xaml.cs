@@ -277,32 +277,6 @@ public partial class MainWindow : Window
         }
     }
 
-    private void BtnQuickGuide_Click(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = "https://github.com/john-cpu25/JNNTool#readme",
-                UseShellExecute = true
-            });
-        }
-        catch { }
-    }
-
-    private void BtnInstallGuide_Click(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = "https://github.com/john-cpu25/JNNTool/releases",
-                UseShellExecute = true
-            });
-        }
-        catch { }
-    }
-
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
     private void SetBusy(bool busy)
