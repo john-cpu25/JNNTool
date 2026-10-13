@@ -1,9 +1,9 @@
 {
-    "version":  "2.0.8",
+    "version":  "2.0.9",
     "releaseDate":  "2026-10-13",
     "manifestUrl":  "https://raw.githubusercontent.com/john-cpu25/JNNTool/main/version.json",
-    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.0.8/JNNToolSetup_v2.0.8.msi",
+    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.0.9/JNNToolSetup_v2.0.9.msi",
     "changelog":  [
-                      "Fix ro ri key test 355 ngay, dong bo day du 66 icon sac net vao MSI, reset form login ve trong"
+                      "Mac dinh su dung bo icon vector 3x supersampling cho 100% nut Revit Ribbon, bo sung icon Key cho License, cap nhat toan dien PulldownButton va SplitButton"
                   ]
 }
