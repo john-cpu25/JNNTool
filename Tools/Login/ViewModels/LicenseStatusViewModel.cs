@@ -96,7 +96,7 @@ namespace JNNTool.Tools.Login.ViewModels
             if (_license != null)
             {
                 Email = _license.Email ?? "Unknown";
-                LicenseType = _license.LicenseType == "Trial" ? "Trial (15 Days)" : "Annual (1 Year)";
+                LicenseType = _license.LicenseType == "Trial" ? "Trial (30 Days)" : "Annual (1 Year)";
                 Status = _license.Status ?? "Active";
                 ExpiresAt = _license.ExpiresAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss") + $" ({_license.ExpiresAtUtc:yyyy-MM-dd} UTC)";
                 DaysRemaining = _license.DaysRemaining;
