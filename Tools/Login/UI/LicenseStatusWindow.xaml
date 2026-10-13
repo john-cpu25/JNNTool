@@ -1,0 +1,168 @@
+<Window x:Class="JNNTool.Tools.Login.UI.LicenseStatusWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="JNNTool — License Status"
+        Width="460" Height="480"
+        WindowStartupLocation="CenterScreen"
+        Topmost="True"
+        ResizeMode="NoResize"
+        Background="#F5F7F9"
+        FontFamily="Segoe UI"
+        FontSize="12"
+        FontWeight="Normal">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <!-- Danger button -->
+        <Style x:Key="DangerBtn" TargetType="Button">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="Foreground" Value="#E74C3C"/>
+            <Setter Property="Background" Value="#FDEDEE"/>
+            <Setter Property="BorderBrush" Value="#F5B7B1"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12,7"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="btnBrd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="btnBrd" Property="Background" Value="#FADBD8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Action button -->
+        <Style x:Key="ActionBtn" TargetType="Button">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="Foreground" Value="#2C3E50"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#DCDDE1"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12,7"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="btnBrd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="btnBrd" Property="Background" Value="#ECF0F1"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Vector icon paths -->
+        <Geometry x:Key="CheckIcon">M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z</Geometry>
+        <Geometry x:Key="MonitorIcon">M21,16H3V4H21M21,2H3C1.89,2 1,2.89 1,4V16A2,2 0 0,0 3,18H10V20H8V22H16V20H14V18H21A2,2 0 0,0 23,16V4C23,2.89 22.1,2 21,2Z</Geometry>
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+
+                <!-- Status badge -->
+                <Border Background="#EAFAF1" BorderBrush="#27AE60" BorderThickness="1" CornerRadius="5" Padding="10,8" Margin="0,0,0,14">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Path Grid.Column="0" Data="{StaticResource CheckIcon}" Fill="#27AE60" Width="16" Height="16" Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="1" Text="License is active and valid" FontSize="12" Foreground="#1E8449" VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <!-- License detail card -->
+                <Border Background="#FFFFFF" BorderBrush="#DCDDE1" BorderThickness="1" CornerRadius="5" Padding="14,12" Margin="0,0,0,14">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,8">
+                            <TextBlock Text="Email:" FontSize="12" Foreground="#7F8C8D"/>
+                            <TextBlock Text="{Binding Email}" FontSize="12" Foreground="#2C3E50" HorizontalAlignment="Right"/>
+                        </Grid>
+
+                        <Grid Margin="0,0,0,8">
+                            <TextBlock Text="License Type:" FontSize="12" Foreground="#7F8C8D"/>
+                            <TextBlock Text="{Binding LicenseType}" FontSize="12" Foreground="#2980B9" HorizontalAlignment="Right"/>
+                        </Grid>
+
+                        <Grid Margin="0,0,0,8">
+                            <TextBlock Text="Status:" FontSize="12" Foreground="#7F8C8D"/>
+                            <Border HorizontalAlignment="Right" Background="#EAFAF1" CornerRadius="5" Padding="8,2">
+                                <TextBlock Text="{Binding Status}" FontSize="11" Foreground="#27AE60"/>
+                            </Border>
+                        </Grid>
+
+                        <Grid Margin="0,0,0,8">
+                            <TextBlock Text="Expires:" FontSize="12" Foreground="#7F8C8D"/>
+                            <TextBlock Text="{Binding ExpiresAt}" FontSize="11" Foreground="#2C3E50" HorizontalAlignment="Right"/>
+                        </Grid>
+
+                        <Grid>
+                            <TextBlock Text="Days Remaining:" FontSize="12" Foreground="#7F8C8D"/>
+                            <TextBlock Text="{Binding DaysRemaining, StringFormat='{}{0} days'}" FontSize="12" Foreground="#E67E22" HorizontalAlignment="Right"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Device Info -->
+                <Border Background="#FFFFFF" BorderBrush="#DCDDE1" BorderThickness="1" CornerRadius="5" Padding="12,10" Margin="0,0,0,14">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Path Grid.Column="0" Data="{StaticResource MonitorIcon}" Fill="#7F8C8D" Width="16" Height="16" Stretch="Uniform" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="{Binding DeviceName, StringFormat='Workstation: {0}'}" FontSize="12" Foreground="#2C3E50"/>
+                            <TextBlock Text="License is bound to this workstation (max 1 device)." FontSize="10.5" Foreground="#7F8C8D" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Loading / Status Notification -->
+                <ProgressBar IsIndeterminate="True" Height="3" Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}" Margin="0,0,0,8" Foreground="#3498DB"/>
+                <TextBlock Text="{Binding StatusMessage}" FontSize="11" Foreground="#3498DB" Margin="0,0,0,10" TextWrapping="Wrap" HorizontalAlignment="Center"/>
+
+                <!-- Action Buttons -->
+                <Grid Margin="0,4,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Button Grid.Column="0" Content="Validate Server" Command="{Binding RefreshCommand}" Style="{StaticResource ActionBtn}" Margin="0,0,6,0"/>
+                    <Button Grid.Column="1" Content="Deactivate Device" Command="{Binding DeactivateCommand}" Style="{StaticResource DangerBtn}" Margin="6,0,0,0"/>
+                </Grid>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Footer -->
+        <Border Grid.Row="1" Margin="0,10,0,0">
+            <Button Content="Close" Command="{Binding CloseCommand}" Style="{StaticResource ActionBtn}" Width="90" HorizontalAlignment="Right"/>
+        </Border>
+    </Grid>
+</Window>

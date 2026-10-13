@@ -15,6 +15,9 @@ namespace JNNTool.RebarSuite.Pile
         {
             try
             {
+                if (!JNNTool.Tools.Login.Services.LicenseGuard.EnsureLicensed(commandData.Application))
+                    return Result.Cancelled;
+
                 var window = new PileRebarWindow();
                 window.Show();
                 return Result.Succeeded;

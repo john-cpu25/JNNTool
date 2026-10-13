@@ -15,6 +15,9 @@ namespace JNNTool.RebarSuite.Foundation
         {
             try
             {
+                if (!JNNTool.Tools.Login.Services.LicenseGuard.EnsureLicensed(commandData.Application))
+                    return Result.Cancelled;
+
                 var window = new FoundationRebarWindow();
                 window.Show();
                 return Result.Succeeded;

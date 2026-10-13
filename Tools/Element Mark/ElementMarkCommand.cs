@@ -21,6 +21,9 @@ namespace JNNTool.Tools.ElementMark
         {
             try
             {
+                if (!JNNTool.Tools.Login.Services.LicenseGuard.EnsureLicensed(commandData.Application))
+                    return Result.Cancelled;
+
                 if (_window != null && _window.IsLoaded)
                 {
                     _window.Activate();

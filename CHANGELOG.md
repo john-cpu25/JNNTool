@@ -4,6 +4,55 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added - Module **Account & License Manager** (panel General): Quản lý bản quyền, đăng nhập tài khoản và kích hoạt JNNTool
+- **Vị trí Ribbon**: Bố trí trên Panel **General** của Tab `JNNTool` (nút **Account / License** kèm icon nhận diện `Login.png`).
+- **Tái cấu trúc Clean-room & Rebrand 100%**:
+  - Chuyển toàn bộ namespace sang `JNNTool.Tools.Login.*`.
+  - Thay thế hoàn toàn phụ thuộc thư viện bên ngoài (`NhanStr.IconLibrary`) bằng vector `Path Geometry` WPF chuẩn, không runtime crash hay thiếu DLL.
+  - Tích hợp chuẩn kiến trúc Core: dùng `ActionEventHandler` chung của JNNTool, loại bỏ handler riêng lẻ dư thừa.
+- **Tuân thủ chuẩn thiết kế AGENTS.md**:
+  - Không sử dụng banner tối màu trên đầu cửa sổ (`Title` chuẩn Windows native).
+  - Không dùng font in đậm (`FontWeight="Normal"`, `FontSize="12"`).
+  - Nền sáng `#F5F7F9`, Card trắng `#FFFFFF`, viền `#DCDDE1`, chữ `#2C3E50`.
+  - Bo góc $5\text{px}$ đồng bộ trên tất cả Button, TextBox, Card, Border.
+  - Ngôn ngữ UI chuẩn tiếng Anh kỹ thuật (Email, Activation Code, License Type, Days Remaining, Active, Expired...).
+- **Cơ chế xác thực & Bảo mật an toàn (Device Fingerprint & DPAPI)**:
+  - Sinh mã định danh phần cứng SHA-256 (`DeviceFingerprintService`) kết hợp bo mạch, CPU và MachineName.
+  - Lưu trữ chứng chỉ bản quyền bằng Windows DPAPI (`SecureStorageService`) tại `%AppData%\JNNTool\License\client_license.dat`, mã hóa ở cấp người dùng, chống sao chép trái phép sang máy khác.
+  - Hỗ trợ chế độ Offline Grace Period lên tới 14 ngày khi mất kết nối mạng.
+- **3 Cửa sổ chức năng chuyên nghiệp**:
+  - `LoginWindow`: Đăng nhập, kích hoạt bằng Email và GUID Activation Code, lấy bản dùng thử 30 ngày (Trial).
+  - `LicenseStatusWindow`: Xem chi tiết bản quyền (Loại, Ngày hết hạn, Số ngày còn lại, Thiết bị), Refresh trạng thái trực tuyến hoặc Hủy kích hoạt (Deactivate).
+  - `LicenseExpiredWindow`: Thông báo hết hạn lịch sự, nút gia hạn (Renew) hoặc nhập Key mới (Enter New Key).
+- **Kiểm thử**: Viết mới `Tests/JNNTool.Tests/LoginTests.cs` (5 unit tests pass, tổng 174 tests), checklist kiểm thử tay tại `docs/test-checklist-login.md`.
+
+### Added - Tool **Ribbon Theme & Icon Color Manager** (panel General): Tùy biến màu sắc và kiểu Icon Ribbon JNNTool
+- **Vị trí Ribbon**: Bố trí trên Panel **General** của Tab `JNNTool` (nút **Ribbon Theme**).
+- **Bộ Icon Vector chuẩn Icons8 (Solid Filled + Rounded Corners)**:
+  - Thiết kế lại toàn diện 25 biểu tượng `JNNIcon` theo chuẩn **Solid Filled + Rounded Corners** (hình khối đặc dày dặn, góc bo tròn mềm mại $R=1.5 - 2.5\text{px}$, các đường khe rãnh âm bản EvenOdd thể hiện cốt thép đai/chủ, lưới trục, dầm sàn, bu lông).
+  - Không còn hiện tượng nét mảnh 1px nhạt nhòa, không răng cưa, đạt độ nhận diện cấu kiện kết cấu cao nhất.
+- **Engine kết xuất đồ họa siêu nét (3x Supersampling - 288 DPI)**:
+  - Nâng cấp `RibbonThemeService.CreateRibbonImage` sử dụng kỹ thuật 3x Supersampling: Render ở độ phân giải $96 \times 96$ pixel (nút lớn 32px) và $48 \times 48$ pixel (nút nhỏ 16px) với DPI = 288.
+  - Bật chế độ `RenderOptions.BitmapScalingMode="HighQuality"` và `EdgeMode.Unspecified` khử răng cưa mượt mà, giúp icon sắc nét tối đa trên mọi màn hình Full HD, 2K và 4K Retina mà không bị mờ nhòe.
+- **Theme Color Presets**: 12 bảng màu hiện đại chuẩn kỹ thuật (Apex Blue, Royal Indigo, Ocean Cyan, Deep Teal, Emerald Green, Amber Gold, Sunset Orange, Crimson Red, Vivid Rose, Electric Purple, Dark Slate, Midnight Black) kèm ô nhập Custom Hex Code và live color swatch.
+- **Icon Presentation Styles (4 kiểu đồ họa)**:
+  - `Badge`: Thẻ bo góc $5\text{px}$ đổ gradient màu chủ đạo kèm viền sáng tinh tế $0.6\text{px}$ với biểu tượng vector trắng nổi bật.
+  - `Glyph`: Biểu tượng vector đặc theo màu chủ đạo trên nền trong suốt (phong cách tối giản, tinh tế).
+  - `Circle`: Khung tròn gradient màu chủ đạo với biểu tượng vector trắng bên trong.
+  - `Outline`: Thẻ nền màu nhạt (12% tint), viền bo góc $5\text{px}$ và biểu tượng vector cùng màu.
+- **Tùy chọn Icon 3D vs Vector linh hoạt (`UseVectorTheme`)**:
+  - Thêm cờ `UseVectorTheme = false` mặc định để giữ trọn vẹn bộ Icon 3D ảnh màu chân thực trong `JNNTool.bundle/Contents/Resources`.
+  - Khi người dùng mở UI Manager và nhấn **Apply to Revit Ribbon**, hệ thống tự động lưu `UseVectorTheme = true` và nạp theme vector tùy biến.
+- **Live Ribbon Preview thời gian thực**:
+  - Mô phỏng toàn bộ nút bấm PushButton của thanh Ribbon JNNTool theo từng Panel (JNN Rebar, Modeling, CSI x Revit, Layout, Stair, Quantity, General) hoặc Tất cả (All).
+  - Tự động re-render và cập nhật tức thì khi người dùng đổi màu hoặc đổi Style.
+- **Áp dụng trực tiếp vào Revit Ribbon (`Apply to Revit Ribbon`)**:
+  - Cập nhật trực tiếp `LargeImage` (32x32) và `Image` (16x16) cho toàn bộ PushButton, SplitButton, PulldownButton trên thanh Ribbon của Revit qua `ExternalEvent` an toàn mà không cần khởi động lại Revit.
+- **Persistence & Tự động nạp khi khởi động**:
+  - Cấu hình lưu trữ tại `%AppData%\JNNTool\Settings\RibbonThemeSettings.json` qua `SettingsService<RibbonThemeSettings>`.
+  - Tự động nạp và áp dụng theme cho thanh Ribbon trong `App.OnStartup`.
+- **Giao diện chuẩn JNN**: Modeless, không banner tối màu, không dùng font in đậm (`FontWeight="Normal"`, `FontSize="12"`), nền sáng `#F5F7F9`, Card trắng `#FFFFFF`, viền `#DCDDE1`, bo góc $5\text{px}$ đồng bộ. Khắc phục triệt để lỗi WPF Shutdown bằng `WpfWindowHelper`. Checklist: `docs/test-checklist-ui-manager.md` + 5 unit tests mới (tổng 176 tests pass 100%).
+
 ### Added - Tool **Quantity Takeoff** (tab Quantity): Bóc tách khối lượng toàn diện đa cấu kiện, Visual Preview Dashboard & 3D Section Box
 - **Vị trí Ribbon**: Bố trí trên Tab riêng biệt **Quantity** (panel `Takeoff`) độc lập.
 - **Bóc tách đa Category siêu tốc**: Dầm kết cấu, Cột kết cấu, Sàn, Vách/Tường, Móng/Đài/Cọc, Cầu thang, Cốt thép Rebar (Rebar & RebarInSystem), Mái, Trần, Cột kiến trúc, Cấu kiện khác...

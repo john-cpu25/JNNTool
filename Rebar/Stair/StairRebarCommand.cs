@@ -15,6 +15,9 @@ namespace JNNTool.RebarSuite.Stair
         {
             try
             {
+                if (!JNNTool.Tools.Login.Services.LicenseGuard.EnsureLicensed(commandData.Application))
+                    return Result.Cancelled;
+
                 var window = new StairRebarWindow();
                 window.Show();
                 return Result.Succeeded;

@@ -15,6 +15,9 @@ namespace JNNTool.RebarSuite.Wall
         {
             try
             {
+                if (!JNNTool.Tools.Login.Services.LicenseGuard.EnsureLicensed(commandData.Application))
+                    return Result.Cancelled;
+
                 var window = new WallRebarWindow();
                 window.Show();
                 return Result.Succeeded;

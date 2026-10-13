@@ -56,6 +56,69 @@ namespace JNNTool
             // Hướng tới thư mục Resources
             string resourcesPath = Path.Combine(Directory.GetParent(assemblyDir).FullName, "Resources");
 
+            // ═══════════════════════════════════════════════════════════════
+            //  Panel 1: General (Bản quyền & Cài đặt hệ thống JNNTool)
+            // ═══════════════════════════════════════════════════════════════
+            try
+            {
+                RibbonPanel generalPanel = application.CreateRibbonPanel(tabName, "General");
+
+                // ------------------- Account / License -------------------
+                PushButtonData btnLicenseData = new PushButtonData(
+                    "cmdLicense",
+                    "Account\nLicense",
+                    assemblyPath,
+                    "JNNTool.Tools.Login.Commands.LoginCmd"
+                );
+                btnLicenseData.ToolTip = "Quản lý bản quyền, đăng nhập tài khoản và kích hoạt JNNTool.";
+
+                PushButton btnLicense = generalPanel.AddItem(btnLicenseData) as PushButton;
+                if (btnLicense != null)
+                {
+                    string iconPathLicense = Path.Combine(resourcesPath, "Login.png");
+                    if (File.Exists(iconPathLicense))
+                    {
+                        BitmapImage img = new BitmapImage();
+                        img.BeginInit();
+                        img.UriSource = new Uri(iconPathLicense, UriKind.Absolute);
+                        img.CacheOption = BitmapCacheOption.OnLoad;
+                        img.EndInit();
+                        btnLicense.LargeImage = img;
+                        btnLicense.Image = img;
+                    }
+                }
+
+                // ------------------- Ribbon Theme -------------------
+                PushButtonData btnThemeData = new PushButtonData(
+                    "cmdUIManager",
+                    "Ribbon\nTheme",
+                    assemblyPath,
+                    "JNNTool.Tools.UIManager.Commands.UIManagerCmd"
+                );
+                btnThemeData.ToolTip = "Tùy biến màu sắc theme (12 bảng màu hoặc mã HEX) và kiểu hiển thị Icon (Badge, Glyph, Circle, Outline) trên thanh Ribbon JNNTool.";
+
+                PushButton btnTheme = generalPanel.AddItem(btnThemeData) as PushButton;
+                if (btnTheme != null)
+                {
+                    string iconPathTheme = Path.Combine(resourcesPath, "UIManager.png");
+                    if (!File.Exists(iconPathTheme)) iconPathTheme = Path.Combine(resourcesPath, "SpeedOverrider.png");
+                    if (File.Exists(iconPathTheme))
+                    {
+                        BitmapImage img = new BitmapImage();
+                        img.BeginInit();
+                        img.UriSource = new Uri(iconPathTheme, UriKind.Absolute);
+                        img.CacheOption = BitmapCacheOption.OnLoad;
+                        img.EndInit();
+                        btnTheme.LargeImage = img;
+                        btnTheme.Image = img;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                JNNTool.Core.Logging.Logger.Error("Lỗi tạo Ribbon Panel General", ex);
+            }
+
             // Tạo Ribbon Panel Modeling
             RibbonPanel modelingPanel = application.CreateRibbonPanel(tabName, modelingPanelName);
 
@@ -131,7 +194,8 @@ namespace JNNTool
             }
 
             // ------------------- Rebar Wall -------------------
-            string iconPathRebarWallSuite = Path.Combine(resourcesPath, "DisallowWallJoins.png");
+            string iconPathRebarWallSuite = Path.Combine(resourcesPath, "RebarWall.png");
+            if (!File.Exists(iconPathRebarWallSuite)) iconPathRebarWallSuite = Path.Combine(resourcesPath, "DisallowWallJoins.png");
             PushButtonData btnRebarWallSuiteData = new PushButtonData(
                 "cmdWallRebarSuite",
                 "Rebar\nWall",
@@ -153,7 +217,8 @@ namespace JNNTool
             }
 
             // ------------------- Rebar Foundation -------------------
-            string iconPathRebarFdn = Path.Combine(resourcesPath, "Connection.png");
+            string iconPathRebarFdn = Path.Combine(resourcesPath, "RebarFoundation.png");
+            if (!File.Exists(iconPathRebarFdn)) iconPathRebarFdn = Path.Combine(resourcesPath, "Connection.png");
             PushButtonData btnRebarFdnData = new PushButtonData(
                 "cmdFoundationRebarSuite",
                 "Rebar\nFooting",
@@ -175,7 +240,8 @@ namespace JNNTool
             }
 
             // ------------------- Rebar Pile -------------------
-            string iconPathRebarPile = Path.Combine(resourcesPath, "PileLocation.png");
+            string iconPathRebarPile = Path.Combine(resourcesPath, "RebarPile.png");
+            if (!File.Exists(iconPathRebarPile)) iconPathRebarPile = Path.Combine(resourcesPath, "PileLocation.png");
             PushButtonData btnRebarPileData = new PushButtonData(
                 "cmdPileRebarSuite",
                 "Rebar\nPile",
@@ -197,7 +263,8 @@ namespace JNNTool
             }
 
             // ------------------- Rebar Stair -------------------
-            string iconPathRebarStairSuite = Path.Combine(resourcesPath, "StairDetail.png");
+            string iconPathRebarStairSuite = Path.Combine(resourcesPath, "RebarStair.png");
+            if (!File.Exists(iconPathRebarStairSuite)) iconPathRebarStairSuite = Path.Combine(resourcesPath, "StairDetail.png");
             PushButtonData btnRebarStairSuiteData = new PushButtonData(
                 "cmdStairRebarSuite",
                 "Rebar\nStair",
@@ -226,7 +293,8 @@ namespace JNNTool
             pulldownUtilsData.ToolTip = "Bộ tiện ích cốt thép: Thống kê khối lượng, đánh số hiệu Mark, Unobscured, Isolate và chuẩn hóa RebarType.";
 
             PulldownButton pullUtils = rebarPanel.AddItem(pulldownUtilsData) as PulldownButton;
-            string iconPathUtils = Path.Combine(resourcesPath, "SpeedOverrider.png");
+            string iconPathUtils = Path.Combine(resourcesPath, "RebarUtils.png");
+            if (!File.Exists(iconPathUtils)) iconPathUtils = Path.Combine(resourcesPath, "SpeedOverrider.png");
             if (File.Exists(iconPathUtils))
             {
                 BitmapImage img = new BitmapImage();
@@ -991,6 +1059,22 @@ namespace JNNTool
             catch (Exception ex)
             {
                 JNNTool.Core.Logging.Logger.Error("Lỗi tạo Ribbon Panel Quantity", ex);
+            }
+
+
+
+            // ─── Tự động nạp theme Ribbon đã lưu (nếu người dùng bật Vector Theme) ───
+            try
+            {
+                var savedTheme = JNNTool.Tools.UIManager.Models.RibbonThemeSettings.Load();
+                if (savedTheme != null && savedTheme.UseVectorTheme)
+                {
+                    JNNTool.Tools.UIManager.Services.RibbonThemeService.ApplyThemeToRibbon(application, savedTheme);
+                }
+            }
+            catch (Exception ex)
+            {
+                JNNTool.Core.Logging.Logger.Error("Lỗi tự động nạp Ribbon Theme", ex);
             }
 
             // ─── Auto-update check (background, non-blocking) ───────────────

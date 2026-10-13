@@ -14,6 +14,9 @@ namespace JNNTool.RebarSuite.Utilities.Commands
     {
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
+            if (!JNNTool.Tools.Login.Services.LicenseGuard.EnsureLicensed(commandData.Application))
+                return Result.Cancelled;
+
             var uiapp = commandData.Application;
             var uidoc = uiapp.ActiveUIDocument;
             if (uidoc == null) return Result.Cancelled;

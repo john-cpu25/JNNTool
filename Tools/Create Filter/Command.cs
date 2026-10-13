@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
@@ -14,6 +14,9 @@ namespace JNNTool.Tools.CreateFilter
         {
             try
             {
+                if (!JNNTool.Tools.Login.Services.LicenseGuard.EnsureLicensed(commandData.Application))
+                    return Result.Cancelled;
+
                 Document doc = commandData.Application.ActiveUIDocument.Document;
 
                 CreateFilterExternalEventHandler handler = new CreateFilterExternalEventHandler();

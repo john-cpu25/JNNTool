@@ -11,6 +11,9 @@ namespace JNNTool.Tools.CSIxRevit.Commands
     {
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
+            if (!JNNTool.Tools.Login.Services.LicenseGuard.EnsureLicensed(commandData.Application))
+                return Result.Cancelled;
+
             var uiapp = commandData.Application;
             var doc = uiapp?.ActiveUIDocument?.Document;
             if (doc == null)

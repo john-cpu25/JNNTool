@@ -17,6 +17,9 @@ namespace JNNTool.Tools.IFCEtabs.Commands
         {
             try
             {
+                if (!JNNTool.Tools.Login.Services.LicenseGuard.EnsureLicensed(commandData.Application))
+                    return Result.Cancelled;
+
                 JNNTool.Core.ExternalEvents.ActionEventHandler.Instance.Initialize();
 
                 if (_currentWindow != null && _currentWindow.IsLoaded)

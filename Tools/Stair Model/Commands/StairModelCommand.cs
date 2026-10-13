@@ -19,6 +19,9 @@ namespace JNNTool.Tools.StairModel.Commands
         {
             try
             {
+                if (!JNNTool.Tools.Login.Services.LicenseGuard.EnsureLicensed(commandData.Application))
+                    return Result.Cancelled;
+
                 var uiApp = commandData.Application;
                 var uiDoc = uiApp.ActiveUIDocument;
                 if (uiDoc == null)

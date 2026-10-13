@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -18,6 +18,9 @@ public class StairDetail : IExternalCommand
     {
         try
         {
+            if (!JNNTool.Tools.Login.Services.LicenseGuard.EnsureLicensed(commandData.Application))
+                return Result.Cancelled;
+
             UIApplication application = commandData.Application;
             UIDocument uidoc = application.ActiveUIDocument;
             Document document = uidoc.Document;

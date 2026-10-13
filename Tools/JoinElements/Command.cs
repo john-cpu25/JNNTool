@@ -12,6 +12,9 @@ namespace RincoNhan.Tools.JoinElements
         {
             try
             {
+                if (!JNNTool.Tools.Login.Services.LicenseGuard.EnsureLicensed(commandData.Application))
+                    return Result.Cancelled;
+
                 var uiApp = commandData.Application;
                 var uidoc = uiApp.ActiveUIDocument;
 

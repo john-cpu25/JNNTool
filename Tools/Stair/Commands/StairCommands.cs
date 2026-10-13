@@ -15,6 +15,9 @@ namespace JNN.Stair.Commands
         {
             try
             {
+                if (!JNNTool.Tools.Login.Services.LicenseGuard.EnsureLicensed(commandData.Application))
+                    return Result.Cancelled;
+
                 var vm = new StairDesignerViewModel();
                 var window = new StairDesignerWindow(vm);
 
@@ -37,6 +40,9 @@ namespace JNN.Stair.Commands
         {
             try
             {
+                if (!JNNTool.Tools.Login.Services.LicenseGuard.EnsureLicensed(commandData.Application))
+                    return Result.Cancelled;
+
                 var vm = new StairDetailingViewModel();
                 var window = new StairDetailingWindow(vm);
 

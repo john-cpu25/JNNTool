@@ -14,6 +14,9 @@ namespace RincoNhan.Tools.AutoViewSheet
         {
             try
             {
+                if (!JNNTool.Tools.Login.Services.LicenseGuard.EnsureLicensed(commandData.Application))
+                    return Result.Cancelled;
+
                 var doc = commandData.Application.ActiveUIDocument.Document;
                 
                 var handler = new AutoViewSheetHandler();
