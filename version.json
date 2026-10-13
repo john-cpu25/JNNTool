@@ -1,9 +1,9 @@
 {
-    "version":  "2.0.7",
+    "version":  "2.0.8",
     "releaseDate":  "2026-10-13",
     "manifestUrl":  "https://raw.githubusercontent.com/john-cpu25/JNNTool/main/version.json",
-    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.0.7/JNNToolSetup_v2.0.7.msi",
+    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.0.8/JNNToolSetup_v2.0.8.msi",
     "changelog":  [
-                      "Removed Quick Guide and Install Guide buttons from JNN Updater UI; updated MSI package"
+                      "Fix ro ri key test 355 ngay, dong bo day du 66 icon sac net vao MSI, reset form login ve trong"
                   ]
 }
