@@ -72,16 +72,23 @@ namespace JNNTool.Tests
                 LastValidatedAtUtc = DateTime.UtcNow
             };
 
-            SecureStorageService.SaveLicense(original);
-            var loaded = SecureStorageService.LoadLicense();
+            try
+            {
+                SecureStorageService.SaveLicense(original);
+                var loaded = SecureStorageService.LoadLicense();
 
-            Assert.NotNull(loaded);
-            Assert.Equal(original.LicenseId, loaded.LicenseId);
-            Assert.Equal(original.Email, loaded.Email);
-            Assert.Equal(original.LicenseType, loaded.LicenseType);
-            Assert.Equal(original.Status, loaded.Status);
-            Assert.Equal(original.AccessToken, loaded.AccessToken);
-            Assert.Equal(original.DeviceIdentifierHash, loaded.DeviceIdentifierHash);
+                Assert.NotNull(loaded);
+                Assert.Equal(original.LicenseId, loaded.LicenseId);
+                Assert.Equal(original.Email, loaded.Email);
+                Assert.Equal(original.LicenseType, loaded.LicenseType);
+                Assert.Equal(original.Status, loaded.Status);
+                Assert.Equal(original.AccessToken, loaded.AccessToken);
+                Assert.Equal(original.DeviceIdentifierHash, loaded.DeviceIdentifierHash);
+            }
+            finally
+            {
+                SecureStorageService.ClearLicense();
+            }
         }
     }
 }

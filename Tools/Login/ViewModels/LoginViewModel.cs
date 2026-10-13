@@ -9,14 +9,14 @@ namespace JNNTool.Tools.Login.ViewModels
 {
     public class LoginViewModel : ObservableObject
     {
-        private string _email = "nhan.nguyenthanh0894@gmail.com";
+        private string _email = string.Empty;
         public string Email
         {
             get => _email;
             set => SetProperty(ref _email, value);
         }
 
-        private string _fullName = "Nhan Nguyen";
+        private string _fullName = string.Empty;
         public string FullName
         {
             get => _fullName;
