@@ -56,7 +56,7 @@ if (Test-Path $MsiPath) { Remove-Item $MsiPath }
 
 Push-Location $InstallerDir
 try {
-    wix build "Package.wxs" -ext WixToolset.UI.wixext/4.0.5 -o "$MsiPath"
+    wix build "Package.wxs" -ext WixToolset.UI.wixext/4.0.5 -arch x64 -o "$MsiPath"
     if ($LASTEXITCODE -ne 0) { Write-Error "Build MSI that bai!"; exit 1 }
 } finally {
     Pop-Location
