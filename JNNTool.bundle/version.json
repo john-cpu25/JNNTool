@@ -1,9 +1,0 @@
-{
-    "version":  "2.1.0",
-    "releaseDate":  "2026-10-14",
-    "manifestUrl":  "https://raw.githubusercontent.com/john-cpu25/JNNTool/main/version.json",
-    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.1.0/JNNToolSetup_v2.1.0.msi",
-    "changelog":  [
-                      "Tich hop Command Palette (Dockable Pane) tra cuu va thuc thi nhanh toan bo cong cu, tim kiem tieng Viet khong dau, ghim Favorites, phim tat Enter/Esc/Ctrl+F, toi uu giao dien Ribbon va chuyen Stair Model sang panel Stair"
-                  ]
-}

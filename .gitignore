@@ -26,5 +26,36 @@ Installer/dist/
 *.DS_Store
 Thumbs.db
 scratch/
-Tools/Tool/
+
+# ==============================================================================
+# PROPRIETARY SOURCE CODE (Local Only - KHONG PUSH LEN GITHUB)
+# ==============================================================================
+Core/
+Rebar/
+Tools/
+JNNTool_Agent/
+JNNTool.bundle/
+Installer/
+Tests/
+docs/
+icon/
 server/
+HtStructural/
+*.cs
+*.csproj
+*.sln
+*.addin
+PackageContents.xml
+AGENTS.md
+TODO.md
+CHANGELOG.md
+convert_mvvm.ps1
+rename.ps1
+ICON JNN.jpg
+Logo_JNN.ico
+
+# Chi cho phep cac file phat hanh (Distribution Only)
+!version.json
+!README.md
+!Logo_JNN.png
+!.gitignore

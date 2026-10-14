@@ -1,46 +1,47 @@
-# NhanStr - Revit Plugin Suite
+<div align="center">
 
-Dự án quản lý và phát triển bộ công cụ hỗ trợ Revit (Add-in) cho NhanStr.
+<img src="Logo_JNN.png" alt="JNNTool Logo" width="120" />
 
-## 🛠 Cấu trúc Ribbon (Giao diện người dùng)
+# JNNTool Revit Plugin Suite
 
-Tất cả các công cụ được tập hợp trong Tab **NhanStr** trên thanh Ribbon của Revit.
+**Bộ công cụ kết cấu, kiến trúc & bố trí cốt thép toàn diện cho Autodesk Revit**  
+Hỗ trợ Autodesk Revit 2022 • 2023 • 2024 • 2025 • 2026 • 2027
 
-| Panel | Công cụ | Trạng thái | Mô tả |
-| :--- | :--- | :---: | :--- |
-| **General** | Advanced Filter | ✅ | Bộ lọc đối tượng nâng cao. |
-| | Reload CAD Links | ✅ | Tải lại các link CAD bị đổi tên/đường dẫn. |
-| | Concrete Lining | ✅ | Tạo bê tông lót tự động. |
-| **Modeling** | Disallow Wall Joins | ✅ | Quản lý nối tường hàng loạt. |
-| | Link To Model | ✅ | Công cụ hỗ trợ Link. |
-| | Add NS-EW | ✅ | Thêm ký hiệu phương hướng. |
-| | Floor Separation | ✅ | Chia sàn thành nhiều mảng nhỏ. |
-| **Views - Sheets** | Add Views To Sheets | ✅ | Thêm nhiều View vào nhiều Sheet. |
-| | Rename Views | ✅ | Đổi tên View/Sheet hàng loạt. |
-| | Title Location | ✅ | Căn chỉnh vị trí tiêu đề View. |
-| | Arrange Views | ✅ | Sắp xếp View tự động trên Sheet. |
+[![Release](https://img.shields.io/github/v/release/john-cpu25/JNNTool?color=blue&label=Latest%20Version)](https://github.com/john-cpu25/JNNTool/releases/latest)
+[![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey.svg)](https://microsoft.com/windows)
+[![Revit](https://img.shields.io/badge/Autodesk%20Revit-2022%20--%202027-0696D7.svg)](https://autodesk.com/revit)
 
-## 🏗 Kế hoạch hiện tại (Task Tracking)
-
-### 1. Hoàn thiện bộ cài đặt (Installer)
-- [ ] Cấu hình file `Package.wxs` cho MSI.
-- [ ] Tích hợp logo thương hiệu vào giao diện cài đặt.
-- [ ] Loại bỏ các bước không cần thiết (License Agreement) để cài đặt nhanh.
-- [ ] Kiểm tra tính năng Gỡ cài đặt (Uninstall).
-
-### 2. Tinh chỉnh UI/UX
-- [x] Cải thiện giao diện Tool Reload CAD.
-- [ ] Đồng bộ hóa icon cho tất cả các nút (đang cập nhật trong thư mục Resources).
-- [ ] Thêm Tooltip chi tiết tiếng Việt cho các nút còn lại.
-
-### 3. Nghiên cứu & Phát triển (R&D)
-- [ ] [Tính năng mới] ... (đang chờ yêu cầu)
-
-## 📁 Cấu trúc thư mục
-- `Core/`: Chứa `App.cs` (khởi tạo Ribbon) và các logic chính.
-- `Tools/`: Mỗi thư mục con là một tính năng riêng biệt.
-- `Resources/`: Chứa các icon (.png) của các công cụ.
-- `Installer/`: Chứa mã nguồn cho bộ cài đặt WiX Toolset.
+</div>
 
 ---
-*Cập nhật lần cuối: 12/04/2026*
+
+## 🚀 Tải Về & Cài Đặt (Download & Install)
+
+1. Tải bộ cài đặt mới nhất: [**Tải JNNToolSetup.msi tại đây (GitHub Releases)**](https://github.com/john-cpu25/JNNTool/releases/latest)
+2. Nhấp đúp chuột vào file `.msi` vừa tải về để tiến hành cài đặt.
+   - **Cài đặt dạng Per-User (%APPDATA%):** Hoàn toàn **không cần quyền Administrator / UAC prompt**. Kỹ sư và người dùng trong môi trường doanh nghiệp bị khóa quyền Admin vẫn cài đặt và sử dụng bình thường.
+3. Khởi động Autodesk Revit. Tab **JNN Rebar** và các công cụ sẽ tự động xuất hiện trên thanh Ribbon.
+
+---
+
+## ✨ Tính Năng Nổi Bật
+
+- **Rebar Suite (Bố trí cốt thép tự động):**
+  - Thép sàn, thép mũ, thép gia cường gối, con kê, dò dầm tự động.
+  - Thép dầm liên tục đa nhịp, đai dày/thưa, thép giá, tạo mặt cắt tự động.
+  - Thép cột/vách chuỗi tầng, bẻ cổ chai, đai AB/CN/LAP, preview 3D.
+  - Móng đơn, móng băng, đài cọc, cọc khoan nhồi, thang bộ.
+- **Tiện ích mô hình & bản vẽ (General & Utilities):**
+  - Command Palette (Dockable Pane) tìm kiếm và kích hoạt nhanh công cụ.
+  - Tự động đánh số hiệu thép, thống kê khối lượng, tag/dim tự động.
+  - Tự động tạo và sắp xếp View/Sheet, căn chỉnh tiêu đề, lọc đối tượng nâng cao.
+- **Tự Động Cập Nhật (JNN Updater):**
+  - Tích hợp sẵn công cụ quản lý và kiểm tra phiên bản mới từ GitHub.
+  - Nâng cấp một chạm chỉ trong vài giây.
+
+---
+
+## 📞 Hỗ Trợ & Bản Quyền
+
+- **Tác giả:** JNN Engineering Team
+- **Báo lỗi & Đóng góp ý kiến:** Vui lòng tạo [GitHub Issue](https://github.com/john-cpu25/JNNTool/issues) hoặc liên hệ trực tiếp.
