@@ -4,6 +4,6 @@
     "manifestUrl":  "https://raw.githubusercontent.com/john-cpu25/JNNTool/main/version.json",
     "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.1.1/JNNToolSetup_v2.1.1.msi",
     "changelog":  [
-                      "Tich hop Admin License Portal va quan tri ban quyen Supabase"
+                      "Cap nhat giao dien License Activation tinh gon chuan Supabase va xoa bo cac truong cu"
                   ]
 }
