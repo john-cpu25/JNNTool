@@ -11,13 +11,19 @@ public class VersionChecker
     public const string DefaultGitHubManifestUrl =
         "https://raw.githubusercontent.com/john-cpu25/JNNTool/main/version.json";
 
-    // Nơi plugin được cài
-    private static readonly string InstallRoot =
+    // Nơi plugin được cài (Per-User %APPDATA% ưu tiên, fallback ProgramData cho bản cũ)
+    private static readonly string PerUserInstallRoot =
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                     "Autodesk", "ApplicationPlugins", "JNNTool.bundle");
+
+    private static readonly string LegacyMachineInstallRoot =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
                      "Autodesk", "ApplicationPlugins", "JNNTool.bundle");
 
-    private static readonly string InstalledVersionFile =
-        Path.Combine(InstallRoot, "version.json");
+    private static string ActiveInstallRoot =>
+        Directory.Exists(PerUserInstallRoot) ? PerUserInstallRoot :
+        Directory.Exists(LegacyMachineInstallRoot) ? LegacyMachineInstallRoot :
+        PerUserInstallRoot;
 
     // version.json cạnh installer exe
     private static readonly string ManifestFile =
@@ -27,7 +33,7 @@ public class VersionChecker
     public VersionManifest? LatestManifest    { get; private set; }
     public bool IsFetchedFromGit              { get; private set; }
 
-    public bool IsInstalled => Directory.Exists(InstallRoot);
+    public bool IsInstalled => Directory.Exists(PerUserInstallRoot) || Directory.Exists(LegacyMachineInstallRoot);
 
     public bool UpdateAvailable
     {
@@ -83,31 +89,31 @@ public class VersionChecker
             LatestManifest = await ReadManifestAsync(ManifestFile);
         }
 
-        // 3. Nếu vẫn null, tạo manifest mặc định v1.0.0
+        // 3. Nếu vẫn null, tạo manifest mặc định
         if (LatestManifest == null)
         {
             LatestManifest = new VersionManifest
             {
-                Version = "1.0.0",
-                ReleaseDate = "2026-09-13",
+                Version = "2.1.0",
+                ReleaseDate = "2026-04-06",
                 ManifestUrl = DefaultGitHubManifestUrl,
-                DownloadUrl = "https://github.com/john-cpu25/JNNTool/releases/download/v1.0.0/JNNToolSetup_v1.0.0.msi",
+                DownloadUrl = "https://github.com/john-cpu25/JNNTool/releases/download/v2.1.0/JNNToolSetup_v2.1.0.msi",
                 Changelog = new List<string>
                 {
-                    "Hỗ trợ Revit 2022 - 2026",
-                    "Cập nhật logo JN mới",
-                    "Giao diện Light theme không cuộn"
+                    "Hỗ trợ Revit 2022 - 2027",
+                    "Cài đặt Per-User (%APPDATA%) không cần quyền Admin"
                 }
             };
         }
 
         // 4. Đọc phiên bản đã cài trên máy
-        InstalledManifest = File.Exists(InstalledVersionFile)
-            ? await ReadManifestAsync(InstalledVersionFile)
+        var installedVersionFile = Path.Combine(ActiveInstallRoot, "version.json");
+        InstalledManifest = File.Exists(installedVersionFile)
+            ? await ReadManifestAsync(installedVersionFile)
             : null;
 
         // Nếu thư mục cài đặt tồn tại nhưng chưa có version.json, giả định v1.0.0
-        if (InstalledManifest == null && Directory.Exists(InstallRoot))
+        if (InstalledManifest == null && IsInstalled)
         {
             InstalledManifest = new VersionManifest
             {

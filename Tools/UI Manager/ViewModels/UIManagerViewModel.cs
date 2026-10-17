@@ -82,7 +82,7 @@ namespace JNNTool.Tools.UIManager.ViewModels
 
         public List<string> Panels { get; } = new List<string>
         {
-            "All", "Modeling", "CSI x Revit", "Layout", "Stair", "Quantity", "General"
+            "All", "General", "Modeling", "CSI x Revit", "Layout", "Stair", "Quantity", "Rebar Suite"
         };
 
         private List<RibbonButtonItem> _allButtons = new List<RibbonButtonItem>();
@@ -111,9 +111,11 @@ namespace JNNTool.Tools.UIManager.ViewModels
                 _handler.ViewModel = this;
             }
 
-            // 12 curated vibrant modern palettes
+            // Curated vibrant modern palettes with signature JNN Blue BIM
             PresetColors = new List<ColorPreset>
             {
+                new ColorPreset("JNN Blue BIM", "#087BC1"),
+                new ColorPreset("JNN Cyan BIM", "#16C5D8"),
                 new ColorPreset("Apex Blue", "#2563EB"),
                 new ColorPreset("Royal Indigo", "#4F46E5"),
                 new ColorPreset("Ocean Cyan", "#0284C7"),

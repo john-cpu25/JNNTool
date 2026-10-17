@@ -15,7 +15,14 @@ namespace JNNTool.Tools.Login.Models
         public string DeviceIdentifierHash { get; set; }
         public DateTime LastValidatedAtUtc { get; set; }
 
+        // Cryptographic Signed Ticket properties (Anti-Tamper & Anti-Fiddler)
+        public string PayloadJson { get; set; }
+        public string SignatureHex { get; set; }
+        public DateTime OfflineUntilUtc { get; set; }
+        public string RuntimeSeed { get; set; }
+
         public bool IsExpired => DateTime.UtcNow >= ExpiresAtUtc;
+        public bool IsOfflineExpired => OfflineUntilUtc != default && DateTime.UtcNow >= OfflineUntilUtc;
 
         public int DaysRemaining
         {
@@ -25,6 +32,27 @@ namespace JNNTool.Tools.Login.Models
                 return (int)Math.Ceiling((ExpiresAtUtc - DateTime.UtcNow).TotalDays);
             }
         }
+    }
+
+    public class SupabaseVerifyRpcResponse
+    {
+        public bool success { get; set; }
+        public string payload_json { get; set; }
+        public string signature_hex { get; set; }
+        public int? days_remaining { get; set; }
+        public string message { get; set; }
+    }
+
+    public class SupabasePayloadData
+    {
+        public string email { get; set; }
+        public string machine_id { get; set; }
+        public string license_type { get; set; }
+        public DateTime expires_at { get; set; }
+        public DateTime offline_until { get; set; }
+        public DateTime server_time { get; set; }
+        public string nonce { get; set; }
+        public string runtime_seed { get; set; }
     }
 
     public class ApiActivateRequest

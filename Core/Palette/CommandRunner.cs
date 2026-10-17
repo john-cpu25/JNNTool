@@ -121,24 +121,38 @@ namespace JNNTool.Core.Palette
 #endif
             }
 
-            PropertyInfo? prop = typeof(ExternalCommandData).GetProperty("Application", flags);
-            MethodInfo? setter = prop?.GetSetMethod(true);
-            if (setter != null)
+            SetMemberValue(data, "Application", typeof(UIApplication), app, flags);
+            if (app.ActiveUIDocument?.ActiveView != null)
             {
-                setter.Invoke(data, new object[] { app });
+                SetMemberValue(data, "View", typeof(View), app.ActiveUIDocument.ActiveView, flags);
             }
-            else
+            SetMemberValue(data, "JournalData", typeof(System.Collections.Generic.IDictionary<string, string>),
+                           new System.Collections.Generic.Dictionary<string, string>(), flags);
+            return data;
+        }
+
+        private static void SetMemberValue(object target, string propertyName, Type memberType, object value, BindingFlags flags)
+        {
+            try
             {
-                foreach (FieldInfo f in typeof(ExternalCommandData).GetFields(flags))
+                PropertyInfo? prop = target.GetType().GetProperty(propertyName, flags);
+                MethodInfo? setter = prop?.GetSetMethod(true);
+                if (setter != null)
                 {
-                    if (f.FieldType == typeof(UIApplication))
+                    setter.Invoke(target, new[] { value });
+                    return;
+                }
+
+                foreach (FieldInfo f in target.GetType().GetFields(flags))
+                {
+                    if (memberType.IsAssignableFrom(f.FieldType))
                     {
-                        f.SetValue(data, app);
-                        break;
+                        f.SetValue(target, value);
+                        return;
                     }
                 }
             }
-            return data;
+            catch { }
         }
 
         private static void Report(string message, bool isError)

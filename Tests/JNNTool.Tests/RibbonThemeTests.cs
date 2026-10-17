@@ -9,15 +9,25 @@ namespace JNNTool.Tests
     public class RibbonThemeTests
     {
         [Fact]
+        public void JNNIcon_ShouldContainExactly50Icons()
+        {
+            var allIcons = Enum.GetValues(typeof(JNNIcon)).Cast<JNNIcon>().ToList();
+            Assert.Equal(50, allIcons.Count);
+        }
+
+        [Fact]
         public void VectorIconCatalog_ShouldReturnValidGeometry_ForAllIcons()
         {
             var allIcons = Enum.GetValues(typeof(JNNIcon)).Cast<JNNIcon>();
 
             foreach (var icon in allIcons)
             {
+                Assert.True(VectorIconCatalog.HasGeometry(icon), $"Icon {icon} must be explicitly registered in VectorIconCatalog without falling back to Settings");
                 var geom = VectorIconCatalog.GetGeometry(icon);
                 Assert.NotNull(geom);
                 Assert.False(geom.IsEmpty(), $"Icon {icon} must have non-empty geometry");
+                var svg = VectorIconCatalog.ToSvg(icon);
+                Assert.False(string.IsNullOrWhiteSpace(svg), $"Icon {icon} must have valid SVG markup");
             }
         }
 

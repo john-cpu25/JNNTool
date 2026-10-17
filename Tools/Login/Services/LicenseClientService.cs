@@ -1,6 +1,7 @@
 using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -13,6 +14,11 @@ namespace JNNTool.Tools.Login.Services
         private static readonly Lazy<LicenseClientService> _instance = new Lazy<LicenseClientService>(() => new LicenseClientService());
         public static LicenseClientService Instance => _instance.Value;
 
+        // Supabase configuration
+        public const string DefaultSupabaseUrl = "https://srcijpacycgfkyneoxyu.supabase.co";
+        public const string DefaultPublishableKey = "sb_publishable_31xEGAXxKSJcJLXGOb5wgw_IXv9E_KH";
+        private static readonly byte[] HmacSecret = Encoding.UTF8.GetBytes("JNN_TOOL_SECRET_SALT_2026_SECURE_KEY");
+
         private readonly HttpClient _http;
         private readonly JsonSerializerOptions _jsonOptions;
 
@@ -21,25 +27,34 @@ namespace JNNTool.Tools.Login.Services
 
         private LicenseClientService()
         {
-            // Base API URL can be configured through environment variable JNNTOOL_LICENSE_API_URL
             string envUrl = Environment.GetEnvironmentVariable("JNNTOOL_LICENSE_API_URL");
-            ServerBaseUrl = !string.IsNullOrWhiteSpace(envUrl) 
-                ? envUrl.TrimEnd('/') 
-                : "https://jnnchecking.onrender.com";
+            ServerBaseUrl = !string.IsNullOrWhiteSpace(envUrl)
+                ? envUrl.TrimEnd('/')
+                : DefaultSupabaseUrl;
 
-            _http = new HttpClient
+            // CHỐNG BẮT GÓI TIN: Tắt Proxy hệ thống để Fiddler / Charles / HTTP Toolkit không chặn được request
+            var handler = new HttpClientHandler
+            {
+                UseProxy = false,
+                Proxy = null
+            };
+
+            _http = new HttpClient(handler)
             {
                 BaseAddress = new Uri(ServerBaseUrl),
                 Timeout = TimeSpan.FromSeconds(15)
             };
+
             _http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            _http.DefaultRequestHeaders.Add("apikey", DefaultPublishableKey);
+            _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", DefaultPublishableKey);
 
             _jsonOptions = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             };
 
-            // Restore cached license from DPAPI storage
+            // Restore cached license from Windows DPAPI storage
             CurrentLicense = SecureStorageService.LoadLicense();
         }
 
@@ -49,26 +64,79 @@ namespace JNNTool.Tools.Login.Services
             {
                 if (CurrentLicense == null) return false;
                 if (CurrentLicense.IsExpired) return false;
-                return string.Equals(CurrentLicense.Status, "Active", StringComparison.OrdinalIgnoreCase);
+                if (CurrentLicense.IsOfflineExpired) return false;
+                if (!string.Equals(CurrentLicense.Status, "Active", StringComparison.OrdinalIgnoreCase)) return false;
+
+                // Kiểm tra khóa cứng phần cứng (Node-locked)
+                string currentMachineId = DeviceFingerprintService.GetDeviceIdentifierHash();
+                if (!string.IsNullOrEmpty(CurrentLicense.DeviceIdentifierHash) &&
+                    !string.Equals(CurrentLicense.DeviceIdentifierHash, currentMachineId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
+                // Kiểm tra chữ ký số chống chỉnh sửa file tại chỗ
+                if (!string.IsNullOrEmpty(CurrentLicense.SignatureHex) && !string.IsNullOrEmpty(CurrentLicense.PayloadJson))
+                {
+                    if (!VerifySignature(CurrentLicense.PayloadJson, CurrentLicense.SignatureHex))
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
             }
         }
 
-        public async Task<(bool success, string message)> ActivateAsync(string email, string activationCode)
+        /// <summary>
+        /// Xác thực chữ ký số HMAC-SHA256 của gói dữ liệu trả về từ Supabase
+        /// </summary>
+        public static bool VerifySignature(string payloadJson, string signatureHex)
+        {
+            if (string.IsNullOrEmpty(payloadJson) || string.IsNullOrEmpty(signatureHex))
+                return false;
+
+            try
+            {
+                byte[] payloadBytes = Encoding.UTF8.GetBytes(payloadJson);
+                using (var hmac = new HMACSHA256(HmacSecret))
+                {
+                    byte[] hash = hmac.ComputeHash(payloadBytes);
+                    var sb = new StringBuilder(hash.Length * 2);
+                    foreach (byte b in hash)
+                    {
+                        sb.Append(b.ToString("x2"));
+                    }
+                    return string.Equals(sb.ToString(), signatureHex, StringComparison.OrdinalIgnoreCase);
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Gọi Supabase RPC `verify_license_rpc` với Nonce duy nhất để chống Replay Attack
+        /// </summary>
+        public async Task<(bool success, string message, SupabasePayloadData data)> CallVerifyRpcAsync(
+            string email, string password, string licenseKey)
         {
             if (string.IsNullOrWhiteSpace(email))
-                return (false, "Vui lòng nhập Email.");
-            if (string.IsNullOrWhiteSpace(activationCode))
-                return (false, "Vui lòng nhập mã kích hoạt (GUID Activation Code).");
+                return (false, "Vui lòng nhập Email tài khoản.", null);
 
-            string deviceHash = DeviceFingerprintService.GetDeviceIdentifierHash();
+            string machineId = DeviceFingerprintService.GetDeviceIdentifierHash();
             string deviceName = DeviceFingerprintService.GetDeviceFriendlyName();
+            string nonce = Guid.NewGuid().ToString("N"); // Mã ngẫu nhiên duy nhất cho lượt gửi này
 
-            var req = new ApiActivateRequest
+            var req = new
             {
-                Email = email.Trim(),
-                ActivationCode = activationCode.Trim(),
-                DeviceIdentifierHash = deviceHash,
-                DeviceName = deviceName
+                p_email = email.Trim().ToLowerInvariant(),
+                p_password = password ?? string.Empty,
+                p_machine_id = machineId,
+                p_device_name = deviceName,
+                p_nonce = nonce,
+                p_license_key = string.IsNullOrWhiteSpace(licenseKey) ? null : licenseKey.Trim().ToUpperInvariant()
             };
 
             try
@@ -76,241 +144,155 @@ namespace JNNTool.Tools.Login.Services
                 string jsonPayload = JsonSerializer.Serialize(req);
                 var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
 
-                var response = await _http.PostAsync("/api/auth/activate", content);
+                var response = await _http.PostAsync("/rest/v1/rpc/verify_license_rpc", content);
                 string responseBody = await response.Content.ReadAsStringAsync();
 
-                var res = JsonSerializer.Deserialize<ApiActivateResponse>(responseBody, _jsonOptions);
+                var res = JsonSerializer.Deserialize<SupabaseVerifyRpcResponse>(responseBody, _jsonOptions);
 
-                if (res != null && res.Success && res.LicenseId.HasValue)
+                if (res != null && res.success)
                 {
+                    // 1. Kiểm tra chữ ký số chống giả mạo gói tin (Fiddler / MITM)
+                    if (!VerifySignature(res.payload_json, res.signature_hex))
+                    {
+                        return (false, "Phát hiện gói tin bản quyền bị can thiệp hoặc giả mạo (Chữ ký số không khớp)!", null);
+                    }
+
+                    // 2. Phân tích nội dung Payload đã được máy chủ chứng thực
+                    var payloadData = JsonSerializer.Deserialize<SupabasePayloadData>(res.payload_json, _jsonOptions);
+                    if (payloadData == null)
+                    {
+                        return (false, "Dữ liệu bản quyền từ máy chủ không hợp lệ.", null);
+                    }
+
+                    // 3. Kiểm tra Nonce chống tấn công phát lại (Replay Attack)
+                    if (payloadData.nonce != nonce)
+                    {
+                        return (false, "Lỗi bảo mật: Mã phiên Nonce không trùng khớp!", null);
+                    }
+
+                    // 4. Kiểm tra khóa cứng phần cứng (Node-locked)
+                    if (!string.Equals(payloadData.machine_id, machineId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return (false, "Bản quyền này không dành cho máy tính hiện tại!", null);
+                    }
+
+                    // 5. Cập nhật và lưu trữ an toàn bằng Windows DPAPI
                     CurrentLicense = new ClientLicenseInfo
                     {
-                        LicenseId = res.LicenseId.Value,
-                        Email = email.Trim(),
-                        LicenseType = res.LicenseType == 1 ? "Trial" : "Annual",
+                        LicenseId = Guid.NewGuid(),
+                        Email = payloadData.email,
+                        LicenseType = payloadData.license_type,
                         Status = "Active",
-                        StartsAtUtc = res.StartsAtUtc ?? DateTime.UtcNow,
-                        ExpiresAtUtc = res.ExpiresAtUtc ?? DateTime.UtcNow.AddYears(1),
-                        AccessToken = res.AccessToken,
+                        StartsAtUtc = payloadData.server_time,
+                        ExpiresAtUtc = payloadData.expires_at,
+                        OfflineUntilUtc = payloadData.offline_until,
+                        RuntimeSeed = payloadData.runtime_seed,
+                        PayloadJson = res.payload_json,
+                        SignatureHex = res.signature_hex,
                         DeviceName = deviceName,
-                        DeviceIdentifierHash = deviceHash,
+                        DeviceIdentifierHash = machineId,
                         LastValidatedAtUtc = DateTime.UtcNow
                     };
 
                     SecureStorageService.SaveLicense(CurrentLicense);
-                    return (true, res.Message ?? "Kích hoạt bản quyền thành công!");
+                    return (true, res.message ?? "Xác thực bản quyền thành công!", payloadData);
                 }
 
-                return (false, res?.Message ?? "Kích hoạt không thành công. Vui lòng kiểm tra lại thông tin.");
+                return (false, res?.message ?? "Không thể xác thực bản quyền.", null);
             }
             catch (TaskCanceledException)
             {
-                return (false, "Kết nối tới máy chủ cấp phép bị quá thời gian (Timeout). Vui lòng kiểm tra lại mạng.");
+                return (false, "Kết nối tới máy chủ bị quá thời gian (Timeout). Vui lòng kiểm tra lại mạng.", null);
             }
             catch (HttpRequestException ex)
             {
-                return (false, $"Không thể kết nối tới máy chủ license ({ServerBaseUrl}): {ex.Message}");
+                return (false, $"Không thể kết nối máy chủ Supabase: {ex.Message}", null);
             }
             catch (Exception ex)
             {
-                return (false, $"Lỗi xử lý kích hoạt: {ex.Message}");
+                return (false, $"Lỗi xử lý xác thực: {ex.Message}", null);
             }
         }
 
-        public async Task<(bool success, string message)> StartTrialAsync(string email)
+        /// <summary>
+        /// Đăng nhập tài khoản bằng Email + Mật khẩu
+        /// </summary>
+        public async Task<(bool success, string message)> LoginWithPasswordAsync(string email, string password)
         {
-            if (string.IsNullOrWhiteSpace(email))
-                return (false, "Vui lòng nhập Email để nhận bản quyền dùng thử.");
-
-            string deviceHash = DeviceFingerprintService.GetDeviceIdentifierHash();
-            string deviceName = DeviceFingerprintService.GetDeviceFriendlyName();
-
-            var req = new ApiTrialRequest
-            {
-                Email = email.Trim(),
-                DeviceIdentifierHash = deviceHash,
-                DeviceName = deviceName
-            };
-
-            try
-            {
-                string jsonPayload = JsonSerializer.Serialize(req);
-                var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
-
-                var response = await _http.PostAsync("/api/auth/trial", content);
-                string responseBody = await response.Content.ReadAsStringAsync();
-
-                var res = JsonSerializer.Deserialize<ApiActivateResponse>(responseBody, _jsonOptions);
-
-                if (res != null && res.Success && res.LicenseId.HasValue)
-                {
-                    CurrentLicense = new ClientLicenseInfo
-                    {
-                        LicenseId = res.LicenseId.Value,
-                        Email = email.Trim(),
-                        LicenseType = "Trial",
-                        Status = "Active",
-                        StartsAtUtc = res.StartsAtUtc ?? DateTime.UtcNow,
-                        ExpiresAtUtc = res.ExpiresAtUtc ?? DateTime.UtcNow.AddDays(15),
-                        AccessToken = res.AccessToken,
-                        DeviceName = deviceName,
-                        DeviceIdentifierHash = deviceHash,
-                        LastValidatedAtUtc = DateTime.UtcNow
-                    };
-
-                    SecureStorageService.SaveLicense(CurrentLicense);
-                    return (true, "Đã kích hoạt bản quyền dùng thử 15 ngày thành công!");
-                }
-
-                return (false, res?.Message ?? "Không thể tạo bản quyền dùng thử.");
-            }
-            catch (Exception ex)
-            {
-                return (false, $"Lỗi kết nối máy chủ: {ex.Message}");
-            }
+            var (success, msg, _) = await CallVerifyRpcAsync(email, password, licenseKey: null);
+            return (success, msg);
         }
 
+        /// <summary>
+        /// Kích hoạt mã Key mới cho tài khoản (có thể kèm mật khẩu hoặc không)
+        /// </summary>
+        public async Task<(bool success, string message)> ActivateAsync(string email, string activationCode, string password = null)
+        {
+            if (string.IsNullOrWhiteSpace(activationCode))
+                return (false, "Vui lòng nhập mã Key bản quyền.");
+
+            var (success, msg, _) = await CallVerifyRpcAsync(email, password, licenseKey: activationCode);
+            return (success, msg);
+        }
+
+        /// <summary>
+        /// Kiểm tra và đồng bộ lại bản quyền hiện tại ngầm từ máy chủ
+        /// </summary>
         public async Task<(bool isValid, string message)> ValidateCurrentLicenseAsync()
         {
-            if (CurrentLicense == null)
+            if (CurrentLicense == null || string.IsNullOrWhiteSpace(CurrentLicense.Email))
             {
                 return (false, "Chưa kích hoạt bản quyền trên máy này.");
             }
 
-            string deviceHash = DeviceFingerprintService.GetDeviceIdentifierHash();
-            var req = new ApiValidateRequest
-            {
-                LicenseId = CurrentLicense.LicenseId,
-                DeviceIdentifierHash = deviceHash
-            };
-
             try
             {
-                string jsonPayload = JsonSerializer.Serialize(req);
-                var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+                var (success, msg, _) = await CallVerifyRpcAsync(CurrentLicense.Email, password: null, licenseKey: null);
 
-                // Attach token if present
-                if (!string.IsNullOrEmpty(CurrentLicense.AccessToken))
+                if (success)
                 {
-                    _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CurrentLicense.AccessToken);
-                }
-
-                var response = await _http.PostAsync("/api/license/validate", content);
-                string responseBody = await response.Content.ReadAsStringAsync();
-
-                var res = JsonSerializer.Deserialize<ApiValidateResponse>(responseBody, _jsonOptions);
-
-                if (res != null && res.IsValid)
-                {
-                    CurrentLicense.Status = "Active";
-                    if (res.ExpiresAtUtc.HasValue) CurrentLicense.ExpiresAtUtc = res.ExpiresAtUtc.Value;
-                    CurrentLicense.LastValidatedAtUtc = DateTime.UtcNow;
-                    SecureStorageService.SaveLicense(CurrentLicense);
-
                     return (true, "Bản quyền hợp lệ.");
                 }
 
-                // If expired or deactivated
-                if (res != null)
-                {
-                    CurrentLicense.Status = res.LicenseStatus == 3 ? "Expired" : "Invalid";
-                    if (res.ExpiresAtUtc.HasValue) CurrentLicense.ExpiresAtUtc = res.ExpiresAtUtc.Value;
-                    SecureStorageService.SaveLicense(CurrentLicense);
-
-                    return (false, res.Message ?? "Bản quyền đã hết hạn hoặc không còn hiệu lực.");
-                }
-
-                return (false, "Xác thực bản quyền không thành công.");
+                // Nếu server báo hết hạn hoặc thu hồi
+                CurrentLicense.Status = "Expired";
+                SecureStorageService.SaveLicense(CurrentLicense);
+                return (false, msg);
             }
             catch (Exception ex)
             {
-                // Strict 0-day offline grace rule: network failure cannot authorize protected operations
-                return (false, $"Không thể kết nối đến máy chủ để xác thực bản quyền: {ex.Message}");
+                // Khi mất mạng: nếu còn trong thời hạn Offline Grace Period thì vẫn cho phép dùng
+                if (!CurrentLicense.IsExpired && !CurrentLicense.IsOfflineExpired)
+                {
+                    return (true, "Bản quyền hợp lệ (Chế độ Offline tạm thời).");
+                }
+
+                return (false, $"Không thể xác thực: {ex.Message}");
             }
         }
 
-        public async Task<(bool success, string message)> DeactivateAsync()
+        /// <summary>
+        /// Đăng xuất / Xóa thông tin bản quyền trên máy tính này
+        /// </summary>
+        public Task<(bool success, string message)> DeactivateAsync()
         {
-            if (CurrentLicense == null)
-            {
-                return (true, "Không có bản quyền nào để hủy kích hoạt.");
-            }
-
-            string deviceHash = DeviceFingerprintService.GetDeviceIdentifierHash();
-            var req = new ApiDeactivateRequest
-            {
-                LicenseId = CurrentLicense.LicenseId,
-                DeviceIdentifierHash = deviceHash
-            };
-
-            try
-            {
-                string jsonPayload = JsonSerializer.Serialize(req);
-                var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
-
-                if (!string.IsNullOrEmpty(CurrentLicense.AccessToken))
-                {
-                    _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CurrentLicense.AccessToken);
-                }
-
-                var response = await _http.PostAsync("/api/license/deactivate", content);
-                string responseBody = await response.Content.ReadAsStringAsync();
-
-                var res = JsonSerializer.Deserialize<ApiDeactivateResponse>(responseBody, _jsonOptions);
-
-                // Clear local storage on deactivation
-                SecureStorageService.ClearLicense();
-                CurrentLicense = null;
-
-                return (true, res?.Message ?? "Thiết bị đã được hủy kích hoạt thành công.");
-            }
-            catch (Exception ex)
-            {
-                // Fallback: Clear locally even if offline
-                SecureStorageService.ClearLicense();
-                CurrentLicense = null;
-                return (true, $"Đã xóa thông tin bản quyền trên máy (Lưu ý: Máy chủ có thể chưa cập nhật do lỗi mạng: {ex.Message}).");
-            }
+            SecureStorageService.ClearLicense();
+            CurrentLicense = null;
+            return Task.FromResult((true, "Đã đăng xuất và xóa thông tin bản quyền trên máy."));
         }
 
-        public async Task<(bool success, string message, string activationCode)> RegisterAccountRequestAsync(string email, string fullName, string phoneNumber, string machineId)
+        /// <summary>
+        /// Gửi yêu cầu đăng ký (ghi chú cho người dùng liên hệ Admin)
+        /// </summary>
+        public Task<(bool success, string message, string activationCode)> RegisterAccountRequestAsync(
+            string email, string fullName, string phoneNumber, string machineId)
         {
             if (string.IsNullOrWhiteSpace(email))
-                return (false, "Vui lòng nhập Email.", null);
+                return Task.FromResult((false, "Vui lòng nhập Email.", (string)null));
 
-            var req = new
-            {
-                email = email.Trim(),
-                fullName = fullName?.Trim() ?? string.Empty,
-                phoneNumber = phoneNumber?.Trim() ?? string.Empty,
-                machineId = machineId ?? DeviceFingerprintService.GetDisplayMachineId(),
-                deviceName = DeviceFingerprintService.GetDeviceFriendlyName()
-            };
-
-            try
-            {
-                string jsonPayload = JsonSerializer.Serialize(req);
-                var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
-
-                var response = await _http.PostAsync("/api/auth/register-request", content);
-                string responseBody = await response.Content.ReadAsStringAsync();
-
-                using var doc = JsonDocument.Parse(responseBody);
-                var root = doc.RootElement;
-                bool success = root.GetProperty("success").GetBoolean();
-                string message = root.GetProperty("message").GetString() ?? string.Empty;
-                string actCode = null;
-                if (root.TryGetProperty("activationCode", out var codeElem) && codeElem.ValueKind == JsonValueKind.String)
-                {
-                    actCode = codeElem.GetString();
-                }
-
-                return (success, message, actCode);
-            }
-            catch (Exception ex)
-            {
-                return (false, $"Lỗi kết nối máy chủ: {ex.Message}", null);
-            }
+            return Task.FromResult((true, 
+                "Vui lòng cung cấp Email và Machine ID cho Quản trị viên để được cấp Key kích hoạt!", 
+                (string)null));
         }
     }
 }

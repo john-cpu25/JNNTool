@@ -16,13 +16,15 @@ namespace JNNTool.Tools.Login.Services
         private static readonly string LicenseFilePath = Path.Combine(StorageDirectory, "license.dat");
         private static readonly byte[] Entropy = Encoding.UTF8.GetBytes("JNNTool_Revit_DPAPI_Entropy_2026");
 
-        public static void SaveLicense(ClientLicenseInfo licenseInfo)
+        public static void SaveLicense(ClientLicenseInfo licenseInfo, string customFilePath = null)
         {
             try
             {
-                if (!Directory.Exists(StorageDirectory))
+                string targetPath = string.IsNullOrWhiteSpace(customFilePath) ? LicenseFilePath : customFilePath;
+                string targetDir = Path.GetDirectoryName(targetPath);
+                if (!string.IsNullOrEmpty(targetDir) && !Directory.Exists(targetDir))
                 {
-                    Directory.CreateDirectory(StorageDirectory);
+                    Directory.CreateDirectory(targetDir);
                 }
 
                 string json = JsonSerializer.Serialize(licenseInfo);
@@ -34,7 +36,7 @@ namespace JNNTool.Tools.Login.Services
                     Entropy,
                     DataProtectionScope.CurrentUser);
 
-                File.WriteAllBytes(LicenseFilePath, encryptedBytes);
+                File.WriteAllBytes(targetPath, encryptedBytes);
             }
             catch (Exception ex)
             {
@@ -42,14 +44,15 @@ namespace JNNTool.Tools.Login.Services
             }
         }
 
-        public static ClientLicenseInfo LoadLicense()
+        public static ClientLicenseInfo LoadLicense(string customFilePath = null)
         {
             try
             {
-                if (!File.Exists(LicenseFilePath))
+                string targetPath = string.IsNullOrWhiteSpace(customFilePath) ? LicenseFilePath : customFilePath;
+                if (!File.Exists(targetPath))
                     return null;
 
-                byte[] encryptedBytes = File.ReadAllBytes(LicenseFilePath);
+                byte[] encryptedBytes = File.ReadAllBytes(targetPath);
                 if (encryptedBytes.Length == 0)
                     return null;
 
@@ -68,13 +71,14 @@ namespace JNNTool.Tools.Login.Services
             }
         }
 
-        public static void ClearLicense()
+        public static void ClearLicense(string customFilePath = null)
         {
             try
             {
-                if (File.Exists(LicenseFilePath))
+                string targetPath = string.IsNullOrWhiteSpace(customFilePath) ? LicenseFilePath : customFilePath;
+                if (File.Exists(targetPath))
                 {
-                    File.Delete(LicenseFilePath);
+                    File.Delete(targetPath);
                 }
             }
             catch (Exception ex)

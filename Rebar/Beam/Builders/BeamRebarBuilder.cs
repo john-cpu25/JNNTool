@@ -87,24 +87,35 @@ namespace JNNTool.RebarSuite.Beam.Builders
             int createdCount = 0;
             var primaryHost = beams[0];
 
+            // Hệ trục tọa độ của chuỗi dầm từ nhịp đầu tiên
+            XYZ origin = XYZ.Zero;
+            XYZ dirX = XYZ.BasisX;
+            if (layoutResult.BeamModel.Spans.Count > 0)
+            {
+                var firstSpan = layoutResult.BeamModel.Spans[0];
+                origin = new XYZ(
+                    GeometryHelper.MmToFeet(firstSpan.StartPoint.X),
+                    GeometryHelper.MmToFeet(firstSpan.StartPoint.Y),
+                    GeometryHelper.MmToFeet(firstSpan.StartPoint.Z));
+                var d = new XYZ(firstSpan.DirectionVector.X, firstSpan.DirectionVector.Y, 0);
+                if (d.GetLength() > 0.001) dirX = d.Normalize();
+            }
+            XYZ dirZ = XYZ.BasisZ;
+            XYZ dirY = dirZ.CrossProduct(dirX).Normalize();
+
             foreach (var setInfo in layoutResult.RebarSets)
             {
                 if (setInfo.CurvePoints.Count < 2) continue;
 
                 try
                 {
+                    bool isStirrup = (setInfo.Role == BeamRebarRole.StirrupDense || setInfo.Role == BeamRebarRole.StirrupSparse);
+
                     var curves = new List<Curve>();
                     for (int i = 0; i < setInfo.CurvePoints.Count - 1; i++)
                     {
-                        var p1 = new XYZ(
-                            GeometryHelper.MmToFeet(setInfo.CurvePoints[i].X),
-                            GeometryHelper.MmToFeet(setInfo.CurvePoints[i].Y),
-                            GeometryHelper.MmToFeet(setInfo.CurvePoints[i].Z));
-
-                        var p2 = new XYZ(
-                            GeometryHelper.MmToFeet(setInfo.CurvePoints[i + 1].X),
-                            GeometryHelper.MmToFeet(setInfo.CurvePoints[i + 1].Y),
-                            GeometryHelper.MmToFeet(setInfo.CurvePoints[i + 1].Z));
+                        XYZ p1 = TransformBeamLocalPoint(setInfo.CurvePoints[i], isStirrup, origin, dirX, dirY, dirZ);
+                        XYZ p2 = TransformBeamLocalPoint(setInfo.CurvePoints[i + 1], isStirrup, origin, dirX, dirY, dirZ);
 
                         if (p1.DistanceTo(p2) > 0.001)
                         {
@@ -120,18 +131,23 @@ namespace JNNTool.RebarSuite.Beam.Builders
                     if (barType == null) continue;
 
                     // Móc đai hoặc móc cốt chủ
-                    var hookType = (setInfo.Role == BeamRebarRole.StirrupDense || setInfo.Role == BeamRebarRole.StirrupSparse)
+                    var hookType = isStirrup
                         ? RebarTypeResolver.ResolveHookType(doc, HookAngle.Deg135)
                         : null;
+                    var style = isStirrup ? RebarStyle.StirrupTie : RebarStyle.Standard;
+
+                    // Với cốt đai (mặt phẳng dirY-dirZ): pháp tuyến là dirX (rải dọc trục dầm)
+                    // Với cốt dọc (mặt phẳng dirX-dirZ): pháp tuyến là dirY (rải ngang bề rộng dầm)
+                    XYZ normal = isStirrup ? dirX : dirY;
 
                     var rebar = JNNTool.Core.Compat.RebarCompat.CreateFromCurves(
                         doc,
-                        RebarStyle.Standard,
+                        style,
                         barType,
                         hookType,
                         hookType,
                         primaryHost,
-                        new XYZ(0, 0, 1),
+                        normal,
                         curves,
                         JNNTool.Core.Compat.JnnHookOrientation.Right,
                         JNNTool.Core.Compat.JnnHookOrientation.Right,
@@ -172,6 +188,26 @@ namespace JNNTool.RebarSuite.Beam.Builders
             }
 
             return createdCount;
+        }
+
+        private static XYZ TransformBeamLocalPoint(Point3D pt, bool isStirrup, XYZ origin, XYZ dirX, XYZ dirY, XYZ dirZ)
+        {
+            if (isStirrup)
+            {
+                // Stirrup local: pt.X = ngang tiết diện (Y), pt.Y = cao tiết diện (Z), pt.Z = dọc trục dầm (X)
+                double xFeet = GeometryHelper.MmToFeet(pt.Z);
+                double yFeet = GeometryHelper.MmToFeet(pt.X);
+                double zFeet = GeometryHelper.MmToFeet(pt.Y);
+                return origin + dirX * xFeet + dirY * yFeet + dirZ * zFeet;
+            }
+            else
+            {
+                // Longitudinal bar local: pt.X = dọc trục dầm (X), pt.Y = ngang tiết diện (Y), pt.Z = cao tiết diện (Z)
+                double xFeet = GeometryHelper.MmToFeet(pt.X);
+                double yFeet = GeometryHelper.MmToFeet(pt.Y);
+                double zFeet = GeometryHelper.MmToFeet(pt.Z);
+                return origin + dirX * xFeet + dirY * yFeet + dirZ * zFeet;
+            }
         }
     }
 }

@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="License Management"
-        Width="490" Height="580"
+        Icon="{Binding LogoImage}"
+        Width="500" Height="480"
         WindowStartupLocation="CenterScreen"
         Topmost="True"
         WindowStyle="None"
@@ -53,12 +54,45 @@
             </Setter>
         </Style>
 
-        <!-- Primary Action Button (Teal / Blue Accent, CornerRadius 5) -->
+        <!-- Modern Light PasswordBox Style with CornerRadius 5 -->
+        <Style x:Key="LightPasswordBox" TargetType="PasswordBox">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="#1E293B"/>
+            <Setter Property="CaretBrush" Value="#0284c7"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="PasswordBox">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="5"
+                                SnapsToDevicePixels="True">
+                            <ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="#0284c7"/>
+                                <Setter TargetName="border" Property="Background" Value="#FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Primary Action Button (Dynamic Accent, CornerRadius 5) -->
         <Style x:Key="PrimaryActionBtn" TargetType="Button">
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="FontWeight" Value="Normal"/>
             <Setter Property="Foreground" Value="#FFFFFF"/>
-            <Setter Property="Background" Value="#10757c"/>
+            <Setter Property="Background" Value="{Binding PrimaryBrush}"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -68,10 +102,10 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="btnBorder" Property="Background" Value="#148a92"/>
+                                <Setter TargetName="btnBorder" Property="Opacity" Value="0.88"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="btnBorder" Property="Background" Value="#0d656b"/>
+                                <Setter TargetName="btnBorder" Property="Opacity" Value="0.75"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="btnBorder" Property="Background" Value="#CBD5E1"/>
@@ -115,7 +149,7 @@
             </Setter>
         </Style>
 
-        <!-- Light Window TitleBar Control Buttons -->
+        <!-- TitleBar Control Buttons -->
         <Style x:Key="LightTitleBarBtn" TargetType="Button">
             <Setter Property="Foreground" Value="#475569"/>
             <Setter Property="Background" Value="Transparent"/>
@@ -160,7 +194,7 @@
         </Style>
     </Window.Resources>
 
-    <!-- Outer Window Frame with Clean White / Light Gray Styling & Soft Shadow -->
+    <!-- Outer Window Frame -->
     <Border Background="#F5F7F9"
             BorderBrush="#DCDDE1"
             BorderThickness="1"
@@ -177,7 +211,7 @@
             </Grid.RowDefinitions>
 
             <!-- ═══════════════════════════════════════════════════════════════ -->
-            <!--  TITLE BAR (Clean White Header Bar with Subtle Border)         -->
+            <!--  TITLE BAR                                                     -->
             <!-- ═══════════════════════════════════════════════════════════════ -->
             <Border Grid.Row="0"
                     Background="#FFFFFF"
@@ -191,10 +225,12 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Title Text with JNN Brand Icon -->
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0">
-                        <Border Width="20" Height="20" Background="#10757C" CornerRadius="4" Margin="0,0,8,0" VerticalAlignment="Center">
-                            <TextBlock Text="J" Foreground="#FFFFFF" FontWeight="Normal" FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Border Width="22" Height="22" Margin="0,0,8,0" VerticalAlignment="Center" CornerRadius="4" ClipToBounds="True">
+                            <Image Source="{Binding LogoImage}"
+                                   Width="20" Height="20"
+                                   Stretch="Uniform"
+                                   RenderOptions.BitmapScalingMode="HighQuality"/>
                         </Border>
                         <TextBlock Text="License Management"
                                    Foreground="#2C3E50"
@@ -203,41 +239,13 @@
                                    VerticalAlignment="Center"/>
                     </StackPanel>
 
-                    <!-- Right Controls (Language Pill + Window Buttons) -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                        <!-- Language Pill Button -->
-                        <Border BorderBrush="#DCDDE1"
-                                BorderThickness="1"
-                                CornerRadius="5"
-                                Background="#F1F5F9"
-                                Padding="8,3"
-                                Margin="0,0,8,0"
-                                Cursor="Hand"
-                                MouseDown="LanguagePill_MouseDown">
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <!-- Globe Vector Icon -->
-                                <Path Width="12" Height="12" Fill="#64748B" Stretch="Uniform" VerticalAlignment="Center"
-                                      Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.46z"/>
-                                <TextBlock Text="{Binding Language}"
-                                           Foreground="#2C3E50"
-                                           FontSize="11"
-                                           FontWeight="Normal"
-                                           VerticalAlignment="Center"
-                                           Margin="5,0,0,0"/>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Minimize Button -->
                         <Button Style="{StaticResource LightTitleBarBtn}" Width="36" Height="41" Click="MinimizeButton_Click">
                             <Path Width="10" Height="2" Fill="#475569" Stretch="Fill" Data="M0,0 L10,0 Z"/>
                         </Button>
-
-                        <!-- Maximize/Restore Button -->
                         <Button Style="{StaticResource LightTitleBarBtn}" Width="36" Height="41" Click="MaximizeButton_Click">
                             <Path Width="10" Height="10" Stroke="#475569" StrokeThickness="1.2" Stretch="Fill" Data="M0,0 L10,0 L10,10 L0,10 Z"/>
                         </Button>
-
-                        <!-- Close Button -->
                         <Button Style="{StaticResource LightTitleBarCloseBtn}" Width="40" Height="41" Click="CloseButton_Click">
                             <Path Width="10" Height="10" Stroke="{Binding Path=Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.4" Stretch="Fill" Data="M0,0 L10,10 M10,0 L0,10"/>
                         </Button>
@@ -246,11 +254,11 @@
             </Border>
 
             <!-- ═══════════════════════════════════════════════════════════════ -->
-            <!--  MAIN CONTENT (3 Clean White Cards on Light Gray)              -->
+            <!--  MAIN CONTENT                                                  -->
             <!-- ═══════════════════════════════════════════════════════════════ -->
             <StackPanel Grid.Row="1" Margin="14,12,14,6">
 
-                <!-- ─── CARD 1: User Information ───────────────────────────── -->
+                <!-- ─── CARD 1: Kích Hoạt Bản Quyền ─────────────────────────── -->
                 <Border Background="#FFFFFF"
                         BorderBrush="#E2E8F0"
                         BorderThickness="1"
@@ -258,13 +266,64 @@
                         Padding="14,12,14,14"
                         Margin="0,0,0,10">
                     <StackPanel>
-                        <!-- Section Header with Blue Accent Pip -->
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <Border Width="3" Height="14" Background="#10757C" CornerRadius="1.5" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="User Information" Foreground="#2C3E50" FontWeight="Normal" FontSize="12.5" VerticalAlignment="Center"/>
+                            <Border Width="3" Height="14" Background="{Binding PrimaryBrush}" CornerRadius="1.5" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Kích Hoạt Bản Quyền (License Activation)" Foreground="#2C3E50" FontWeight="Normal" FontSize="12.5" VerticalAlignment="Center"/>
                         </StackPanel>
 
-                        <!-- 2-Column Grid: Email & Full Name -->
+                        <!-- Email -->
+                        <StackPanel Margin="0,0,0,10">
+                            <TextBlock Text="Email khách hàng (*)" Foreground="#64748B" FontSize="11.5" Margin="0,0,0,4"/>
+                            <TextBox Style="{StaticResource LightTextBox}" Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+
+                        <!-- License Key with Paste Button -->
+                        <StackPanel Margin="0,0,0,14">
+                            <TextBlock Text="Mã Key bản quyền (*)" Foreground="#64748B" FontSize="11.5" Margin="0,0,0,4"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0"
+                                         Style="{StaticResource LightTextBox}" 
+                                         FontFamily="Consolas, Segoe UI"
+                                         FontSize="12.5"
+                                         Text="{Binding ActivationCode, UpdateSourceTrigger=PropertyChanged}"
+                                         TextWrapping="NoWrap"/>
+                                <Button Grid.Column="1"
+                                        Style="{StaticResource SecondaryLightBtn}"
+                                        Content="Dán (Paste)"
+                                        Width="80"
+                                        Height="30"
+                                        Margin="6,0,0,0"
+                                        Command="{Binding PasteActivationCodeCommand}"/>
+                            </Grid>
+                        </StackPanel>
+
+                        <!-- Activate Button -->
+                        <Button Style="{StaticResource PrimaryActionBtn}"
+                                Background="{Binding PrimaryBrush}"
+                                Content="⚡ Kích Hoạt Bản Quyền"
+                                Height="36"
+                                FontSize="12.5"
+                                Command="{Binding ActivateCommand}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- ─── CARD 2: Thông Tin Thiết Bị ──────────────────────────── -->
+                <Border Background="#FFFFFF"
+                        BorderBrush="#E2E8F0"
+                        BorderThickness="1"
+                        CornerRadius="5"
+                        Padding="14,12,14,14">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <Border Width="3" Height="14" Background="{Binding PrimaryBrush}" CornerRadius="1.5" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Thông Tin Thiết Bị (Device Fingerprint)" Foreground="#2C3E50" FontWeight="Normal" FontSize="12.5" VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <!-- 2-Column: Device Name & Machine ID -->
                         <Grid Margin="0,0,0,8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -272,136 +331,28 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- Email -->
                             <StackPanel Grid.Column="0">
-                                <TextBlock Text="Email" Foreground="#64748B" FontSize="11.5" Margin="0,0,0,4"/>
-                                <TextBox Style="{StaticResource LightTextBox}" Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}"/>
+                                <TextBlock Text="Tên thiết bị" Foreground="#64748B" FontSize="11.5" Margin="0,0,0,4"/>
+                                <TextBox Style="{StaticResource LightTextBox}" Text="{Binding DeviceName, Mode=OneWay}" IsReadOnly="True"/>
                             </StackPanel>
 
-                            <!-- Full Name -->
                             <StackPanel Grid.Column="2">
-                                <TextBlock Text="Full Name" Foreground="#64748B" FontSize="11.5" Margin="0,0,0,4"/>
-                                <TextBox Style="{StaticResource LightTextBox}" Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged}"/>
+                                <TextBlock Text="Mã máy (Machine ID)" Foreground="#64748B" FontSize="11.5" Margin="0,0,0,4"/>
+                                <TextBox Style="{StaticResource LightTextBox}"
+                                         Text="{Binding MachineId, Mode=OneWay}"
+                                         IsReadOnly="True"/>
                             </StackPanel>
                         </Grid>
 
-                        <!-- 2-Column Grid: Phone Number & Machine ID -->
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="14"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-
-                            <!-- Phone Number -->
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="Phone Number" Foreground="#64748B" FontSize="11.5" Margin="0,0,0,4"/>
-                                <TextBox Style="{StaticResource LightTextBox}" Text="{Binding PhoneNumber, UpdateSourceTrigger=PropertyChanged}"/>
-                            </StackPanel>
-
-                            <!-- Machine ID (auto) with Copy button -->
-                            <StackPanel Grid.Column="2">
-                                <TextBlock Text="Machine ID (auto)" Foreground="#64748B" FontSize="11.5" Margin="0,0,0,4"/>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBox Grid.Column="0"
-                                             Style="{StaticResource LightTextBox}"
-                                             Text="{Binding MachineId, Mode=OneWay}"
-                                             IsReadOnly="True"/>
-                                    <Button Grid.Column="1"
-                                             Style="{StaticResource SecondaryLightBtn}"
-                                             Content="Copy"
-                                             Width="50"
-                                             Height="30"
-                                             Margin="6,0,0,0"
-                                             Command="{Binding CopyMachineIdCommand}"/>
-                                </Grid>
-                            </StackPanel>
-                        </Grid>
-                    </StackPanel>
-                </Border>
-
-                <!-- ─── CARD 2: Đăng ký & Kích hoạt Server ─────────────────── -->
-                <Border Background="#FFFFFF"
-                        BorderBrush="#E2E8F0"
-                        BorderThickness="1"
-                        CornerRadius="5"
-                        Padding="14,12,14,14"
-                        Margin="0,0,0,10">
-                    <StackPanel>
-                        <!-- Section Header with Teal Accent Pip -->
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                            <Border Width="3" Height="14" Background="#10757C" CornerRadius="1.5" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="Đăng ký &amp; Kích hoạt Server" Foreground="#2C3E50" FontWeight="Normal" FontSize="12.5" VerticalAlignment="Center"/>
-                        </StackPanel>
-
-                        <!-- Subtitle Description -->
-                        <TextBlock Text="Gửi thông tin tài khoản lên hệ thống máy chủ để Quản trị viên phê duyệt:"
-                                   Foreground="#64748B"
-                                   FontSize="12"
-                                   Margin="0,2,0,12"
-                                   TextWrapping="Wrap"/>
-
-                        <!-- Registration Request Button -->
-                        <Button Style="{StaticResource PrimaryActionBtn}"
-                                Content="Gửi yêu cầu đăng ký"
-                                Padding="16,0"
-                                Height="34"
-                                HorizontalAlignment="Left"
-                                Command="{Binding RegisterRequestCommand}"/>
-                    </StackPanel>
-                </Border>
-
-                <!-- ─── CARD 3: Login ──────────────────────────────────────── -->
-                <Border Background="#FFFFFF"
-                        BorderBrush="#E2E8F0"
-                        BorderThickness="1"
-                        CornerRadius="5"
-                        Padding="14,12,14,14">
-                    <StackPanel>
-                        <!-- Section Header with Teal Accent Pip -->
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <Border Width="3" Height="14" Background="#10757C" CornerRadius="1.5" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="Login" Foreground="#2C3E50" FontWeight="Normal" FontSize="12.5" VerticalAlignment="Center"/>
-                        </StackPanel>
-
-                        <!-- Account & Key Code Grid -->
-                        <Grid Margin="0,0,0,12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="14"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-
-                            <!-- Account -->
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="Account" Foreground="#64748B" FontSize="11.5" Margin="0,0,0,4"/>
-                                <TextBox Style="{StaticResource LightTextBox}" Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}"/>
-                            </StackPanel>
-
-                            <!-- Key Code -->
-                            <StackPanel Grid.Column="2">
-                                <TextBlock Text="Key Code" Foreground="#64748B" FontSize="11.5" Margin="0,0,0,4"/>
-                                <TextBox Style="{StaticResource LightTextBox}" Text="{Binding ActivationCode, UpdateSourceTrigger=PropertyChanged}"/>
-                            </StackPanel>
-                        </Grid>
-
-                        <!-- Login Button (Right Aligned) -->
-                        <Button Style="{StaticResource PrimaryActionBtn}"
-                                Content="Login"
-                                Width="110"
-                                Height="34"
-                                HorizontalAlignment="Right"
-                                Command="{Binding ActivateCommand}"/>
+                        <TextBlock Text="• Bản quyền sẽ tự động khóa cứng vào thiết bị này trong lần kích hoạt đầu tiên."
+                                   Foreground="#94A3B8"
+                                   FontSize="11"/>
                     </StackPanel>
                 </Border>
             </StackPanel>
 
             <!-- ═══════════════════════════════════════════════════════════════ -->
-            <!--  STATUS BAR (Bottom Bar with Clean White Styling & Dot)        -->
+            <!--  STATUS BAR                                                    -->
             <!-- ═══════════════════════════════════════════════════════════════ -->
             <Border Grid.Row="2"
                     Background="#FFFFFF"
@@ -410,9 +361,7 @@
                     CornerRadius="0,0,7,7"
                     Padding="16,0">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <!-- Status Indicator Circle -->
-                    <Ellipse Width="8" Height="8" Fill="#10757C" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                    <!-- Status Message -->
+                    <Ellipse Width="8" Height="8" Fill="{Binding PrimaryBrush}" Margin="0,0,8,0" VerticalAlignment="Center"/>
                     <TextBlock Text="{Binding StatusMessage}"
                                Foreground="#64748B"
                                FontSize="11.5"

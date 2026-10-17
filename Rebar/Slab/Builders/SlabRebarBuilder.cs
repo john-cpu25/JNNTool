@@ -69,8 +69,10 @@ namespace JNNTool.RebarSuite.Slab.Builders
                     var beamBox = beam.get_BoundingBox(null);
                     if (beamBox == null || bbox == null) continue;
 
-                    // Kiểm tra dầm có nằm trong phạm vi cao độ sàn không
-                    if (beamBox.Max.Z >= bbox.Min.Z - 2.0 && beamBox.Min.Z <= bbox.Max.Z)
+                    // Kiểm tra dầm có giao cắt X/Y và nằm trong phạm vi cao độ sàn không
+                    bool xyOverlap = beamBox.Max.X >= bbox.Min.X - 1.0 && beamBox.Min.X <= bbox.Max.X + 1.0 &&
+                                     beamBox.Max.Y >= bbox.Min.Y - 1.0 && beamBox.Min.Y <= bbox.Max.Y + 1.0;
+                    if (xyOverlap && beamBox.Max.Z >= bbox.Min.Z - 2.0 && beamBox.Min.Z <= bbox.Max.Z + 0.5)
                     {
                         var curve = (beam.Location as LocationCurve)?.Curve;
                         if (curve != null)
@@ -146,6 +148,10 @@ namespace JNNTool.RebarSuite.Slab.Builders
                     var startHook = RebarTypeResolver.ResolveHookType(doc, setInfo.StartHook);
                     var endHook = RebarTypeResolver.ResolveHookType(doc, setInfo.EndHook);
 
+                    // Vector pháp tuyến mặt phẳng chứa thanh thép (đồng thời là phương rải của RebarSet)
+                    var distVec = new XYZ(setInfo.DistributionVector.X, setInfo.DistributionVector.Y, setInfo.DistributionVector.Z);
+                    XYZ normal = distVec.GetLength() > 0.001 ? distVec.Normalize() : new XYZ(0, 1, 0);
+
                     // Tạo thanh thép từ curves
                     var rebar = JNNTool.Core.Compat.RebarCompat.CreateFromCurves(
                         doc,
@@ -154,7 +160,7 @@ namespace JNNTool.RebarSuite.Slab.Builders
                         startHook,
                         endHook,
                         floor,
-                        new XYZ(0, 0, 1),
+                        normal,
                         curves,
                         JNNTool.Core.Compat.JnnHookOrientation.Right,
                         JNNTool.Core.Compat.JnnHookOrientation.Right,

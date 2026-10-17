@@ -41,6 +41,14 @@ namespace JNNTool.Tools.Login.UI
             ViewModel?.ToggleLanguageCommand?.Execute(null);
         }
 
+        private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is LoginViewModel vm && sender is System.Windows.Controls.PasswordBox pb)
+            {
+                vm.Password = pb.Password;
+            }
+        }
+
         private void MinimizeButton_Click(object sender, RoutedEventArgs e)
         {
             WindowState = WindowState.Minimized;
@@ -75,6 +83,7 @@ namespace JNNTool.Tools.Login.UI
         protected override void OnClosed(EventArgs e)
         {
             base.OnClosed(e);
+            ViewModel?.Cleanup();
             _instance = null;
         }
     }

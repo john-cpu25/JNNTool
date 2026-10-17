@@ -13,11 +13,12 @@ namespace JNNTool.Core.Palette
     public sealed class PaletteItemVm : ObservableObject
     {
         private bool _isFavorite;
+        private ImageSource? _icon;
 
-        public PaletteItemVm(ToolCommandInfo info)
+        public PaletteItemVm(ToolCommandInfo info, JNNTool.Tools.UIManager.Models.RibbonThemeSettings? themeSettings = null)
         {
             Info = info;
-            Icon = IconLoader.Load(info.IconFile, 0);
+            RefreshIcon(themeSettings);
             Initials = MakeInitials(info.Title);
             SearchKey = TextSearch.Normalize($"{info.Title} {info.Group} {info.Description} {info.Keywords}");
         }
@@ -27,10 +28,28 @@ namespace JNNTool.Core.Palette
         public string Title => Info.Title;
         public string Group => Info.Group;
         public string Description => Info.Description;
-        public ImageSource? Icon { get; }
+
+        public ImageSource? Icon
+        {
+            get => _icon;
+            private set
+            {
+                if (SetProperty(ref _icon, value))
+                {
+                    OnPropertyChanged(nameof(HasIcon));
+                }
+            }
+        }
+
         public bool HasIcon => Icon != null;
         public string Initials { get; }
         public string SearchKey { get; }
+
+        public void RefreshIcon(JNNTool.Tools.UIManager.Models.RibbonThemeSettings? themeSettings = null)
+        {
+            ImageSource? vectorIcon = JNNTool.Tools.UIManager.Services.RibbonThemeService.CreateCommandIcon(Info.Id, themeSettings, 32);
+            Icon = vectorIcon ?? IconLoader.Load(Info.IconFile, 64);
+        }
 
         public bool IsFavorite
         {

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Windows.Media;
+using CommunityToolkit.Mvvm.ComponentModel;
 using JNNTool.Core.Settings;
 
 namespace JNNTool.Tools.UIManager.Models
@@ -28,10 +29,10 @@ namespace JNNTool.Tools.UIManager.Models
     /// </summary>
     public class RibbonThemeSettings
     {
-        /// <summary>Màu mặc định chuẩn kỹ thuật (Apex Blue: #2563EB).</summary>
-        public const string DefaultColor = "#2563EB";
+        /// <summary>Màu mặc định chuẩn thiết kế JNN Blue BIM (#087BC1).</summary>
+        public const string DefaultColor = "#087BC1";
 
-        /// <summary>Mã màu Hex chủ đạo (ví dụ "#2563EB").</summary>
+        /// <summary>Mã màu Hex chủ đạo (ví dụ "#087BC1").</summary>
         public string PrimaryColorHex { get; set; } = DefaultColor;
 
         /// <summary>Kiểu hiển thị icon được chọn.</summary>
@@ -71,14 +72,21 @@ namespace JNNTool.Tools.UIManager.Models
     /// <summary>
     /// Thông tin mô tả một nút bấm trên thanh Ribbon JNNTool.
     /// </summary>
-    public class RibbonButtonItem
+    public class RibbonButtonItem : ObservableObject
     {
+        private ImageSource? _imagePreview;
+
         public string CommandId { get; set; } = string.Empty;
         public string DisplayName { get; set; } = string.Empty;
         public string PanelName { get; set; } = string.Empty;
         public JNNIcon Icon { get; set; } = JNNIcon.Settings;
         public string ToolTip { get; set; } = string.Empty;
-        public ImageSource? ImagePreview { get; set; }
+
+        public ImageSource? ImagePreview
+        {
+            get => _imagePreview;
+            set => SetProperty(ref _imagePreview, value);
+        }
     }
 
     /// <summary>

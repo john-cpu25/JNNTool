@@ -59,7 +59,10 @@ namespace JNNTool.RebarSuite.Column.Builders
                         .Where(bm =>
                         {
                             var bBox = bm.get_BoundingBox(null);
-                            return bBox != null && bBox.Min.Z <= bbox.Max.Z && bBox.Max.Z >= bbox.Max.Z - 3.0;
+                            if (bBox == null) return false;
+                            bool xyOverlap = bBox.Max.X >= bbox.Min.X - 0.5 && bBox.Min.X <= bbox.Max.X + 0.5 &&
+                                             bBox.Max.Y >= bbox.Min.Y - 0.5 && bBox.Min.Y <= bbox.Max.Y + 0.5;
+                            return xyOverlap && bBox.Min.Z <= bbox.Max.Z + 0.5 && bBox.Max.Z >= bbox.Max.Z - 3.0;
                         })
                         .ToList();
 
@@ -148,15 +151,21 @@ namespace JNNTool.RebarSuite.Column.Builders
                                       setInfo.Role == ColumnRebarRole.InternalStirrupOrTie);
 
                     var hookType = isStirrup ? RebarTypeResolver.ResolveHookType(doc, HookAngle.Deg135) : null;
+                    var style = isStirrup ? RebarStyle.StirrupTie : RebarStyle.Standard;
+
+                    // Xác định vector pháp tuyến vuông góc với mặt phẳng chứa thanh thép:
+                    // - Với cốt đai (nằm trong mặt phẳng XY): normal = +Z (rải dọc theo chiều cao cột)
+                    // - Với cốt dọc (song song trục Z hoặc uốn cổ chai): lấy tích có hướng hoặc trục vuông góc với các đoạn curve
+                    XYZ normal = isStirrup ? XYZ.BasisZ : ComputeCurvePlaneNormal(curves);
 
                     var rebar = JNNTool.Core.Compat.RebarCompat.CreateFromCurves(
                         doc,
-                        RebarStyle.Standard,
+                        style,
                         barType,
                         hookType,
                         hookType,
                         primaryCol,
-                        new XYZ(0, 0, 1),
+                        normal,
                         curves,
                         JNNTool.Core.Compat.JnnHookOrientation.Right,
                         JNNTool.Core.Compat.JnnHookOrientation.Right,
@@ -197,6 +206,30 @@ namespace JNNTool.RebarSuite.Column.Builders
             }
 
             return createdCount;
+        }
+
+        private static XYZ ComputeCurvePlaneNormal(IList<Curve> curves)
+        {
+            if (curves == null || curves.Count == 0) return XYZ.BasisX;
+
+            var dir0 = (curves[0].GetEndPoint(1) - curves[0].GetEndPoint(0)).Normalize();
+            for (int i = 1; i < curves.Count; i++)
+            {
+                var dirI = (curves[i].GetEndPoint(1) - curves[i].GetEndPoint(0)).Normalize();
+                var cross = dir0.CrossProduct(dirI);
+                if (cross.GetLength() > 0.001)
+                {
+                    return cross.Normalize();
+                }
+            }
+
+            // Đường thẳng đơn (như thanh dọc cột thẳng đứng): chọn vector vuông góc với dir0
+            var fallback = dir0.CrossProduct(XYZ.BasisX);
+            if (fallback.GetLength() < 0.001)
+            {
+                fallback = dir0.CrossProduct(XYZ.BasisY);
+            }
+            return fallback.Normalize();
         }
     }
 }

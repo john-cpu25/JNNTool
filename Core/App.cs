@@ -415,73 +415,68 @@ namespace JNNTool
             }
 #endif
 
-            // ------------------- Split Beam By Column -------------------
-            string iconPathSplitBeam = Path.Combine(resourcesPath, "SplitBeam.png");
+            // ═══════════════════════════════════════════════════════════════
+            //  Panel: Modeling (2 Cột x 3 Nút Nhỏ Xếp Tầng - Stacked Items)
+            // ═══════════════════════════════════════════════════════════════
+            // Cột 1: Split Beam, Create Section, Disallow Join Beam
             PushButtonData btnSplitBeamData = new PushButtonData(
                 "cmdSplitBeamByColumn",
-                "Split\nBeam",
+                "Split Beam",
                 assemblyPath,
                 "JNNTool.SplitBeamByColumnCmd"
             );
             btnSplitBeamData.ToolTip = "Ngắt dầm thành từng đoạn tại vị trí các cột hoặc dầm cắt ngang được chọn.";
+            SetRibbonItemIcon(btnSplitBeamData, "SplitBeam.png", resourcesPath);
 
-            PushButton btnSplitBeam = modelingPanel.AddItem(btnSplitBeamData) as PushButton;
-            if (File.Exists(iconPathSplitBeam))
-            {
-                BitmapImage img = new BitmapImage();
-                img.BeginInit();
-                img.UriSource = new Uri(iconPathSplitBeam, UriKind.Absolute);
-                img.CacheOption = BitmapCacheOption.OnLoad;
-                img.EndInit();
-                btnSplitBeam.LargeImage = img;
-                btnSplitBeam.Image = img;
-            }
-
-#if false
-            // ------------------- Rebar Beam -------------------
-            string iconPathRebarBeam = Path.Combine(resourcesPath, "RebarBeam.png");
-            PushButtonData btnRebarBeamData = new PushButtonData(
-                "cmdRebarBeam",
-                "Rebar\nBeam",
-                assemblyPath,
-                "JNNTool.RebarBeamCmd"
-            );
-            btnRebarBeamData.ToolTip = "Bố trí thép dầm liên tục (Lớp trên, dưới, và đai theo L0/4).";
-
-            PushButton btnRebarBeam = modelingPanel.AddItem(btnRebarBeamData) as PushButton;
-            if (File.Exists(iconPathRebarBeam))
-            {
-                BitmapImage img = new BitmapImage();
-                img.BeginInit();
-                img.UriSource = new Uri(iconPathRebarBeam, UriKind.Absolute);
-                img.CacheOption = BitmapCacheOption.OnLoad;
-                img.EndInit();
-                btnRebarBeam.LargeImage = img;
-                btnRebarBeam.Image = img;
-            }
-#endif
-
-            // ------------------- Create Section -------------------
-            string iconPathCreateSection = Path.Combine(resourcesPath, "CreateSection.png");
             PushButtonData btnCreateSectionData = new PushButtonData(
                 "cmdCreateSection",
-                "Create\nSection",
+                "Create Section",
                 assemblyPath,
                 "JNNTool.CreateSectionCmd"
             );
             btnCreateSectionData.ToolTip = "Duplicate hàng loạt type dầm/cột với kích thước b×h mới.";
+            SetRibbonItemIcon(btnCreateSectionData, "CreateSection.png", resourcesPath);
 
-            PushButton btnCreateSection = modelingPanel.AddItem(btnCreateSectionData) as PushButton;
-            if (File.Exists(iconPathCreateSection))
-            {
-                BitmapImage img = new BitmapImage();
-                img.BeginInit();
-                img.UriSource = new Uri(iconPathCreateSection, UriKind.Absolute);
-                img.CacheOption = BitmapCacheOption.OnLoad;
-                img.EndInit();
-                btnCreateSection.LargeImage = img;
-                btnCreateSection.Image = img;
-            }
+            PushButtonData btnDisallowData = new PushButtonData(
+                "cmdDisallowJoinBeam",
+                "Disallow Join Beam",
+                assemblyPath,
+                "JNNTool.Tools.DisallowJoinBeam.DisallowJoinBeamCmd"
+            );
+            btnDisallowData.ToolTip = "Quét chọn nhiều dầm và thực hiện Disallow Join ở 2 đầu.";
+            SetRibbonItemIcon(btnDisallowData, "DisallowJoinBeam.png", resourcesPath);
+
+            // Cột 2: Create Filter, Speed Overrider, Pile Location
+            PushButtonData btnCreateFilterData = new PushButtonData(
+                "cmdCreateFilter",
+                "Create Filter",
+                assemblyPath,
+                "JNNTool.Tools.CreateFilter.Command"
+            );
+            btnCreateFilterData.ToolTip = "Tạo bộ lọc tự động từ danh sách phần tử (Create Filter).";
+            SetRibbonItemIcon(btnCreateFilterData, "CreateFilter.png", resourcesPath);
+
+            PushButtonData btnSpeedOverriderData = new PushButtonData(
+                "cmdSpeedOverriderElement",
+                "Speed Overrider",
+                assemblyPath,
+                "JNNTool.Tools.SpeedOverriderElement.Command"
+            );
+            btnSpeedOverriderData.ToolTip = "Override hiển thị phần tử nhanh (Speed Overrider).";
+            SetRibbonItemIcon(btnSpeedOverriderData, "SpeedOverrider.png", resourcesPath);
+
+            PushButtonData btnPileLocationData = new PushButtonData(
+                "cmdPileLocation",
+                "Pile Location",
+                assemblyPath,
+                "JNNTool.Tools.PileLocation.Command"
+            );
+            btnPileLocationData.ToolTip = "Chọn 1 cọc gốc → tool tự tìm tất cả cọc (Pile) trong view → ghi toạ độ thực tế (mm) vào X Coordinate / Y Coordinate.";
+            SetRibbonItemIcon(btnPileLocationData, "PileLocation.png", resourcesPath);
+
+            // Xếp 2 cột nút nhỏ (2 Cột x 3 Hàng) vào Modeling Panel
+            modelingPanel.AddStackedItems(btnSplitBeamData, btnCreateSectionData, btnDisallowData);
+            modelingPanel.AddStackedItems(btnCreateFilterData, btnSpeedOverriderData, btnPileLocationData);
 
             // ═══════════════════════════════════════════════════════════════
             //  Panel: CSI x Revit
@@ -514,88 +509,23 @@ namespace JNNTool
             string iconPathFitScopeBox = Path.Combine(resourcesPath, "DimGrid.png");
             PushButtonData btnFitScopeBoxData = new PushButtonData(
                 "cmdFitScopeBox",
-                "Fit\nScope Box",
+                "Fit Scope Box",
                 assemblyPath,
                 "JNNTool.Tools.CSIxRevit.Commands.FitScopeBoxCommand"
             );
             btnFitScopeBoxData.ToolTip = "Khóa và cắt khớp toàn bộ Lưới trục (Grid) và Cao độ (Level) theo Scope Box 'JNN_SB' sau khi bạn đã kéo bao quanh nhà.";
+            SetRibbonItemIcon(btnFitScopeBoxData, "DimGrid.png", resourcesPath);
 
-            PushButton btnFitScopeBox = csiPanel.AddItem(btnFitScopeBoxData) as PushButton;
-            if (File.Exists(iconPathFitScopeBox))
-            {
-                BitmapImage img = new BitmapImage();
-                img.BeginInit();
-                img.UriSource = new Uri(iconPathFitScopeBox, UriKind.Absolute);
-                img.CacheOption = BitmapCacheOption.OnLoad;
-                img.EndInit();
-                btnFitScopeBox.LargeImage = img;
-                btnFitScopeBox.Image = img;
-            }
-
-            // ------------------- Tạm ẩn Module IFC Etabs (Chưa hoàn thiện) -------------------
-            /*
-            PushButtonData btnEtabsConverterData = new PushButtonData(
-                "cmdEtabsConverter",
-                "ETABS\nConverter",
-                assemblyPath,
-                "JNNTool.Tools.IFCEtabs.Commands.EtabsConverterCommand"
-            );
-            btnEtabsConverterData.ToolTip = "Chuyển đổi trực tiếp mô hình ETABS sang cấu kiện Native Revit (Dầm, Cột, Tầng, Trục) kèm tham số JNN.";
-
-            PushButton btnEtabsConverter = csiPanel.AddItem(btnEtabsConverterData) as PushButton;
-            if (File.Exists(iconPathImportE2K))
-            {
-                BitmapImage img = new BitmapImage();
-                img.BeginInit();
-                img.UriSource = new Uri(iconPathImportE2K, UriKind.Absolute);
-                img.CacheOption = BitmapCacheOption.OnLoad;
-                img.EndInit();
-                btnEtabsConverter.LargeImage = img;
-                btnEtabsConverter.Image = img;
-            }
-
-            PushButtonData btnPropViewerData = new PushButtonData(
-                "cmdPropertyViewer",
-                "Property\nViewer",
-                assemblyPath,
-                "JNNTool.Tools.IFCEtabs.Commands.PropertyViewerCommand"
-            );
-            btnPropViewerData.ToolTip = "Tra cứu thuộc tính nguồn gốc (ETABS / IFC) và các tham số chi tiết của cấu kiện kết cấu.";
-
-            PushButton btnPropViewer = csiPanel.AddItem(btnPropViewerData) as PushButton;
-            if (File.Exists(iconPathImportE2K))
-            {
-                BitmapImage img = new BitmapImage();
-                img.BeginInit();
-                img.UriSource = new Uri(iconPathImportE2K, UriKind.Absolute);
-                img.CacheOption = BitmapCacheOption.OnLoad;
-                img.EndInit();
-                btnPropViewer.LargeImage = img;
-                btnPropViewer.Image = img;
-            }
-            */
-
-            // ------------------- Căn Lề Biên (Boundary Align) -------------------
+            // ------------------- Boundary Align -------------------
             string iconPathBoundaryAlign = Path.Combine(resourcesPath, "ExtendBeam.png");
             PushButtonData btnBoundaryAlignData = new PushButtonData(
                 "cmdBoundaryAlign",
-                "Căn Lề\nBiên",
+                "Boundary Align",
                 assemblyPath,
                 "JNNTool.Tools.CSIxRevit.Commands.BoundaryAlignCommand"
             );
             btnBoundaryAlignData.ToolTip = "Dời dầm và cột biên vào trong ranh đất / lưới trục (B/2), tự động co/kéo các dầm ngang vuông góc kết nối vào.";
-
-            PushButton btnBoundaryAlign = csiPanel.AddItem(btnBoundaryAlignData) as PushButton;
-            if (File.Exists(iconPathBoundaryAlign))
-            {
-                BitmapImage img = new BitmapImage();
-                img.BeginInit();
-                img.UriSource = new Uri(iconPathBoundaryAlign, UriKind.Absolute);
-                img.CacheOption = BitmapCacheOption.OnLoad;
-                img.EndInit();
-                btnBoundaryAlign.LargeImage = img;
-                btnBoundaryAlign.Image = img;
-            }
+            SetRibbonItemIcon(btnBoundaryAlignData, "ExtendBeam.png", resourcesPath);
 
             // ------------------- Auto Join -------------------
             string iconPathAutoJoin = Path.Combine(resourcesPath, "AutoJoin.png");
@@ -604,51 +534,33 @@ namespace JNNTool
                 iconPathAutoJoin = Path.Combine(resourcesPath, "JoinElements.png");
             }
 
-            // SplitButton: 1 nút trên Ribbon gồm Active View (mặc định) và Entire Project
-            SplitButtonData splitBtnData = new SplitButtonData("cmdAutoJoinSplit", "Auto\nJoin");
-            SplitButton splitBtn = csiPanel.AddItem(splitBtnData) as SplitButton;
+            SplitButtonData splitBtnData = new SplitButtonData("cmdAutoJoinSplit", "Auto Join");
+            SetRibbonItemIcon(splitBtnData, Path.GetFileName(iconPathAutoJoin), resourcesPath);
 
-            if (splitBtn != null)
+            // Xếp 3 nút nhỏ xếp tầng (Fit Scope Box, Boundary Align, Auto Join) cột bên cạnh Import E2K
+            IList<RibbonItem> csiStacked = csiPanel.AddStackedItems(btnFitScopeBoxData, btnBoundaryAlignData, splitBtnData);
+
+            if (csiStacked != null && csiStacked.Count >= 3 && csiStacked[2] is SplitButton splitBtn)
             {
                 PushButtonData btnActiveData = new PushButtonData(
                     "cmdAutoJoinActiveView",
-                    "Auto Join\n(Active View)",
+                    "Auto Join (Active View)",
                     assemblyPath,
                     "JNNTool.Tools.AutoJoin.AutoJoinActiveViewCommand"
                 );
                 btnActiveData.ToolTip = "Tự động Join và đảo thứ tự ưu tiên (Column > Beam > Floor) trong View hiện hành.\n\n• Cột cắt Dầm và Sàn\n• Dầm cắt Sàn\n• Tự động đảo thứ tự (Switch Order) nếu đang bị ngược.";
-
-                PushButton btnActive = splitBtn.AddPushButton(btnActiveData);
-                if (File.Exists(iconPathAutoJoin))
-                {
-                    BitmapImage img = new BitmapImage();
-                    img.BeginInit();
-                    img.UriSource = new Uri(iconPathAutoJoin, UriKind.Absolute);
-                    img.CacheOption = BitmapCacheOption.OnLoad;
-                    img.EndInit();
-                    btnActive.LargeImage = img;
-                    btnActive.Image = img;
-                }
+                SetRibbonItemIcon(btnActiveData, Path.GetFileName(iconPathAutoJoin), resourcesPath);
+                splitBtn.AddPushButton(btnActiveData);
 
                 PushButtonData btnProjectData = new PushButtonData(
                     "cmdAutoJoinProject",
-                    "Auto Join\n(Entire Project)",
+                    "Auto Join (Entire Project)",
                     assemblyPath,
                     "JNNTool.Tools.AutoJoin.AutoJoinProjectCommand"
                 );
                 btnProjectData.ToolTip = "Tự động Join và đảo thứ tự ưu tiên (Column > Beam > Floor) cho toàn bộ mô hình dự án.\n\n• Cột cắt Dầm và Sàn\n• Dầm cắt Sàn\n• Tự động đảo thứ tự (Switch Order) nếu đang bị ngược.";
-
-                PushButton btnProject = splitBtn.AddPushButton(btnProjectData);
-                if (File.Exists(iconPathAutoJoin))
-                {
-                    BitmapImage img = new BitmapImage();
-                    img.BeginInit();
-                    img.UriSource = new Uri(iconPathAutoJoin, UriKind.Absolute);
-                    img.CacheOption = BitmapCacheOption.OnLoad;
-                    img.EndInit();
-                    btnProject.LargeImage = img;
-                    btnProject.Image = img;
-                }
+                SetRibbonItemIcon(btnProjectData, Path.GetFileName(iconPathAutoJoin), resourcesPath);
+                splitBtn.AddPushButton(btnProjectData);
             }
 
 #if false
@@ -697,7 +609,8 @@ namespace JNNTool
             }
 #endif
 
-            // ------------------- Rebar Column -------------------
+#if false
+            // ------------------- Rebar Column (Chuyển ngầm qua Rebar Suite) -------------------
             string iconPathRebarCol = Path.Combine(resourcesPath, "RebarColumn.png");
             PushButtonData btnRebarColData = new PushButtonData(
                 "cmdRebarColumn",
@@ -718,93 +631,10 @@ namespace JNNTool
                 btnRebarCol.LargeImage = img;
                 btnRebarCol.Image = img;
             }
+#endif
 
-            // ------------------- Disallow Join Beam -------------------
-            string iconPathDisallow = Path.Combine(resourcesPath, "DisallowJoinBeam.png");
-            PushButtonData btnDisallowData = new PushButtonData(
-                "cmdDisallowJoinBeam",
-                "Disallow\nJoin Beam",
-                assemblyPath,
-                "JNNTool.Tools.DisallowJoinBeam.DisallowJoinBeamCmd"
-            );
-            btnDisallowData.ToolTip = "Quét chọn nhiều dầm và thực hiện Disallow Join ở 2 đầu.";
-
-            PushButton btnDisallow = modelingPanel.AddItem(btnDisallowData) as PushButton;
-            if (File.Exists(iconPathDisallow))
-            {
-                BitmapImage img = new BitmapImage();
-                img.BeginInit();
-                img.UriSource = new Uri(iconPathDisallow, UriKind.Absolute);
-                img.CacheOption = BitmapCacheOption.OnLoad;
-                img.EndInit();
-                btnDisallow.LargeImage = img;
-                btnDisallow.Image = img;
-            }
-            // ------------------- Create Filter -------------------
-            string iconPathCreateFilter = Path.Combine(resourcesPath, "CreateFilter.png");
-            PushButtonData btnCreateFilterData = new PushButtonData(
-                "cmdCreateFilter",
-                "Create\nFilter",
-                assemblyPath,
-                "JNNTool.Tools.CreateFilter.Command"
-            );
-            btnCreateFilterData.ToolTip = "Tạo bộ lọc tự động từ danh sách phần tử (Create Filter).";
-
-            PushButton btnCreateFilter = modelingPanel.AddItem(btnCreateFilterData) as PushButton;
-            if (File.Exists(iconPathCreateFilter))
-            {
-                BitmapImage img = new BitmapImage();
-                img.BeginInit();
-                img.UriSource = new Uri(iconPathCreateFilter, UriKind.Absolute);
-                img.CacheOption = BitmapCacheOption.OnLoad;
-                img.EndInit();
-                btnCreateFilter.LargeImage = img;
-                btnCreateFilter.Image = img;
-            }
-
-            // ------------------- Speed Overrider Element -------------------
-            string iconPathSpeedOverrider = Path.Combine(resourcesPath, "SpeedOverrider.png");
-            PushButtonData btnSpeedOverriderData = new PushButtonData(
-                "cmdSpeedOverriderElement",
-                "Speed\nOverrider",
-                assemblyPath,
-                "JNNTool.Tools.SpeedOverriderElement.Command"
-            );
-            btnSpeedOverriderData.ToolTip = "Override hiển thị phần tử nhanh (Speed Overrider).";
-
-            PushButton btnSpeedOverrider = modelingPanel.AddItem(btnSpeedOverriderData) as PushButton;
-            if (File.Exists(iconPathSpeedOverrider))
-            {
-                BitmapImage img = new BitmapImage();
-                img.BeginInit();
-                img.UriSource = new Uri(iconPathSpeedOverrider, UriKind.Absolute);
-                img.CacheOption = BitmapCacheOption.OnLoad;
-                img.EndInit();
-                btnSpeedOverrider.LargeImage = img;
-                btnSpeedOverrider.Image = img;
-            }
-
-            // ------------------- Pile Location -------------------
-            string iconPathPileLocation = Path.Combine(resourcesPath, "PileLocation.png");
-            PushButtonData btnPileLocationData = new PushButtonData(
-                "cmdPileLocation",
-                "Pile\nLocation",
-                assemblyPath,
-                "JNNTool.Tools.PileLocation.Command"
-            );
-            btnPileLocationData.ToolTip = "Chọn 1 cọc gốc → tool tự tìm tất cả cọc (Pile) trong view → ghi toạ độ thực tế (mm) vào X Coordinate / Y Coordinate.";
-
-            PushButton btnPileLocation = modelingPanel.AddItem(btnPileLocationData) as PushButton;
-            if (File.Exists(iconPathPileLocation))
-            {
-                BitmapImage img = new BitmapImage();
-                img.BeginInit();
-                img.UriSource = new Uri(iconPathPileLocation, UriKind.Absolute);
-                img.CacheOption = BitmapCacheOption.OnLoad;
-                img.EndInit();
-                btnPileLocation.LargeImage = img;
-                btnPileLocation.Image = img;
-            }
+            // Các nút của Panel Modeling (Disallow Join, Create Filter, Speed Overrider, Pile Location)
+            // đã được chuyển lên nhóm AddStackedItems trong khối khởi tạo modelingPanel ở trên.
 
 #if false
             // ------------------- Create Dim (Beam) -------------------
@@ -1162,47 +992,46 @@ namespace JNNTool
 
             // ─── Auto-update check (background, non-blocking) ───────────────
 #if !NET48
-            _ = Task.Run(async () =>
+            string bundleDirForUpdate = Path.GetDirectoryName(assemblyPath) is { } d
+                ? Path.GetFullPath(Path.Combine(d, "..", ".."))
+                : "";
+            application.ControlledApplication.ApplicationInitialized += (s, e) =>
             {
-                try
+                _ = Task.Run(async () =>
                 {
-                    // Đọc version đang cài từ bundle
-                    string bundleDir     = Path.GetDirectoryName(assemblyPath) is { } d
-                                          ? Path.GetFullPath(Path.Combine(d, "..", ".."))
-                                          : "";
-                    string installedJson = Path.Combine(bundleDir, "version.json");
-                    if (!File.Exists(installedJson)) return;
-
-                    var installedText = await File.ReadAllTextAsync(installedJson);
-                    var installed     = Newtonsoft.Json.JsonConvert.DeserializeObject<VersionInfo>(installedText);
-                    if (installed == null) return;
-
-                    // Nếu có manifestUrl thì check online
-                    if (string.IsNullOrWhiteSpace(installed.ManifestUrl)) return;
-
-                    using var http   = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(5) };
-                    var latestJson   = await http.GetStringAsync(installed.ManifestUrl);
-                    var latest       = Newtonsoft.Json.JsonConvert.DeserializeObject<VersionInfo>(latestJson);
-                    if (latest == null) return;
-
-                    if (Version.TryParse(latest.Version, out var lv) &&
-                        Version.TryParse(installed.Version, out var iv) &&
-                        lv > iv)
+                    try
                     {
-                        // Hiện thông báo trên UI thread của Revit
-                        application.ControlledApplication.ApplicationInitialized += (s, e) =>
+                        string installedJson = Path.Combine(bundleDirForUpdate, "version.json");
+                        if (!File.Exists(installedJson)) return;
+
+                        var installedText = await File.ReadAllTextAsync(installedJson);
+                        var installed     = Newtonsoft.Json.JsonConvert.DeserializeObject<VersionInfo>(installedText);
+                        if (installed == null || string.IsNullOrWhiteSpace(installed.ManifestUrl)) return;
+
+                        using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+                        var latestJson = await http.GetStringAsync(installed.ManifestUrl);
+                        var latest     = Newtonsoft.Json.JsonConvert.DeserializeObject<VersionInfo>(latestJson);
+                        if (latest == null) return;
+
+                        if (Version.TryParse(latest.Version, out var lv) &&
+                            Version.TryParse(installed.Version, out var iv) &&
+                            lv > iv)
                         {
-                            TaskDialog dlg = new TaskDialog("JNNTool — Có phiên bản mới!");
-                            dlg.MainIcon        = TaskDialogIcon.TaskDialogIconInformation;
-                            dlg.MainInstruction = $"🔔 JNNTool v{latest.Version} đã sẵn sàng!";
-                            dlg.MainContent     = $"Bạn đang dùng v{installed.Version}.\n" +
-                                                  $"Vui lòng chạy JNNToolInstaller.exe để cập nhật.";
-                            dlg.Show();
-                        };
+                            // Hiện thông báo an toàn trên UI thread của Revit qua ExternalEvent
+                            JNNTool.Core.ExternalEvents.ActionEventHandler.Instance.Post(_ =>
+                            {
+                                TaskDialog dlg = new TaskDialog("JNNTool — Có phiên bản mới!");
+                                dlg.MainIcon        = TaskDialogIcon.TaskDialogIconInformation;
+                                dlg.MainInstruction = $"🔔 JNNTool v{latest.Version} đã sẵn sàng!";
+                                dlg.MainContent     = $"Bạn đang dùng v{installed.Version}.\n" +
+                                                      $"Vui lòng chạy JNNToolInstaller.exe để cập nhật.";
+                                dlg.Show();
+                            });
+                        }
                     }
-                }
-                catch { /* Không làm gì nếu lỗi network */ }
-            });
+                    catch { /* Không làm gì nếu lỗi network */ }
+                });
+            };
 #endif
 
             return Result.Succeeded;
@@ -1248,6 +1077,40 @@ namespace JNNTool
             catch { }
 
             return null;
+        }
+
+        private static void SetRibbonItemIcon(RibbonItemData data, string iconFileName, string resourcesPath)
+        {
+            try
+            {
+                string iconPath = Path.Combine(resourcesPath, iconFileName);
+                if (File.Exists(iconPath))
+                {
+                    var img = new BitmapImage();
+                    img.BeginInit();
+                    img.UriSource = new Uri(iconPath, UriKind.Absolute);
+                    img.CacheOption = BitmapCacheOption.OnLoad;
+                    img.EndInit();
+                    img.Freeze();
+
+                    if (data is PushButtonData pbd)
+                    {
+                        pbd.LargeImage = img;
+                        pbd.Image = img;
+                    }
+                    else if (data is SplitButtonData sbd)
+                    {
+                        sbd.LargeImage = img;
+                        sbd.Image = img;
+                    }
+                    else if (data is PulldownButtonData pud)
+                    {
+                        pud.LargeImage = img;
+                        pud.Image = img;
+                    }
+                }
+            }
+            catch { }
         }
     }
 

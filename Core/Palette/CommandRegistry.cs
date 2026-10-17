@@ -9,7 +9,7 @@ namespace JNNTool.Core.Palette
     {
         public ToolCommandInfo(string id, string ribbonText, string title, string group,
                                string className, string description, string? iconFile = null,
-                               string? keywords = null)
+                               string? keywords = null, string? parentSplitId = null)
         {
             Id = id;
             RibbonText = ribbonText;
@@ -19,6 +19,7 @@ namespace JNNTool.Core.Palette
             Description = description;
             IconFile = iconFile;
             Keywords = keywords ?? string.Empty;
+            ParentSplitId = parentSplitId;
         }
 
         public string Id { get; }
@@ -29,6 +30,7 @@ namespace JNNTool.Core.Palette
         public string Description { get; }
         public string? IconFile { get; }
         public string Keywords { get; }
+        public string? ParentSplitId { get; }
     }
 
     /// <summary>
@@ -74,12 +76,6 @@ namespace JNNTool.Core.Palette
                 "CreateSection.png", "tao tiet dien section duplicate size dam cot kich thuoc"
             ),
             new ToolCommandInfo(
-                "cmdRebarColumn", "Rebar\nColumn", "Rebar Column (Quick)", "Modeling",
-                "JNNTool.Tools.RebarColumn.Command",
-                "Bố trí thép cột nhanh (thép dọc, đai, nối thép).",
-                "RebarColumn.png", "thep cot rebar column dai thep bo tri nhanh"
-            ),
-            new ToolCommandInfo(
                 "cmdDisallowJoinBeam", "Disallow\nJoin Beam", "Disallow Join Beam", "Modeling",
                 "JNNTool.Tools.DisallowJoinBeam.DisallowJoinBeamCmd",
                 "Quét chọn nhiều dầm và thực hiện Disallow Join ở 2 đầu.",
@@ -102,6 +98,14 @@ namespace JNNTool.Core.Palette
                 "JNNTool.Tools.PileLocation.Command",
                 "Tự động tìm cọc trong view và ghi tọa độ thực tế (mm) vào parameter.",
                 "PileLocation.png", "toa do coc pile location toa do x y coordinate dinh vi coc"
+            ),
+#if false
+            // Tạm ẩn đồng bộ theo Ribbon (App.cs) - Chuyển ngầm qua Rebar Suite
+            new ToolCommandInfo(
+                "cmdRebarColumn", "Rebar\nColumn", "Rebar Column (Quick)", "Rebar Suite",
+                "JNNTool.Tools.RebarColumn.Command",
+                "Bố trí thép cột nhanh (thép dọc, đai, nối thép).",
+                "RebarColumn.png", "thep cot rebar column dai thep bo tri nhanh"
             ),
             new ToolCommandInfo(
                 "cmdFloorByRoom", "Floor By\nRoom", "Floor By Room", "Modeling",
@@ -139,6 +143,7 @@ namespace JNNTool.Core.Palette
                 "Nhận diện gối ở 2 đầu và đưa tim dầm tới đúng mặt gối chính xác.",
                 "ExtendBeam.png", "extend trim keo dai dam goi support mat goi tim dam"
             ),
+#endif
 
             // ───────────────── Panel: CSI x Revit ─────────────────
             new ToolCommandInfo(
@@ -154,22 +159,24 @@ namespace JNNTool.Core.Palette
                 "DimGrid.png", "fit scope box grid level cat truc khoa truc hop gioi han"
             ),
             new ToolCommandInfo(
-                "cmdBoundaryAlign", "Căn Lề\nBiên", "Boundary Align", "CSI x Revit",
+                "cmdBoundaryAlign", "Boundary\nAlign", "Boundary Align", "CSI x Revit",
                 "JNNTool.Tools.CSIxRevit.Commands.BoundaryAlignCommand",
                 "Dời dầm và cột biên vào trong ranh đất / lưới trục, co kéo dầm ngang.",
-                "ExtendBeam.png", "can le bien boundary align ranh dat mep bien can mep"
+                "ExtendBeam.png", "boundary align can le bien ranh dat mep bien can mep"
             ),
             new ToolCommandInfo(
                 "cmdAutoJoinActiveView", "Auto Join\n(View)", "Auto Join (Active View)", "CSI x Revit",
                 "JNNTool.Tools.AutoJoin.AutoJoinActiveViewCommand",
                 "Tự động Join và đảo thứ tự ưu tiên (Column > Beam > Floor) trong View hiện hành.",
-                "AutoJoin.png", "auto join view cat cot dam san switch order active view"
+                "AutoJoin.png", "auto join view cat cot dam san switch order active view",
+                "cmdAutoJoinSplit"
             ),
             new ToolCommandInfo(
                 "cmdAutoJoinProject", "Auto Join\n(Project)", "Auto Join (Entire Project)", "CSI x Revit",
                 "JNNTool.Tools.AutoJoin.AutoJoinProjectCommand",
                 "Tự động Join và đảo thứ tự ưu tiên cho toàn bộ mô hình dự án.",
-                "AutoJoin.png", "auto join project toan bo mo hinh join toan bo"
+                "AutoJoin.png", "auto join project toan bo mo hinh join toan bo",
+                "cmdAutoJoinSplit"
             ),
 
             // ───────────────── Panel: Layout ─────────────────
@@ -211,12 +218,15 @@ namespace JNNTool.Core.Palette
                 "Thiết kế tham số hình học cầu thang 3D Solid và xuất Family (.rfa).",
                 "StairModel.png", "thiet ke thang stair designer 3d solid family rfa winder"
             ),
+#if false
+            // Tạm ẩn đồng bộ theo Ribbon (App.cs)
             new ToolCommandInfo(
                 "cmdStairRebarSuiteNew", "Stair\nRebar", "Stair Rebar", "Stair",
                 "JNN.Stair.Commands.StairDetailingCommand",
                 "Bố trí uốn cốt thép thang đan chéo góc lõm chống bung nổ bê tông theo TCVN 5574.",
                 "StairDetail.png", "thep thang stair rebar uon thep goc lom dan cheo"
             ),
+#endif
 
             // ───────────────── Panel: Quantity ─────────────────
             new ToolCommandInfo(
@@ -226,7 +236,8 @@ namespace JNNTool.Core.Palette
                 "QuantityTakeoff.png", "boc tach khoi luong quantity takeoff qto excel be tong van khuon thep"
             ),
 
-            // ───────────────── Panel: Rebar Suite ─────────────────
+#if false
+            // ───────────────── Panel: Rebar Suite (Tạm ẩn đồng bộ theo Ribbon App.cs) ─────────────────
             new ToolCommandInfo(
                 "cmdSlabRebar", "Rebar\nSlab", "Rebar Slab", "Rebar Suite",
                 "JNNTool.RebarSuite.Slab.SlabRebarCommand",
@@ -299,9 +310,16 @@ namespace JNNTool.Core.Palette
                 "Chuẩn hóa và tạo mới các RebarBarType D6-D32, HookType, CoverType.",
                 "RebarUtils.png", "chuan hoa rebar type d6 d32 hook cover loai thep"
             ),
+#endif
         };
 
         public static string GetPostableId(ToolCommandInfo cmd)
-            => $"CustomCtrl_%CustomCtrl_%{TabName}%{cmd.Group}%{cmd.Id}";
+        {
+            if (!string.IsNullOrEmpty(cmd.ParentSplitId))
+            {
+                return $"CustomCtrl_%CustomCtrl_%CustomCtrl_%{TabName}%{cmd.Group}%{cmd.ParentSplitId}%{cmd.Id}";
+            }
+            return $"CustomCtrl_%CustomCtrl_%{TabName}%{cmd.Group}%{cmd.Id}";
+        }
     }
 }

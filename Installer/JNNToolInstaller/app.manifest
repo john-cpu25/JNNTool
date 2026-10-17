@@ -3,12 +3,12 @@
                 xmlns:asmv1="urn:schemas-microsoft-com:asm.v1"
                 xmlns:asmv2="urn:schemas-microsoft-com:asm.v2"
                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <assemblyIdentity version="1.0.0.0" name="NhanStrInstaller.app"/>
+  <assemblyIdentity version="1.0.0.0" name="JNNToolInstaller.app"/>
   <trustInfo xmlns="urn:schemas-microsoft-com:asm.v2">
     <security>
       <requestedPrivileges xmlns="urn:schemas-microsoft-com:asm.v3">
-        <!-- Yêu cầu quyền Admin để ghi vào C:\ProgramData -->
-        <requestedExecutionLevel level="requireAdministrator" uiAccess="false" />
+        <!-- Cài đặt Per-User vào %APPDATA%, không cần quyền Administrator -->
+        <requestedExecutionLevel level="asInvoker" uiAccess="false" />
       </requestedPrivileges>
     </security>
   </trustInfo>

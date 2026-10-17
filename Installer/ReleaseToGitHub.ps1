@@ -61,23 +61,56 @@ if ($LASTEXITCODE -ne 0 -or -not (Test-Path $MsiPath)) {
     exit 1
 }
 
-# 4. Git Commit, Tag & Push
+# 4. Git Commit, Tag & Push (Clean Distribution Repo Policy - Khong day ma nguon C#)
 Write-Host "`n4. Git Commit, Tag va Push len GitHub..." -ForegroundColor Yellow
 Set-Location $ProjectRoot
-git add -A
-$status = git status --porcelain
-if ($status) {
-    git commit -m "Release v${Version}: $Changelog"
+$currentBranch = (& git rev-parse --abbrev-ref HEAD).Trim()
+if ($currentBranch -eq "main") {
+    $distFiles = @("version.json", "README.md", ".gitignore", "Logo_JNN.png")
+    foreach ($df in $distFiles) {
+        if (Test-Path (Join-Path $ProjectRoot $df)) {
+            git add $df
+        }
+    }
+    $status = git status --porcelain -- $distFiles
+    if ($status) {
+        git commit -m "Release v${Version}: $Changelog"
+    }
+    git push origin main
+    if ($LASTEXITCODE -ne 0) { Write-Error "Git push main that bai!"; exit 1 }
+
+    # Chi gan tag tren nhanh main (khong gan tag tren source-backup de tranh lo source code tren GitHub Release)
+    if (& git tag -l "v$Version") {
+        Write-Host "   Tag v$Version da ton tai, cap nhat tag..." -ForegroundColor Gray
+        git tag -d "v$Version"
+    }
+    git tag -a "v$Version" -m "Release v${Version}: $Changelog"
+    git push origin "v$Version" --force
+    if ($LASTEXITCODE -ne 0) { Write-Error "Git push tag that bai!"; exit 1 }
+} else {
+    Write-Warning "Dang o nhanh '$currentBranch' (khong phai 'main'). Bo qua 'git add -A' va 'git tag' tren nhanh code de bao ve ma nguon C#!"
+    Write-Host "   Cap nhat version.json len origin/main qua worktree tam..." -ForegroundColor Gray
+    $tempMainDir = Join-Path ([System.IO.Path]::GetTempPath()) "JNNTool_main_$([Guid]::NewGuid().ToString('N'))"
+    try {
+        git worktree add $tempMainDir main
+        Copy-Item (Join-Path $ProjectRoot "version.json") (Join-Path $tempMainDir "version.json") -Force
+        Push-Location $tempMainDir
+        git add version.json
+        $wtStatus = git status --porcelain -- version.json
+        if ($wtStatus) {
+            git commit -m "Release v${Version}: $Changelog"
+            git push origin main
+        }
+        if (& git tag -l "v$Version") { git tag -d "v$Version" }
+        git tag -a "v$Version" -m "Release v${Version}: $Changelog"
+        git push origin "v$Version" --force
+        Pop-Location
+    } finally {
+        if (Test-Path $tempMainDir) {
+            git worktree remove $tempMainDir --force 2>$null
+        }
+    }
 }
-# Tao hoac cap nhat Tag
-if (& git tag -l "v$Version") {
-    Write-Host "   Tag v$Version da ton tai, cap nhat tag..." -ForegroundColor Gray
-    git tag -d "v$Version"
-}
-git tag -a "v$Version" -m "Release v${Version}: $Changelog"
-git push origin main
-git push origin "v$Version" --force
-if ($LASTEXITCODE -ne 0) { Write-Error "Git push that bai!"; exit 1 }
 
 # 5. Lay Token tu Windows Credential Manager
 Write-Host "`n5. Lay GitHub Token tu Windows Credential Vault..." -ForegroundColor Yellow

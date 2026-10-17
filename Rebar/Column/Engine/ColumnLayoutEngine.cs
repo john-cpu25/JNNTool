@@ -96,6 +96,9 @@ namespace JNNTool.RebarSuite.Column.Engine
             for (int row = nH - 2; row >= 1; row--)
                 barPositions2D.Add((-innerB / 2.0, -innerH / 2.0 + row * stepH));
 
+            double cx = story.CenterPoint.X;
+            double cy = story.CenterPoint.Y;
+
             // Sinh từng thanh dọc
             for (int barIdx = 0; barIdx < barPositions2D.Count; barIdx++)
             {
@@ -109,7 +112,7 @@ namespace JNNTool.RebarSuite.Column.Engine
                 };
 
                 // Điểm chân thanh thép
-                vertBar.CurvePoints.Add(new Point3D(pos.X, pos.Y, zBot));
+                vertBar.CurvePoints.Add(new Point3D(cx + pos.X, cy + pos.Y, zBot));
 
                 if (cranked && !isTopStory)
                 {
@@ -118,17 +121,17 @@ namespace JNNTool.RebarSuite.Column.Engine
                     double zCrankStart = zTop - story.IntersectingBeamDepthMm;
                     double zCrankEnd = zCrankStart + crankSlopeH;
 
-                    vertBar.CurvePoints.Add(new Point3D(pos.X, pos.Y, zCrankStart));
+                    vertBar.CurvePoints.Add(new Point3D(cx + pos.X, cy + pos.Y, zCrankStart));
 
-                    // Điểm uốn thu vào trong
-                    double offsetX = (pos.X > 0) ? -deltaB / 2.0 : deltaB / 2.0;
-                    double offsetY = (pos.Y > 0) ? -deltaH / 2.0 : deltaH / 2.0;
-                    vertBar.CurvePoints.Add(new Point3D(pos.X + offsetX, pos.Y + offsetY, zCrankEnd));
-                    vertBar.CurvePoints.Add(new Point3D(pos.X + offsetX, pos.Y + offsetY, zBarTop));
+                    // Điểm uốn thu vào trong (thanh nằm chính giữa trục X=0 hoặc Y=0 không bẻ lệch theo phương đó)
+                    double offsetX = Math.Abs(pos.X) < 1e-3 ? 0.0 : (pos.X > 0 ? -deltaB / 2.0 : deltaB / 2.0);
+                    double offsetY = Math.Abs(pos.Y) < 1e-3 ? 0.0 : (pos.Y > 0 ? -deltaH / 2.0 : deltaH / 2.0);
+                    vertBar.CurvePoints.Add(new Point3D(cx + pos.X + offsetX, cy + pos.Y + offsetY, zCrankEnd));
+                    vertBar.CurvePoints.Add(new Point3D(cx + pos.X + offsetX, cy + pos.Y + offsetY, zBarTop));
                 }
                 else
                 {
-                    vertBar.CurvePoints.Add(new Point3D(pos.X, pos.Y, zBarTop));
+                    vertBar.CurvePoints.Add(new Point3D(cx + pos.X, cy + pos.Y, zBarTop));
                 }
 
                 result.RebarSets.Add(vertBar);
@@ -146,6 +149,9 @@ namespace JNNTool.RebarSuite.Column.Engine
             ColumnLayoutResult result)
         {
             double clearH = story.ClearHeightMm;
+            double zBot = story.BottomElevationMm;
+            double cx = story.CenterPoint.X;
+            double cy = story.CenterPoint.Y;
 
             // Chiều cao vùng đai dày theo TCVN: max(H_clear/6, B, H, 500mm)
             double denseH = Math.Max(clearH / 6.0, Math.Max(story.WidthBMm, story.HeightHMm));
@@ -165,7 +171,7 @@ namespace JNNTool.RebarSuite.Column.Engine
                 RangeHeightMm = denseH,
                 Description = $"Đai dày chân cột Tầng {story.LevelName}"
             };
-            AddColumnStirrupPoints(stirrupBase, story.WidthBMm, story.HeightHMm, cover);
+            AddColumnStirrupPoints(stirrupBase, story.WidthBMm, story.HeightHMm, cover, cx, cy, zBot + 50.0);
             result.RebarSets.Add(stirrupBase);
 
             // 2. Đai thưa thân cột
@@ -182,7 +188,7 @@ namespace JNNTool.RebarSuite.Column.Engine
                     RangeHeightMm = midSparseH,
                     Description = $"Đai thưa thân cột Tầng {story.LevelName}"
                 };
-                AddColumnStirrupPoints(stirrupMid, story.WidthBMm, story.HeightHMm, cover);
+                AddColumnStirrupPoints(stirrupMid, story.WidthBMm, story.HeightHMm, cover, cx, cy, zBot + denseH);
                 result.RebarSets.Add(stirrupMid);
             }
 
@@ -197,7 +203,7 @@ namespace JNNTool.RebarSuite.Column.Engine
                 RangeHeightMm = denseH,
                 Description = $"Đai dày đầu cột Tầng {story.LevelName}"
             };
-            AddColumnStirrupPoints(stirrupTop, story.WidthBMm, story.HeightHMm, cover);
+            AddColumnStirrupPoints(stirrupTop, story.WidthBMm, story.HeightHMm, cover, cx, cy, zBot + clearH - denseH);
             result.RebarSets.Add(stirrupTop);
 
             // 4. Đai lồng trong (kiểu AB) nếu được chọn
@@ -214,26 +220,27 @@ namespace JNNTool.RebarSuite.Column.Engine
                 // Đai lồng hình chữ nhật nhỏ bên trong
                 double wIn = (story.WidthBMm - 2 * cover) / 2.0;
                 double hIn = (story.HeightHMm - 2 * cover) / 2.0;
-                internalStirrup.CurvePoints.Add(new Point3D(-wIn / 2.0, -hIn / 2.0, 0));
-                internalStirrup.CurvePoints.Add(new Point3D(wIn / 2.0, -hIn / 2.0, 0));
-                internalStirrup.CurvePoints.Add(new Point3D(wIn / 2.0, hIn / 2.0, 0));
-                internalStirrup.CurvePoints.Add(new Point3D(-wIn / 2.0, hIn / 2.0, 0));
-                internalStirrup.CurvePoints.Add(new Point3D(-wIn / 2.0, -hIn / 2.0, 0));
+                double zIn = zBot + 50.0;
+                internalStirrup.CurvePoints.Add(new Point3D(cx - wIn / 2.0, cy - hIn / 2.0, zIn));
+                internalStirrup.CurvePoints.Add(new Point3D(cx + wIn / 2.0, cy - hIn / 2.0, zIn));
+                internalStirrup.CurvePoints.Add(new Point3D(cx + wIn / 2.0, cy + hIn / 2.0, zIn));
+                internalStirrup.CurvePoints.Add(new Point3D(cx - wIn / 2.0, cy + hIn / 2.0, zIn));
+                internalStirrup.CurvePoints.Add(new Point3D(cx - wIn / 2.0, cy - hIn / 2.0, zIn));
                 result.RebarSets.Add(internalStirrup);
             }
         }
 
-        private static void AddColumnStirrupPoints(ColumnRebarSetLayoutInfo set, double b, double h, double cover)
+        private static void AddColumnStirrupPoints(ColumnRebarSetLayoutInfo set, double b, double h, double cover, double cx = 0, double cy = 0, double z = 0)
         {
             double halfW = b / 2.0 - cover;
             double halfH = h / 2.0 - cover;
 
             // Hình chữ nhật đai kín
-            set.CurvePoints.Add(new Point3D(-halfW, -halfH, 0));
-            set.CurvePoints.Add(new Point3D(halfW, -halfH, 0));
-            set.CurvePoints.Add(new Point3D(halfW, halfH, 0));
-            set.CurvePoints.Add(new Point3D(-halfW, halfH, 0));
-            set.CurvePoints.Add(new Point3D(-halfW, -halfH, 0));
+            set.CurvePoints.Add(new Point3D(cx - halfW, cy - halfH, z));
+            set.CurvePoints.Add(new Point3D(cx + halfW, cy - halfH, z));
+            set.CurvePoints.Add(new Point3D(cx + halfW, cy + halfH, z));
+            set.CurvePoints.Add(new Point3D(cx - halfW, cy + halfH, z));
+            set.CurvePoints.Add(new Point3D(cx - halfW, cy - halfH, z));
         }
     }
 }

@@ -108,17 +108,18 @@ namespace JNNTool.RebarSuite.Wall.Builders
                     var barType = RebarTypeResolver.ResolveBarType(doc, dia);
                     if (barType == null) continue;
 
-                    // Xác định normal vector cho Rebar
+                    // Xác định normal vector cho Rebar (phương rải của RebarSet):
+                    // - Thép đứng: rải dọc theo phương chiều dài vách (Wall.Direction)
+                    // - Thép ngang và đai C: rải theo phương đứng Z
                     XYZ normal;
                     if (setInfo.Role == WallRebarRole.VerticalLayerOuter || setInfo.Role == WallRebarRole.VerticalLayerInner)
                     {
-                        // Thép đứng: Normal là vector vuông góc vách
-                        normal = new XYZ(layoutResult.Wall.Normal.X, layoutResult.Wall.Normal.Y, layoutResult.Wall.Normal.Z);
+                        var d = new XYZ(layoutResult.Wall.Direction.X, layoutResult.Wall.Direction.Y, layoutResult.Wall.Direction.Z);
+                        normal = d.GetLength() > 0.001 ? d.Normalize() : XYZ.BasisX;
                     }
                     else
                     {
-                        // Thép ngang và đai C: Normal theo phương đứng Z
-                        normal = new XYZ(0, 0, 1);
+                        normal = XYZ.BasisZ;
                     }
 
                     var rebar = JNNTool.Core.Compat.RebarCompat.CreateFromCurves(

@@ -129,6 +129,23 @@ namespace JNNTool.RebarSuite.Pile.Engine
                 });
             }
 
+            // Đai dày mũi cọc
+            if (denseLen > 100.0)
+            {
+                int countDenseToe = Math.Max(2, (int)Math.Ceiling(denseLen / s.StirrupSpacingDense) + 1);
+                result.RebarSets.Add(new PileRebarSetLayoutInfo
+                {
+                    Role = PileRebarRole.StirrupDenseToe,
+                    Diameter = s.StirrupDiameter,
+                    BarCount = countDenseToe,
+                    SpacingMm = s.StirrupSpacingDense,
+                    RangeLengthMm = denseLen,
+                    CurvePoints = CreateCirclePts(pileBotZ + denseLen),
+                    DistributionVector = new Point3D(0, 0, -1),
+                    Description = $"Đai vùng dày mũi cọc ({s.StirrupDiameter} a{s.StirrupSpacingDense:F0}, {countDenseToe} đai)"
+                });
+            }
+
             // ==========================================================
             // 3. Vành Đai Gia Cường / Định Vị (Stiffener Rings)
             // ==========================================================

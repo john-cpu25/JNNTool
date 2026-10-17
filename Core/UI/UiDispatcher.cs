@@ -47,7 +47,7 @@ namespace JNNTool.Core.UI
             {
                 Dispatcher d = Current;
                 if (d == null || d.CheckAccess()) action();
-                else d.Invoke(action);
+                else d.BeginInvoke(action);
             }
             catch
             {

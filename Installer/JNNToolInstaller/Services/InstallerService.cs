@@ -8,8 +8,12 @@ namespace JNNToolInstaller.Services;
 
 public class InstallerService
 {
-    // Noi plugin duoc cai (de kiem tra IsInstalled)
+    // Nơi plugin được cài (Per-User %APPDATA% ưu tiên, kèm đường dẫn ProgramData cũ để dọn dẹp nếu có)
     private static readonly string InstallRoot =
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                     "Autodesk", "ApplicationPlugins", "JNNTool.bundle");
+
+    private static readonly string LegacyMachineInstallRoot =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
                      "Autodesk", "ApplicationPlugins", "JNNTool.bundle");
 
@@ -36,64 +40,78 @@ public class InstallerService
         var tempDir = Path.Combine(Path.GetTempPath(), $"JNNTool_{Guid.NewGuid():N}");
         Directory.CreateDirectory(tempDir);
 
-        // Ten file tu URL (vi du: JNNToolSetup_v1.2.0.msi)
-        var fileName = Path.GetFileName(new Uri(manifest.DownloadUrl).LocalPath);
-        if (string.IsNullOrWhiteSpace(fileName)) fileName = "JNNToolSetup.msi";
-        var msiPath = Path.Combine(tempDir, fileName);
-
-        using var http = new HttpClient();
-        http.Timeout = TimeSpan.FromMinutes(10);
-        http.DefaultRequestHeaders.Add("User-Agent", "JNNToolInstaller");
-
-        using var response = await http.GetAsync(
-            manifest.DownloadUrl, HttpCompletionOption.ResponseHeadersRead, ct);
-        response.EnsureSuccessStatusCode();
-
-        long? length = response.Content.Headers.ContentLength;
-        await using var fs  = new FileStream(msiPath, FileMode.Create, FileAccess.Write,
-                                              FileShare.None, 81920, true);
-        await using var src = await response.Content.ReadAsStreamAsync(ct);
-
-        var  buffer = new byte[81920];
-        long read   = 0;
-        int  n;
-        while ((n = await src.ReadAsync(buffer, ct)) > 0)
+        try
         {
-            await fs.WriteAsync(buffer.AsMemory(0, n), ct);
-            read += n;
-            if (length is > 0)
+            // Ten file tu URL (vi du: JNNToolSetup_v1.2.0.msi)
+            var fileName = Path.GetFileName(new Uri(manifest.DownloadUrl).LocalPath);
+            if (string.IsNullOrWhiteSpace(fileName)) fileName = "JNNToolSetup.msi";
+            var msiPath = Path.Combine(tempDir, fileName);
+
+            using var http = new HttpClient();
+            http.Timeout = TimeSpan.FromMinutes(10);
+            http.DefaultRequestHeaders.Add("User-Agent", "JNNToolInstaller");
+
+            using var response = await http.GetAsync(
+                manifest.DownloadUrl, HttpCompletionOption.ResponseHeadersRead, ct);
+            response.EnsureSuccessStatusCode();
+
+            long? length = response.Content.Headers.ContentLength;
+            await using var fs  = new FileStream(msiPath, FileMode.Create, FileAccess.Write,
+                                                  FileShare.None, 81920, true);
+            await using var src = await response.Content.ReadAsStreamAsync(ct);
+
+            var  buffer = new byte[81920];
+            long read   = 0;
+            int  n;
+            while ((n = await src.ReadAsync(buffer, ct)) > 0)
             {
-                int pct = (int)((double)read / length.Value * 90);
-                ProgressChanged?.Invoke(pct);
-                StatusChanged?.Invoke(
-                    $"Dang tai... {read / 1024:N0} KB / {length.Value / 1024:N0} KB");
+                await fs.WriteAsync(buffer.AsMemory(0, n), ct);
+                read += n;
+                if (length is > 0)
+                {
+                    int pct = (int)((double)read / length.Value * 90);
+                    ProgressChanged?.Invoke(pct);
+                    StatusChanged?.Invoke(
+                        $"Dang tai... {read / 1024:N0} KB / {length.Value / 1024:N0} KB");
+                }
+            }
+            await fs.DisposeAsync();
+
+            // --- Chay msiexec (Per-User, khong can UAC runas) ---
+            StatusChanged?.Invoke("Dang chay Windows Installer...");
+            ProgressChanged?.Invoke(95);
+
+            // /i = install, /qb = basic UI (progress bar), /norestart
+            var psi = new ProcessStartInfo
+            {
+                FileName        = "msiexec.exe",
+                Arguments       = $"/i \"{msiPath}\" /qb /norestart",
+                UseShellExecute = true
+            };
+
+            var proc = Process.Start(psi)
+                ?? throw new Exception("Khong the khoi dong Windows Installer.");
+
+            await proc.WaitForExitAsync(ct);
+
+            if (proc.ExitCode != 0 && proc.ExitCode != 1641 && proc.ExitCode != 3010)
+                throw new Exception($"Cai dat that bai (exit code {proc.ExitCode}).");
+
+            ProgressChanged?.Invoke(100);
+            StatusChanged?.Invoke("Hoan tat! Vui long khoi dong lai Revit.");
+        }
+        finally
+        {
+            try
+            {
+                if (Directory.Exists(tempDir))
+                    Directory.Delete(tempDir, recursive: true);
+            }
+            catch
+            {
+                // Ignore temp cleanup errors
             }
         }
-        await fs.DisposeAsync();
-
-        // --- Chay msiexec ---
-        StatusChanged?.Invoke("Dang chay Windows Installer...");
-        ProgressChanged?.Invoke(95);
-
-        // /i = install, /qb = basic UI (progress bar), /norestart
-        var psi = new ProcessStartInfo
-        {
-            FileName        = "msiexec.exe",
-            Arguments       = $"/i \"{msiPath}\" /qb /norestart",
-            UseShellExecute = true,   // can UAC elevation
-            Verb            = "runas"
-        };
-
-        var proc = Process.Start(psi)
-            ?? throw new Exception("Khong the khoi dong Windows Installer.");
-
-        await proc.WaitForExitAsync(ct);
-
-        if (proc.ExitCode != 0 && proc.ExitCode != 1641 && proc.ExitCode != 3010)
-            throw new Exception($"Cai dat that bai (exit code {proc.ExitCode}).");
-
-        ProgressChanged?.Invoke(100);
-        StatusChanged?.Invoke("Hoan tat! Vui long khoi dong lai Revit.");
     }
 
     // ─── Uninstall ───────────────────────────────────────────────────────────
@@ -104,7 +122,7 @@ public class InstallerService
         StatusChanged?.Invoke("Dang go cai dat...");
         ProgressChanged?.Invoke(10);
 
-        // Tim ProductCode tu registry
+        // Tim ProductCode tu registry (HKCU uu tien, HKLM fallback)
         var productCode = FindProductCode();
         if (productCode != null)
         {
@@ -113,17 +131,29 @@ public class InstallerService
             {
                 FileName        = "msiexec.exe",
                 Arguments       = $"/x {productCode} /qb /norestart",
-                UseShellExecute = true,
-                Verb            = "runas"
+                UseShellExecute = true
             };
             var proc = Process.Start(psi);
             if (proc != null) await proc.WaitForExitAsync(ct);
         }
-        else if (Directory.Exists(InstallRoot))
+
+        if (Directory.Exists(InstallRoot))
         {
-            // Fallback: xoa thu muc truc tiep
-            StatusChanged?.Invoke("Xoa thu muc plugin...");
+            StatusChanged?.Invoke("Xoa thu muc plugin (%APPDATA%)...");
             Directory.Delete(InstallRoot, recursive: true);
+        }
+
+        if (Directory.Exists(LegacyMachineInstallRoot))
+        {
+            try
+            {
+                StatusChanged?.Invoke("Xoa thu muc plugin cu (ProgramData)...");
+                Directory.Delete(LegacyMachineInstallRoot, recursive: true);
+            }
+            catch
+            {
+                // Bo qua neu khong co quyen xoa ProgramData
+            }
         }
 
         ProgressChanged?.Invoke(100);
@@ -132,7 +162,7 @@ public class InstallerService
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
-    public bool IsInstalled => Directory.Exists(InstallRoot);
+    public bool IsInstalled => Directory.Exists(InstallRoot) || Directory.Exists(LegacyMachineInstallRoot);
 
     public List<string> GetInstalledRevitVersions()
     {
@@ -147,21 +177,49 @@ public class InstallerService
         return result;
     }
 
-    /// <summary>Tim ProductCode cua JNNTool trong registry de go dung MSI.</summary>
+    /// <summary>Tim ProductCode cua JNNTool trong registry (HKCU va HKLM) de go dung MSI.</summary>
     private static string? FindProductCode()
     {
         try
         {
-            using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(
-                @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall");
-            if (key == null) return null;
-
-            foreach (var sub in key.GetSubKeyNames())
+            // 1. Kiem tra key HKCU\Software\JNN\JNNTool do Package.wxs ghi
+            using (var jnnKey = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\JNN\JNNTool"))
             {
-                using var subKey = key.OpenSubKey(sub);
-                var name = subKey?.GetValue("DisplayName") as string;
-                if (name != null && name.Contains("JNNTool", StringComparison.OrdinalIgnoreCase))
-                    return sub; // ProductCode dang {GUID}
+                var code = jnnKey?.GetValue("ProductCode") as string;
+                if (!string.IsNullOrWhiteSpace(code))
+                    return code;
+            }
+
+            // 2. Kiem tra HKCU Uninstall (Per-User MSI)
+            using (var cuKey = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
+                @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"))
+            {
+                if (cuKey != null)
+                {
+                    foreach (var sub in cuKey.GetSubKeyNames())
+                    {
+                        using var subKey = cuKey.OpenSubKey(sub);
+                        var name = subKey?.GetValue("DisplayName") as string;
+                        if (name != null && name.Contains("JNNTool", StringComparison.OrdinalIgnoreCase))
+                            return sub;
+                    }
+                }
+            }
+
+            // 3. Fallback HKLM Uninstall (Per-Machine MSI cu)
+            using (var lmKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(
+                @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"))
+            {
+                if (lmKey != null)
+                {
+                    foreach (var sub in lmKey.GetSubKeyNames())
+                    {
+                        using var subKey = lmKey.OpenSubKey(sub);
+                        var name = subKey?.GetValue("DisplayName") as string;
+                        if (name != null && name.Contains("JNNTool", StringComparison.OrdinalIgnoreCase))
+                            return sub;
+                    }
+                }
             }
         }
         catch { }

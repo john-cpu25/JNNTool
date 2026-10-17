@@ -238,9 +238,19 @@
                         <TextBlock Text="Icon Presentation Style" Style="{StaticResource SectionLabel}" Margin="0,14,0,6"/>
                         <UniformGrid Columns="2" Rows="2">
                             <!-- Style 1: Badge -->
-                            <Button Style="{StaticResource StyleOptionButton}"
-                                    Command="{Binding SelectStyleCommand}" CommandParameter="{x:Static models:RibbonIconStyle.Badge}"
+                            <Button Command="{Binding SelectStyleCommand}" CommandParameter="{x:Static models:RibbonIconStyle.Badge}"
                                     ToolTip="Badge: Rounded container with white glyph">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource StyleOptionButton}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsBadgeStyle}" Value="True">
+                                                <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+                                                <Setter Property="BorderThickness" Value="1.5"/>
+                                                <Setter Property="Background" Value="#EDF2F7"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                     <Border Width="16" Height="16" CornerRadius="4" Background="{Binding SelectedColorBrush}" Margin="0,0,6,0"/>
                                     <TextBlock Text="Badge" VerticalAlignment="Center"/>
@@ -248,9 +258,19 @@
                             </Button>
 
                             <!-- Style 2: Glyph -->
-                            <Button Style="{StaticResource StyleOptionButton}"
-                                    Command="{Binding SelectStyleCommand}" CommandParameter="{x:Static models:RibbonIconStyle.Glyph}"
+                            <Button Command="{Binding SelectStyleCommand}" CommandParameter="{x:Static models:RibbonIconStyle.Glyph}"
                                     ToolTip="Glyph: Transparent background with colored glyph">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource StyleOptionButton}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsGlyphStyle}" Value="True">
+                                                <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+                                                <Setter Property="BorderThickness" Value="1.5"/>
+                                                <Setter Property="Background" Value="#EDF2F7"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                     <Path Data="F0 M4,3 H20 A2,2 0 0 1 22,5 V7.5 A2,2 0 0 1 20,9.5 H15 A1,1 0 0 0 14,10.5 V13.5 A1,1 0 0 0 15,14.5 H20 A2,2 0 0 1 22,16.5 V19 A2,2 0 0 1 20,21 H4 A2,2 0 0 1 2,19 V16.5 A2,2 0 0 1 4,14.5 H9 A1,1 0 0 0 10,13.5 V10.5 A1,1 0 0 0 9,9.5 H4 A2,2 0 0 1 2,7.5 V5 A2,2 0 0 1 4,3 Z" Width="14" Height="14" Stretch="Uniform" Fill="{Binding SelectedColorBrush}" Margin="0,0,6,0"/>
                                     <TextBlock Text="Glyph" VerticalAlignment="Center"/>
@@ -258,9 +278,19 @@
                             </Button>
 
                             <!-- Style 3: Circle -->
-                            <Button Style="{StaticResource StyleOptionButton}"
-                                    Command="{Binding SelectStyleCommand}" CommandParameter="{x:Static models:RibbonIconStyle.Circle}"
+                            <Button Command="{Binding SelectStyleCommand}" CommandParameter="{x:Static models:RibbonIconStyle.Circle}"
                                     ToolTip="Circle: Circular container with white glyph">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource StyleOptionButton}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsCircleStyle}" Value="True">
+                                                <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+                                                <Setter Property="BorderThickness" Value="1.5"/>
+                                                <Setter Property="Background" Value="#EDF2F7"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                     <Border Width="16" Height="16" CornerRadius="8" Background="{Binding SelectedColorBrush}" Margin="0,0,6,0"/>
                                     <TextBlock Text="Circle" VerticalAlignment="Center"/>
@@ -268,9 +298,19 @@
                             </Button>
 
                             <!-- Style 4: Outline -->
-                            <Button Style="{StaticResource StyleOptionButton}"
-                                    Command="{Binding SelectStyleCommand}" CommandParameter="{x:Static models:RibbonIconStyle.Outline}"
+                            <Button Command="{Binding SelectStyleCommand}" CommandParameter="{x:Static models:RibbonIconStyle.Outline}"
                                     ToolTip="Outline: Tinted background with colored border">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource StyleOptionButton}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsOutlineStyle}" Value="True">
+                                                <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+                                                <Setter Property="BorderThickness" Value="1.5"/>
+                                                <Setter Property="Background" Value="#EDF2F7"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                     <Border Width="16" Height="16" CornerRadius="4" Background="#F5F7F9" BorderBrush="{Binding SelectedColorBrush}" BorderThickness="1.5" Margin="0,0,6,0"/>
                                     <TextBlock Text="Outline" VerticalAlignment="Center"/>

@@ -4,6 +4,33 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed - **Đồng bộ số lượng công cụ Ribbon và Command Palette (21 tools)**
+- **Khớp 1:1 theo Ribbon thực tế**:
+  - Ẩn lệnh `Rebar Column` (`cmdRebarColumn`) khỏi Panel **Modeling** trên cả Ribbon ([`App.cs`](file:///c:/Users/nhann/OneDrive/AI/JNNTool/Core/App.cs)) và Command Palette ([`CommandRegistry.cs`](file:///c:/Users/nhann/OneDrive/AI/JNNTool/Core/Palette/CommandRegistry.cs)), chuyển ngầm vào phân hệ `Rebar Suite`.
+  - Panel **Modeling** tinh gọn còn đúng **6 công cụ**: `Split Beam`, `Create Section`, `Disallow Join Beam`, `Create Filter`, `Speed Overrider`, `Pile Location`.
+  - Tổng số công cụ trên Ribbon và Command Palette đồng bộ chuẩn xác **21 công cụ**.
+  - Thống nhất tên gọi tiếng Anh chuẩn mực **`Boundary Align`** cho lệnh `cmdBoundaryAlign` trên Ribbon, Command Palette, Theme Manager và Tiêu đề cửa sổ.
+
+### Fixed & Enhanced - **Code Review Toàn Diện & Nâng Cấp Hệ Thống (2026-10-14)** (Chi tiết tại `History/2026-10-14_CodeReview_And_Update_History.md`)
+- **Login, Bảo mật & Cô lập Unit Test**:
+  - Bổ sung tham số `customFilePath` cho `SecureStorageService` và cập nhật `LoginTests` dùng file tạm độc lập trong `Path.GetTempPath()`, bảo vệ tuyệt đối file `%APPDATA%\JNNTool\license.dat` thật khi chạy `dotnet test`.
+  - Gắn `Authorization: Bearer` theo từng `HttpRequestMessage` trong `LicenseClientService` để đảm bảo thread-safety.
+  - Bổ sung `[Authorize]` cho các endpoint `validate`, `deactivate`, `renew` trên `LicenseController` (Server API).
+- **JNN Updater (`JNNToolInstaller`), WiX MSI & Release Pipeline**:
+  - Đồng bộ `VersionChecker` và `InstallerService` sang kiến trúc cài đặt Per-User (`%APPDATA%\Autodesk\ApplicationPlugins\JNNTool.bundle`), đọc `ProductCode` từ `HKCU\Software\JNN\JNNTool`, bỏ ép quyền Admin (`asInvoker`) và tự động dọn thư mục tải MSI tạm.
+  - Loại bỏ toàn bộ DLL cũ (`NhanStr.dll`, `RincoModeling.dll`, `Material.Icons*`, `Microsoft.Expression.Drawing`, `Microsoft.Xaml.Behaviors`) và 13 icon decompile khỏi `Package.wxs` và `JNNTool.bundle`.
+  - Áp dụng cơ chế Clean Distribution Repo trong `ReleaseToGitHub.ps1` (thay thế `git add -A`) để bảo vệ mã nguồn C#.
+- **Core, Dispatcher & Command Palette**:
+  - Đăng ký `ApplicationInitialized` đồng bộ trong `App.OnStartup` và điều phối `TaskDialog.Show()` qua `ActionEventHandler.Instance.Post`.
+  - Đổi `d.Invoke` sang `d.BeginInvoke` trong `UiDispatcher.RunOnUi` để chống deadlock giữa UI thread và Revit API thread.
+  - Bổ sung `ParentSplitId` trong `CommandRegistry` cho các lệnh con của `SplitButton` và gán đầy đủ `View` + `JournalData` trong `CommandRunner`.
+- **Rebar Suite 3D Geometry & Builders**:
+  - Hoàn thiện biến đổi tọa độ 3D, kiểm tra giao cắt BoundingBox X/Y và vector pháp tuyến mặt phẳng (`normal` / `RebarStyle.StirrupTie`) cho cả 6 phân hệ: **Sàn** (`SlabRebarBuilder`), **Dầm** (`BeamLayoutEngine`, `BeamRebarBuilder`), **Cột** (`ColumnLayoutEngine`, `ColumnRebarBuilder`), **Vách** (`WallRebarBuilder`), **Móng** (`FoundationRebarBuilder`) và **Cọc** (`PileLayoutEngine`, `PileRebarBuilder`).
+- **Hệ thống Icon Vector 3x, Ribbon Theme & Command Palette**:
+  - Thiết kế và đăng ký đầy đủ Path Geometry cho toàn bộ 34 biểu tượng trong `VectorIconCatalog` (`Split`, `DisallowJoin`, `Flash`, `Target`, `Eye`, `CommandPalette`, `DimColumn`, `StairDesigner`), loại bỏ hoàn toàn hiện tượng fallback về icon `Settings` và xóa bỏ trùng lặp icon giữa các nút trên cùng một Panel.
+  - Đồng bộ trực tiếp bộ **Vector Icon 3x Supersampling** vào **Command Palette** (`PaletteItemVm` + `RibbonThemeService.ThemeApplied`), tự động đổi màu và kiểu hiển thị (`Badge`, `Glyph`, `Circle`, `Outline`) theo thời gian thực khi người dùng tùy chỉnh trong `Ribbon Theme Manager`.
+  - Tối ưu hóa các tài nguyên ảnh PNG `1024×1024` quá khổ, giúp giảm dung lượng bộ cài `JNNToolSetup_v2.1.0.msi` từ `10.62 MB` xuống còn **`6.74 MB`**.
+
 ### Added - **Command Palette (Dockable Pane)** (panel General): Bảng lệnh tìm kiếm nhanh toàn bộ công cụ JNNTool
 - **Kiến trúc Dockable Pane Modeless**:
   - Tích hợp Dockable Pane chuẩn Revit API (`IDockablePaneProvider`), có thể neo cố định hoặc dock bên cạnh màn hình Revit.
@@ -17,6 +44,22 @@ All notable changes to this project will be documented in this file.
 - **Tối ưu hóa bố cục Ribbon theo nhu cầu thực tế**:
   - Chuyển công cụ **Stair Model** từ panel Layout sang panel **Stair**.
   - Tạm ẩn các công cụ chưa dùng tới: Floor By Room, Rebar Beam, Steel Connection, Clash Detection, Dim Beam, Extend Beam, Stair Rebar và panel JNN Rebar.
+
+### Added - **Hệ thống Quản Trị & Tạo Key Bản Quyền Tự Động (Admin License Portal & CLI)**
+- **SQL Backend RPC trên Supabase (`supabase/admin_license_rpc.sql`)**:
+  - `admin_generate_key`: Tự động sinh mã Key chuẩn Base32 Crockford `JNN-XXXX-XXXX-XXXX` (loại bỏ ký tự dễ nhầm lẫn 0, O, 1, I, L), tính toán hạn dùng và lưu vào bảng `public.licenses`.
+  - `admin_manage_license`: Xử lý 3 nghiệp vụ quản trị tức thì: Reset máy (`bound_machine_id = NULL`), Gia hạn thêm ngày (`renew`), và Thu hồi bản quyền (`revoke`).
+  - `admin_list_licenses`: Truy vấn danh sách khách hàng có phân trang, tính toán số ngày còn lại và hỗ trợ tìm kiếm.
+  - Bảng cấu hình bảo mật `admin_config` với RLS bật kín, bảo vệ bằng mật khẩu `Admin Secret`.
+- **Giao diện Web Admin Portal (`Tools/Admin/admin-license-portal.html`)**:
+  - Giao diện Web tĩnh độc lập (HTML/CSS/JS thuần, không phụ thuộc server hay Node.js), có thể chạy offline hoặc deploy lên web tĩnh.
+  - Thiết kế đồng bộ chuẩn JNNTool: nền sáng `#F5F7F9`, Card trắng `#FFFFFF`, viền `#DCDDE1`, chữ `#2C3E50`, font chữ thường thanh thoát, bo góc 5px.
+  - Tự động lưu cấu hình `Admin Secret` vào `localStorage`, tích hợp nút 1-click **[ 📋 Copy Key ]** và **[ 💬 Copy Tin Nhắn Gửi Khách ]** soạn sẵn gửi qua Zalo/Email.
+  - Bảng quản trị danh sách khách hàng trực quan kèm các nút thao tác nhanh: `[ 🔄 Reset Máy ]`, `[ ➕ Gia Hạn ]`, `[ ⛔ Thu Hồi ]`.
+- **Script Dòng Lệnh PowerShell (`scripts/create-key.ps1`)**:
+  - Tạo key siêu tốc từ terminal chỉ với 1 lệnh: `.\scripts\create-key.ps1 -Email "user@gmail.com" -Days 365`.
+  - Tự động sao chép mã Key sinh ra vào bộ nhớ tạm (Windows Clipboard).
+  - Hỗ trợ tham số `-ResetMachine -LicenseKey "JNN-..."` để hủy khóa máy nhanh chóng khi khách đổi máy tính.
 
 ### Added - Module **Account & License Manager** (panel General): Quản lý bản quyền, đăng nhập tài khoản và kích hoạt JNNTool
 - **Vị trí Ribbon**: Bố trí trên Panel **General** của Tab `JNNTool` (nút **Account / License** kèm icon nhận diện `Login.png`).

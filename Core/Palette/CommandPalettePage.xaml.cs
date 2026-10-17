@@ -30,7 +30,9 @@ namespace JNNTool.Core.Palette
             InitializeComponent();
 
             _favorites = FavoriteStore.Load();
-            _allItems = CommandRegistry.Commands.Select(c => new PaletteItemVm(c)).ToList();
+            var currentTheme = JNNTool.Tools.UIManager.Models.RibbonThemeSettings.Load()
+                            ?? new JNNTool.Tools.UIManager.Models.RibbonThemeSettings();
+            _allItems = CommandRegistry.Commands.Select(c => new PaletteItemVm(c, currentTheme)).ToList();
             foreach (PaletteItemVm item in _allItems)
             {
                 item.IsFavorite = _favorites.Contains(item.Id);
@@ -40,9 +42,21 @@ namespace JNNTool.Core.Palette
             TotalCommandsText.Text = $"{_allItems.Count} lệnh";
 
             CommandRunner.StatusChanged += OnStatusChanged;
+            JNNTool.Tools.UIManager.Services.RibbonThemeService.ThemeApplied += OnThemeApplied;
             PreviewKeyDown += Page_PreviewKeyDown;
 
             Rebuild();
+        }
+
+        private void OnThemeApplied(JNNTool.Tools.UIManager.Models.RibbonThemeSettings newTheme)
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                foreach (var item in _allItems)
+                {
+                    item.RefreshIcon(newTheme);
+                }
+            }));
         }
 
         // ── IDockablePaneProvider ─────────────────────────────────────────

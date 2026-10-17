@@ -103,9 +103,16 @@ namespace JNNTool.RebarSuite.Pile.Builders
                     var barType = RebarTypeResolver.ResolveBarType(doc, dia);
                     if (barType == null) continue;
 
-                    XYZ normal = (setInfo.Role == PileRebarRole.MainLongitudinal)
-                        ? new XYZ(1, 0, 0)
-                        : new XYZ(0, 0, 1);
+                    XYZ normal;
+                    if (setInfo.Role == PileRebarRole.MainLongitudinal)
+                    {
+                        normal = XYZ.BasisX;
+                    }
+                    else
+                    {
+                        var dist = new XYZ(setInfo.DistributionVector.X, setInfo.DistributionVector.Y, setInfo.DistributionVector.Z);
+                        normal = dist.GetLength() > 0.001 ? dist.Normalize() : new XYZ(0, 0, -1);
+                    }
 
                     var rebar = JNNTool.Core.Compat.RebarCompat.CreateFromCurves(
                         doc,

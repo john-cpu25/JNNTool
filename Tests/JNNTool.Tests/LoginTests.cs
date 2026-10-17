@@ -58,6 +58,10 @@ namespace JNNTool.Tests
         [Fact]
         public void SecureStorage_SaveAndLoad_ShouldRoundtripCorrectly()
         {
+            string tempFilePath = System.IO.Path.Combine(
+                System.IO.Path.GetTempPath(),
+                $"JNNTool_TestLicense_{Guid.NewGuid():N}.dat");
+
             var original = new ClientLicenseInfo
             {
                 LicenseId = Guid.NewGuid(),
@@ -74,8 +78,8 @@ namespace JNNTool.Tests
 
             try
             {
-                SecureStorageService.SaveLicense(original);
-                var loaded = SecureStorageService.LoadLicense();
+                SecureStorageService.SaveLicense(original, tempFilePath);
+                var loaded = SecureStorageService.LoadLicense(tempFilePath);
 
                 Assert.NotNull(loaded);
                 Assert.Equal(original.LicenseId, loaded.LicenseId);
@@ -87,7 +91,7 @@ namespace JNNTool.Tests
             }
             finally
             {
-                SecureStorageService.ClearLicense();
+                SecureStorageService.ClearLicense(tempFilePath);
             }
         }
     }

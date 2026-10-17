@@ -12,22 +12,28 @@ namespace JNNTool.Tools.Login.Services
         private static readonly TimeSpan CacheInterval = TimeSpan.FromMinutes(15);
 
         /// <summary>
-        /// Validates current workstation license status.
-        /// If not licensed or expired, opens the Login/Activation window modelessly and returns false.
-        /// Unrelated Revit commands will not crash.
+        /// Khóa nghiệp vụ RuntimeSeed được giải mã từ chữ ký số máy chủ Supabase.
+        /// Áp dụng kỹ thuật Data Dependency: nếu kẻ xấu dùng dnSpy xóa dòng EnsureLicensed, 
+        /// biến này sẽ mang giá trị rỗng/mặc định khiến các hàm dựng thép tính sai thông số.
+        /// </summary>
+        public static string RuntimeSeed => LicenseClientService.Instance.CurrentLicense?.RuntimeSeed ?? "JNN_DEFAULT_SEED";
+
+        /// <summary>
+        /// Kiểm tra trạng thái bản quyền của máy trạm.
+        /// Nếu chưa kích hoạt hoặc hết hạn, hiển thị bảng đăng nhập và trả về false để chặn lệnh.
         /// </summary>
         public static bool EnsureLicensed(UIApplication uiapp = null)
         {
             var client = LicenseClientService.Instance;
 
-            // Fast local check
+            // Kiểm tra cục bộ tức thì qua DPAPI và HMAC-SHA256
             if (!client.IsLicensed)
             {
                 ShowActivationPrompt(uiapp);
                 return false;
             }
 
-            // Periodically re-validate with server if cache is older than 15 minutes
+            // Đồng bộ ngầm với Supabase định kỳ mỗi 15 phút (Anti-Clock Tampering)
             if (DateTime.UtcNow - _lastCheckedUtc > CacheInterval)
             {
                 Task.Run(async () =>

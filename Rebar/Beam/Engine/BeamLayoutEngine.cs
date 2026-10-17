@@ -75,6 +75,16 @@ namespace JNNTool.RebarSuite.Beam.Engine
             double denseLen = GeometryHelper.RoundUpToMultiple(clearL * settings.StirrupDenseRangeRatio, 50);
             double midLen = Math.Max(clearL - 2 * denseLen, 0);
 
+            // Tính vị trí đầu nhịp dọc theo chuỗi dầm
+            double spanStartX = 0;
+            for (int idx = 0; idx < result.BeamModel.Spans.Count; idx++)
+            {
+                if (ReferenceEquals(result.BeamModel.Spans[idx], span) || result.BeamModel.Spans[idx].SpanIndex == span.SpanIndex)
+                    break;
+                spanStartX += result.BeamModel.Spans[idx].LengthMm;
+            }
+            double clearStartX = spanStartX + span.LeftSupportWidthMm / 2.0;
+
             // 1. Đai dày gối trái
             GeometryHelper.CalculateSpacing(denseLen, 50, 0, settings.StirrupSpacingEnd, out int countDenseLeft, out double actualSpacingLeft);
             var stirrupLeft = new BeamRebarSetLayoutInfo
@@ -86,7 +96,7 @@ namespace JNNTool.RebarSuite.Beam.Engine
                 RangeLengthMm = denseLen,
                 Description = $"Cốt đai dày gối trái (Nhịp {span.SpanIndex + 1})"
             };
-            AddStirrupProfilePoints(stirrupLeft, span, cover);
+            AddStirrupProfilePoints(stirrupLeft, span, cover, clearStartX + 50.0);
             result.RebarSets.Add(stirrupLeft);
 
             // 2. Đai thưa giữa nhịp
@@ -102,7 +112,7 @@ namespace JNNTool.RebarSuite.Beam.Engine
                     RangeLengthMm = midLen,
                     Description = $"Cốt đai thưa giữa nhịp (Nhịp {span.SpanIndex + 1})"
                 };
-                AddStirrupProfilePoints(stirrupMid, span, cover);
+                AddStirrupProfilePoints(stirrupMid, span, cover, clearStartX + denseLen);
                 result.RebarSets.Add(stirrupMid);
             }
 
@@ -117,21 +127,21 @@ namespace JNNTool.RebarSuite.Beam.Engine
                 RangeLengthMm = denseLen,
                 Description = $"Cốt đai dày gối phải (Nhịp {span.SpanIndex + 1})"
             };
-            AddStirrupProfilePoints(stirrupRight, span, cover);
+            AddStirrupProfilePoints(stirrupRight, span, cover, clearStartX + clearL - denseLen);
             result.RebarSets.Add(stirrupRight);
         }
 
-        private static void AddStirrupProfilePoints(BeamRebarSetLayoutInfo set, BeamSpanModel span, double cover)
+        private static void AddStirrupProfilePoints(BeamRebarSetLayoutInfo set, BeamSpanModel span, double cover, double longitudinalOffsetMm = 0)
         {
             double halfW = span.WidthMm / 2.0 - cover;
             double halfH = span.HeightMm / 2.0 - cover;
 
-            // Mặt cắt đai dạng hình chữ nhật khép kín (Y, Z cục bộ)
-            set.CurvePoints.Add(new Point3D(-halfW, -halfH, 0));
-            set.CurvePoints.Add(new Point3D(halfW, -halfH, 0));
-            set.CurvePoints.Add(new Point3D(halfW, halfH, 0));
-            set.CurvePoints.Add(new Point3D(-halfW, halfH, 0));
-            set.CurvePoints.Add(new Point3D(-halfW, -halfH, 0));
+            // Mặt cắt đai dạng hình chữ nhật khép kín (X: bề rộng dầm, Y: chiều cao dầm, Z: vị trí dọc trục dầm)
+            set.CurvePoints.Add(new Point3D(-halfW, -halfH, longitudinalOffsetMm));
+            set.CurvePoints.Add(new Point3D(halfW, -halfH, longitudinalOffsetMm));
+            set.CurvePoints.Add(new Point3D(halfW, halfH, longitudinalOffsetMm));
+            set.CurvePoints.Add(new Point3D(-halfW, halfH, longitudinalOffsetMm));
+            set.CurvePoints.Add(new Point3D(-halfW, -halfH, longitudinalOffsetMm));
         }
 
         /// <summary>
@@ -147,6 +157,12 @@ namespace JNNTool.RebarSuite.Beam.Engine
             double totalLen = beamModel.TotalLengthMm;
             double anchorLenTop = settings.AnchorLengthMultiplier * barTop.DiameterMm;
             double anchorLenBot = settings.AnchorLengthMultiplier * barBot.DiameterMm;
+            double firstSpanH = beamModel.Spans.Count > 0 ? beamModel.Spans[0].HeightMm : 500.0;
+            double firstSpanW = beamModel.Spans.Count > 0 ? beamModel.Spans[0].WidthMm : 300.0;
+            double zTop = firstSpanH / 2.0 - settings.CoverMm - barTop.DiameterMm / 2.0;
+            double zBot = -firstSpanH / 2.0 + settings.CoverMm + barBot.DiameterMm / 2.0;
+            double yStart = -firstSpanW / 2.0 + settings.CoverMm + barTop.DiameterMm / 2.0;
+            double usableW = Math.Max(firstSpanW - 2 * settings.CoverMm - barTop.DiameterMm, 0);
 
             // Thép chủ trên
             var mainTop = new BeamRebarSetLayoutInfo
@@ -154,13 +170,14 @@ namespace JNNTool.RebarSuite.Beam.Engine
                 Role = BeamRebarRole.MainTop,
                 Diameter = barTop.Name,
                 BarCount = settings.TopMainCount,
+                SpacingMm = settings.TopMainCount > 1 ? usableW / (settings.TopMainCount - 1) : 0,
                 Description = $"Thép chủ trên chạy suốt {settings.TopMainCount}{barTop.Name}"
             };
             // Bẻ neo 2 đầu cắm xuống gối
-            mainTop.CurvePoints.Add(new Point3D(0, 0, -anchorLenTop));
-            mainTop.CurvePoints.Add(new Point3D(0, 0, 0));
-            mainTop.CurvePoints.Add(new Point3D(totalLen, 0, 0));
-            mainTop.CurvePoints.Add(new Point3D(totalLen, 0, -anchorLenTop));
+            mainTop.CurvePoints.Add(new Point3D(settings.CoverMm, yStart, zTop - anchorLenTop));
+            mainTop.CurvePoints.Add(new Point3D(settings.CoverMm, yStart, zTop));
+            mainTop.CurvePoints.Add(new Point3D(totalLen - settings.CoverMm, yStart, zTop));
+            mainTop.CurvePoints.Add(new Point3D(totalLen - settings.CoverMm, yStart, zTop - anchorLenTop));
             result.RebarSets.Add(mainTop);
 
             // Thép chủ dưới
@@ -169,13 +186,14 @@ namespace JNNTool.RebarSuite.Beam.Engine
                 Role = BeamRebarRole.MainBottom,
                 Diameter = barBot.Name,
                 BarCount = settings.BottomMainCount,
+                SpacingMm = settings.BottomMainCount > 1 ? usableW / (settings.BottomMainCount - 1) : 0,
                 Description = $"Thép chủ dưới chạy suốt {settings.BottomMainCount}{barBot.Name}"
             };
             // Bẻ neo 2 đầu móc lên
-            mainBot.CurvePoints.Add(new Point3D(0, 0, anchorLenBot));
-            mainBot.CurvePoints.Add(new Point3D(0, 0, 0));
-            mainBot.CurvePoints.Add(new Point3D(totalLen, 0, 0));
-            mainBot.CurvePoints.Add(new Point3D(totalLen, 0, anchorLenBot));
+            mainBot.CurvePoints.Add(new Point3D(settings.CoverMm, yStart, zBot + anchorLenBot));
+            mainBot.CurvePoints.Add(new Point3D(settings.CoverMm, yStart, zBot));
+            mainBot.CurvePoints.Add(new Point3D(totalLen - settings.CoverMm, yStart, zBot));
+            mainBot.CurvePoints.Add(new Point3D(totalLen - settings.CoverMm, yStart, zBot + anchorLenBot));
             result.RebarSets.Add(mainBot);
         }
 
@@ -198,6 +216,9 @@ namespace JNNTool.RebarSuite.Beam.Engine
                 double spanLeft = beamModel.Spans[i].ClearSpanLengthMm;
                 double spanRight = beamModel.Spans[i + 1].ClearSpanLengthMm;
                 double maxSpan = Math.Max(spanLeft, spanRight);
+                double zTopAdd = beamModel.Spans[i].HeightMm / 2.0 - settings.CoverMm - barTopAdd.DiameterMm * 1.5;
+                double yStart = -beamModel.Spans[i].WidthMm / 2.0 + settings.CoverMm + barTopAdd.DiameterMm / 2.0;
+                double usableW = Math.Max(beamModel.Spans[i].WidthMm - 2 * settings.CoverMm - barTopAdd.DiameterMm, 0);
 
                 // Chiều dài vươn = max(L1, L2) * 0.25 (L/4)
                 double cantileverL = GeometryHelper.RoundUpToMultiple(maxSpan * settings.TopAddSpanRatio, 50);
@@ -207,11 +228,12 @@ namespace JNNTool.RebarSuite.Beam.Engine
                     Role = BeamRebarRole.TopAddSupport,
                     Diameter = barTopAdd.Name,
                     BarCount = settings.TopAddCount,
+                    SpacingMm = settings.TopAddCount > 1 ? usableW / (settings.TopAddCount - 1) : 0,
                     Description = $"Thép gia cường gối {i + 1} ({settings.TopAddCount}{barTopAdd.Name} L={cantileverL * 2})"
                 };
 
-                topAdd.CurvePoints.Add(new Point3D(currentDist - cantileverL, 0, 0));
-                topAdd.CurvePoints.Add(new Point3D(currentDist + cantileverL, 0, 0));
+                topAdd.CurvePoints.Add(new Point3D(currentDist - cantileverL, yStart, zTopAdd));
+                topAdd.CurvePoints.Add(new Point3D(currentDist + cantileverL, yStart, zTopAdd));
                 result.RebarSets.Add(topAdd);
             }
         }
@@ -227,21 +249,35 @@ namespace JNNTool.RebarSuite.Beam.Engine
             var barBotAdd = BarCatalog.Parse(settings.BottomAddDiameter) ?? new BarInfo(20);
             double clearL = span.ClearSpanLengthMm;
 
+            double spanStartX = 0;
+            for (int idx = 0; idx < result.BeamModel.Spans.Count; idx++)
+            {
+                if (ReferenceEquals(result.BeamModel.Spans[idx], span) || result.BeamModel.Spans[idx].SpanIndex == span.SpanIndex)
+                    break;
+                spanStartX += result.BeamModel.Spans[idx].LengthMm;
+            }
+
             double offset = GeometryHelper.RoundUpToMultiple(clearL * settings.BottomAddOffsetRatio, 50);
             double addLen = clearL - 2 * offset;
 
             if (addLen > 300)
             {
+                double zBotAdd = -span.HeightMm / 2.0 + settings.CoverMm + barBotAdd.DiameterMm * 1.5;
+                double yStart = -span.WidthMm / 2.0 + settings.CoverMm + barBotAdd.DiameterMm / 2.0;
+                double usableW = Math.Max(span.WidthMm - 2 * settings.CoverMm - barBotAdd.DiameterMm, 0);
+
                 var botAdd = new BeamRebarSetLayoutInfo
                 {
                     Role = BeamRebarRole.BottomAddMidSpan,
                     Diameter = barBotAdd.Name,
                     BarCount = settings.BottomAddCount,
+                    SpacingMm = settings.BottomAddCount > 1 ? usableW / (settings.BottomAddCount - 1) : 0,
                     Description = $"Thép gia cường nhịp {span.SpanIndex + 1} ({settings.BottomAddCount}{barBotAdd.Name} L={addLen})"
                 };
 
-                botAdd.CurvePoints.Add(new Point3D(offset, 0, 0));
-                botAdd.CurvePoints.Add(new Point3D(offset + addLen, 0, 0));
+                double startX = spanStartX + span.LeftSupportWidthMm / 2.0 + offset;
+                botAdd.CurvePoints.Add(new Point3D(startX, yStart, zBotAdd));
+                botAdd.CurvePoints.Add(new Point3D(startX + addLen, yStart, zBotAdd));
                 result.RebarSets.Add(botAdd);
             }
         }

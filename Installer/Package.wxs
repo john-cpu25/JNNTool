@@ -9,7 +9,7 @@
 
   <Package Name="JNNTool Revit Plugin"
            Manufacturer="JNN"
-           Version="2.1.0"
+           Version="2.1.1"
            UpgradeCode="7f04a601-5e26-4b8c-8f4b-57f920f92b7c"
            Compressed="yes"
            Scope="perUser">
@@ -119,29 +119,11 @@
       <Component Id="Cmp_2022_JNNTool_dll" Guid="*" Directory="Dir2022">
         <File Source="..\JNNTool.bundle\Contents\2022\JNNTool.dll" KeyPath="yes" />
       </Component>
-      <Component Id="Cmp_2022_Material_Icons_dll" Guid="*" Directory="Dir2022">
-        <File Source="..\JNNTool.bundle\Contents\2022\Material.Icons.dll" KeyPath="yes" />
-      </Component>
-      <Component Id="Cmp_2022_Material_Icons_WPF_dll" Guid="*" Directory="Dir2022">
-        <File Source="..\JNNTool.bundle\Contents\2022\Material.Icons.WPF.dll" KeyPath="yes" />
-      </Component>
       <Component Id="Cmp_2022_Microsoft_Bcl_AsyncInterfaces_dll" Guid="*" Directory="Dir2022">
         <File Source="..\JNNTool.bundle\Contents\2022\Microsoft.Bcl.AsyncInterfaces.dll" KeyPath="yes" />
       </Component>
-      <Component Id="Cmp_2022_Microsoft_Expression_Drawing_dll" Guid="*" Directory="Dir2022">
-        <File Source="..\JNNTool.bundle\Contents\2022\Microsoft.Expression.Drawing.dll" KeyPath="yes" />
-      </Component>
-      <Component Id="Cmp_2022_Microsoft_Xaml_Behaviors_dll" Guid="*" Directory="Dir2022">
-        <File Source="..\JNNTool.bundle\Contents\2022\Microsoft.Xaml.Behaviors.dll" KeyPath="yes" />
-      </Component>
       <Component Id="Cmp_2022_Newtonsoft_Json_dll" Guid="*" Directory="Dir2022">
         <File Source="..\JNNTool.bundle\Contents\2022\Newtonsoft.Json.dll" KeyPath="yes" />
-      </Component>
-      <Component Id="Cmp_2022_NhanStr_dll" Guid="*" Directory="Dir2022">
-        <File Source="..\JNNTool.bundle\Contents\2022\NhanStr.dll" KeyPath="yes" />
-      </Component>
-      <Component Id="Cmp_2022_RincoModeling_dll" Guid="*" Directory="Dir2022">
-        <File Source="..\JNNTool.bundle\Contents\2022\RincoModeling.dll" KeyPath="yes" />
       </Component>
       <Component Id="Cmp_2022_System_Buffers_dll" Guid="*" Directory="Dir2022">
         <File Source="..\JNNTool.bundle\Contents\2022\System.Buffers.dll" KeyPath="yes" />
@@ -183,29 +165,11 @@
       <Component Id="Cmp_2023_JNNTool_dll" Guid="*" Directory="Dir2023">
         <File Source="..\JNNTool.bundle\Contents\2023\JNNTool.dll" KeyPath="yes" />
       </Component>
-      <Component Id="Cmp_2023_Material_Icons_dll" Guid="*" Directory="Dir2023">
-        <File Source="..\JNNTool.bundle\Contents\2023\Material.Icons.dll" KeyPath="yes" />
-      </Component>
-      <Component Id="Cmp_2023_Material_Icons_WPF_dll" Guid="*" Directory="Dir2023">
-        <File Source="..\JNNTool.bundle\Contents\2023\Material.Icons.WPF.dll" KeyPath="yes" />
-      </Component>
       <Component Id="Cmp_2023_Microsoft_Bcl_AsyncInterfaces_dll" Guid="*" Directory="Dir2023">
         <File Source="..\JNNTool.bundle\Contents\2023\Microsoft.Bcl.AsyncInterfaces.dll" KeyPath="yes" />
       </Component>
-      <Component Id="Cmp_2023_Microsoft_Expression_Drawing_dll" Guid="*" Directory="Dir2023">
-        <File Source="..\JNNTool.bundle\Contents\2023\Microsoft.Expression.Drawing.dll" KeyPath="yes" />
-      </Component>
-      <Component Id="Cmp_2023_Microsoft_Xaml_Behaviors_dll" Guid="*" Directory="Dir2023">
-        <File Source="..\JNNTool.bundle\Contents\2023\Microsoft.Xaml.Behaviors.dll" KeyPath="yes" />
-      </Component>
       <Component Id="Cmp_2023_Newtonsoft_Json_dll" Guid="*" Directory="Dir2023">
         <File Source="..\JNNTool.bundle\Contents\2023\Newtonsoft.Json.dll" KeyPath="yes" />
-      </Component>
-      <Component Id="Cmp_2023_NhanStr_dll" Guid="*" Directory="Dir2023">
-        <File Source="..\JNNTool.bundle\Contents\2023\NhanStr.dll" KeyPath="yes" />
-      </Component>
-      <Component Id="Cmp_2023_RincoModeling_dll" Guid="*" Directory="Dir2023">
-        <File Source="..\JNNTool.bundle\Contents\2023\RincoModeling.dll" KeyPath="yes" />
       </Component>
       <Component Id="Cmp_2023_System_Buffers_dll" Guid="*" Directory="Dir2023">
         <File Source="..\JNNTool.bundle\Contents\2023\System.Buffers.dll" KeyPath="yes" />
@@ -247,29 +211,11 @@
       <Component Id="Cmp_2024_JNNTool_dll" Guid="*" Directory="Dir2024">
         <File Source="..\JNNTool.bundle\Contents\2024\JNNTool.dll" KeyPath="yes" />
       </Component>
-      <Component Id="Cmp_2024_Material_Icons_dll" Guid="*" Directory="Dir2024">
-        <File Source="..\JNNTool.bundle\Contents\2024\Material.Icons.dll" KeyPath="yes" />
-      </Component>
-      <Component Id="Cmp_2024_Material_Icons_WPF_dll" Guid="*" Directory="Dir2024">
-        <File Source="..\JNNTool.bundle\Contents\2024\Material.Icons.WPF.dll" KeyPath="yes" />
-      </Component>
       <Component Id="Cmp_2024_Microsoft_Bcl_AsyncInterfaces_dll" Guid="*" Directory="Dir2024">
         <File Source="..\JNNTool.bundle\Contents\2024\Microsoft.Bcl.AsyncInterfaces.dll" KeyPath="yes" />
       </Component>
-      <Component Id="Cmp_2024_Microsoft_Expression_Drawing_dll" Guid="*" Directory="Dir2024">
-        <File Source="..\JNNTool.bundle\Contents\2024\Microsoft.Expression.Drawing.dll" KeyPath="yes" />
-      </Component>
-      <Component Id="Cmp_2024_Microsoft_Xaml_Behaviors_dll" Guid="*" Directory="Dir2024">
-        <File Source="..\JNNTool.bundle\Contents\2024\Microsoft.Xaml.Behaviors.dll" KeyPath="yes" />
-      </Component>
       <Component Id="Cmp_2024_Newtonsoft_Json_dll" Guid="*" Directory="Dir2024">
         <File Source="..\JNNTool.bundle\Contents\2024\Newtonsoft.Json.dll" KeyPath="yes" />
-      </Component>
-      <Component Id="Cmp_2024_NhanStr_dll" Guid="*" Directory="Dir2024">
-        <File Source="..\JNNTool.bundle\Contents\2024\NhanStr.dll" KeyPath="yes" />
-      </Component>
-      <Component Id="Cmp_2024_RincoModeling_dll" Guid="*" Directory="Dir2024">
-        <File Source="..\JNNTool.bundle\Contents\2024\RincoModeling.dll" KeyPath="yes" />
       </Component>
       <Component Id="Cmp_2024_System_Buffers_dll" Guid="*" Directory="Dir2024">
         <File Source="..\JNNTool.bundle\Contents\2024\System.Buffers.dll" KeyPath="yes" />
@@ -311,26 +257,8 @@
       <Component Id="Cmp_2025_JNNTool_dll" Guid="*" Directory="Dir2025">
         <File Source="..\JNNTool.bundle\Contents\2025\JNNTool.dll" KeyPath="yes" />
       </Component>
-      <Component Id="Cmp_2025_Material_Icons_dll" Guid="*" Directory="Dir2025">
-        <File Source="..\JNNTool.bundle\Contents\2025\Material.Icons.dll" KeyPath="yes" />
-      </Component>
-      <Component Id="Cmp_2025_Material_Icons_WPF_dll" Guid="*" Directory="Dir2025">
-        <File Source="..\JNNTool.bundle\Contents\2025\Material.Icons.WPF.dll" KeyPath="yes" />
-      </Component>
-      <Component Id="Cmp_2025_Microsoft_Expression_Drawing_dll" Guid="*" Directory="Dir2025">
-        <File Source="..\JNNTool.bundle\Contents\2025\Microsoft.Expression.Drawing.dll" KeyPath="yes" />
-      </Component>
-      <Component Id="Cmp_2025_Microsoft_Xaml_Behaviors_dll" Guid="*" Directory="Dir2025">
-        <File Source="..\JNNTool.bundle\Contents\2025\Microsoft.Xaml.Behaviors.dll" KeyPath="yes" />
-      </Component>
       <Component Id="Cmp_2025_Newtonsoft_Json_dll" Guid="*" Directory="Dir2025">
         <File Source="..\JNNTool.bundle\Contents\2025\Newtonsoft.Json.dll" KeyPath="yes" />
-      </Component>
-      <Component Id="Cmp_2025_NhanStr_dll" Guid="*" Directory="Dir2025">
-        <File Source="..\JNNTool.bundle\Contents\2025\NhanStr.dll" KeyPath="yes" />
-      </Component>
-      <Component Id="Cmp_2025_RincoModeling_dll" Guid="*" Directory="Dir2025">
-        <File Source="..\JNNTool.bundle\Contents\2025\RincoModeling.dll" KeyPath="yes" />
       </Component>
       <!-- Revit 2026 -->
       <Component Id="Cmp_2026_CommunityToolkit_Mvvm_dll" Guid="*" Directory="Dir2026">
@@ -342,26 +270,8 @@
       <Component Id="Cmp_2026_JNNTool_dll" Guid="*" Directory="Dir2026">
         <File Source="..\JNNTool.bundle\Contents\2026\JNNTool.dll" KeyPath="yes" />
       </Component>
-      <Component Id="Cmp_2026_Material_Icons_dll" Guid="*" Directory="Dir2026">
-        <File Source="..\JNNTool.bundle\Contents\2026\Material.Icons.dll" KeyPath="yes" />
-      </Component>
-      <Component Id="Cmp_2026_Material_Icons_WPF_dll" Guid="*" Directory="Dir2026">
-        <File Source="..\JNNTool.bundle\Contents\2026\Material.Icons.WPF.dll" KeyPath="yes" />
-      </Component>
-      <Component Id="Cmp_2026_Microsoft_Expression_Drawing_dll" Guid="*" Directory="Dir2026">
-        <File Source="..\JNNTool.bundle\Contents\2026\Microsoft.Expression.Drawing.dll" KeyPath="yes" />
-      </Component>
-      <Component Id="Cmp_2026_Microsoft_Xaml_Behaviors_dll" Guid="*" Directory="Dir2026">
-        <File Source="..\JNNTool.bundle\Contents\2026\Microsoft.Xaml.Behaviors.dll" KeyPath="yes" />
-      </Component>
       <Component Id="Cmp_2026_Newtonsoft_Json_dll" Guid="*" Directory="Dir2026">
         <File Source="..\JNNTool.bundle\Contents\2026\Newtonsoft.Json.dll" KeyPath="yes" />
-      </Component>
-      <Component Id="Cmp_2026_NhanStr_dll" Guid="*" Directory="Dir2026">
-        <File Source="..\JNNTool.bundle\Contents\2026\NhanStr.dll" KeyPath="yes" />
-      </Component>
-      <Component Id="Cmp_2026_RincoModeling_dll" Guid="*" Directory="Dir2026">
-        <File Source="..\JNNTool.bundle\Contents\2026\RincoModeling.dll" KeyPath="yes" />
       </Component>
       <!-- Revit 2027 -->
       <Component Id="Cmp_2027_CommunityToolkit_Mvvm_dll" Guid="*" Directory="Dir2027">
@@ -373,22 +283,9 @@
       <Component Id="Cmp_2027_JNNTool_dll" Guid="*" Directory="Dir2027">
         <File Source="..\JNNTool.bundle\Contents\2027\JNNTool.dll" KeyPath="yes" />
       </Component>
-      <Component Id="Cmp_2027_Material_Icons_dll" Guid="*" Directory="Dir2027">
-        <File Source="..\JNNTool.bundle\Contents\2027\Material.Icons.dll" KeyPath="yes" />
-      </Component>
-      <Component Id="Cmp_2027_Material_Icons_WPF_dll" Guid="*" Directory="Dir2027">
-        <File Source="..\JNNTool.bundle\Contents\2027\Material.Icons.WPF.dll" KeyPath="yes" />
-      </Component>
-      <Component Id="Cmp_2027_Microsoft_Expression_Drawing_dll" Guid="*" Directory="Dir2027">
-        <File Source="..\JNNTool.bundle\Contents\2027\Microsoft.Expression.Drawing.dll" KeyPath="yes" />
-      </Component>
-      <Component Id="Cmp_2027_Microsoft_Xaml_Behaviors_dll" Guid="*" Directory="Dir2027">
-        <File Source="..\JNNTool.bundle\Contents\2027\Microsoft.Xaml.Behaviors.dll" KeyPath="yes" />
-      </Component>
       <Component Id="Cmp_2027_Newtonsoft_Json_dll" Guid="*" Directory="Dir2027">
         <File Source="..\JNNTool.bundle\Contents\2027\Newtonsoft.Json.dll" KeyPath="yes" />
       </Component>
-
 
       <!-- Resources (icons) -->
       <Component Id="Ico_AddNSEW" Guid="*" Directory="ResourcesDir">
@@ -478,17 +375,11 @@
       <Component Id="Ico_Login" Guid="*" Directory="ResourcesDir">
         <File Source="..\JNNTool.bundle\Contents\Resources\Login.png" KeyPath="yes" />
       </Component>
-      <Component Id="Ico_mcn_diagram" Guid="*" Directory="ResourcesDir">
-        <File Source="..\JNNTool.bundle\Contents\Resources\mcn_diagram.png" KeyPath="yes" />
-      </Component>
       <Component Id="Ico_PileLocation" Guid="*" Directory="ResourcesDir">
         <File Source="..\JNNTool.bundle\Contents\Resources\PileLocation.png" KeyPath="yes" />
       </Component>
       <Component Id="Ico_PutNSEW" Guid="*" Directory="ResourcesDir">
         <File Source="..\JNNTool.bundle\Contents\Resources\PutNSEW.png" KeyPath="yes" />
-      </Component>
-      <Component Id="Ico_qrcode" Guid="*" Directory="ResourcesDir">
-        <File Source="..\JNNTool.bundle\Contents\Resources\qrcode.png" KeyPath="yes" />
       </Component>
       <Component Id="Ico_QuantityTakeoff" Guid="*" Directory="ResourcesDir">
         <File Source="..\JNNTool.bundle\Contents\Resources\QuantityTakeoff.png" KeyPath="yes" />
@@ -538,50 +429,14 @@
       <Component Id="Ico_SplitBeam" Guid="*" Directory="ResourcesDir">
         <File Source="..\JNNTool.bundle\Contents\Resources\SplitBeam.png" KeyPath="yes" />
       </Component>
-      <Component Id="Ico_StairDetail" Guid="*" Directory="ResourcesDir">
-        <File Source="..\JNNTool.bundle\Contents\Resources\StairDetail.png" KeyPath="yes" />
-      </Component>
       <Component Id="Ico_StairModel" Guid="*" Directory="ResourcesDir">
         <File Source="..\JNNTool.bundle\Contents\Resources\StairModel.png" KeyPath="yes" />
-      </Component>
-      <Component Id="Ico_stair_cas_1" Guid="*" Directory="ResourcesDir">
-        <File Source="..\JNNTool.bundle\Contents\Resources\stair_cas_1.png" KeyPath="yes" />
-      </Component>
-      <Component Id="Ico_stair_cas_2" Guid="*" Directory="ResourcesDir">
-        <File Source="..\JNNTool.bundle\Contents\Resources\stair_cas_2.png" KeyPath="yes" />
-      </Component>
-      <Component Id="Ico_stair_cas_3" Guid="*" Directory="ResourcesDir">
-        <File Source="..\JNNTool.bundle\Contents\Resources\stair_cas_3.png" KeyPath="yes" />
-      </Component>
-      <Component Id="Ico_stair_cas_4" Guid="*" Directory="ResourcesDir">
-        <File Source="..\JNNTool.bundle\Contents\Resources\stair_cas_4.png" KeyPath="yes" />
-      </Component>
-      <Component Id="Ico_stair_cas_5" Guid="*" Directory="ResourcesDir">
-        <File Source="..\JNNTool.bundle\Contents\Resources\stair_cas_5.png" KeyPath="yes" />
-      </Component>
-      <Component Id="Ico_stair_cas_6" Guid="*" Directory="ResourcesDir">
-        <File Source="..\JNNTool.bundle\Contents\Resources\stair_cas_6.png" KeyPath="yes" />
-      </Component>
-      <Component Id="Ico_stair_cas_7" Guid="*" Directory="ResourcesDir">
-        <File Source="..\JNNTool.bundle\Contents\Resources\stair_cas_7.png" KeyPath="yes" />
-      </Component>
-      <Component Id="Ico_stair_cas_8" Guid="*" Directory="ResourcesDir">
-        <File Source="..\JNNTool.bundle\Contents\Resources\stair_cas_8.png" KeyPath="yes" />
       </Component>
       <Component Id="Ico_SteelConnectionDefault" Guid="*" Directory="ResourcesDir">
         <File Source="..\JNNTool.bundle\Contents\Resources\SteelConnectionDefault.png" KeyPath="yes" />
       </Component>
       <Component Id="Ico_Stiffened_seated_beam_connection" Guid="*" Directory="ResourcesDir">
         <File Source="..\JNNTool.bundle\Contents\Resources\Stiffened_seated_beam_connection.png" KeyPath="yes" />
-      </Component>
-      <Component Id="Ico_stirrupab_v2" Guid="*" Directory="ResourcesDir">
-        <File Source="..\JNNTool.bundle\Contents\Resources\stirrupab_v2.png" KeyPath="yes" />
-      </Component>
-      <Component Id="Ico_stirrupcn_v2" Guid="*" Directory="ResourcesDir">
-        <File Source="..\JNNTool.bundle\Contents\Resources\stirrupcn_v2.png" KeyPath="yes" />
-      </Component>
-      <Component Id="Ico_stirruplap_v2" Guid="*" Directory="ResourcesDir">
-        <File Source="..\JNNTool.bundle\Contents\Resources\stirruplap_v2.png" KeyPath="yes" />
       </Component>
       <Component Id="Ico_TitleLocation" Guid="*" Directory="ResourcesDir">
         <File Source="..\JNNTool.bundle\Contents\Resources\TitleLocation.png" KeyPath="yes" />
@@ -592,8 +447,6 @@
       <Component Id="Ico_views" Guid="*" Directory="ResourcesDir">
         <File Source="..\JNNTool.bundle\Contents\Resources\views.png" KeyPath="yes" />
       </Component>
-
-
     </ComponentGroup>
 
     <Feature Id="MainFeature" Title="JNNTool Revit Plugin" Level="1">

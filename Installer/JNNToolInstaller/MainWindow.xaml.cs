@@ -18,6 +18,8 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         RevitVersionCards.ItemsSource = _revitVersions;
+        _svc.StatusChanged += s => Dispatcher.Invoke(() => TxtStatus.Text = s);
+        _svc.ProgressChanged += p => Dispatcher.Invoke(() => ProgressBar.Value = p);
         Loaded += async (_, _) => await InitAsync();
     }
 
@@ -201,9 +203,6 @@ public partial class MainWindow : Window
         ProgressBar.Value = 0;
         ProgressBar.IsIndeterminate = false;
 
-        _svc.StatusChanged += s => Dispatcher.Invoke(() => TxtStatus.Text = s);
-        _svc.ProgressChanged += p => Dispatcher.Invoke(() => ProgressBar.Value = p);
-
         try
         {
             await _svc.InstallAsync(_checker.LatestManifest, _cts.Token);
@@ -251,9 +250,6 @@ public partial class MainWindow : Window
         SetBusy(true);
         ProgressPanel.Visibility = Visibility.Visible;
         ProgressBar.IsIndeterminate = true;
-
-        _svc.StatusChanged += s => Dispatcher.Invoke(() => TxtStatus.Text = s);
-        _svc.ProgressChanged += p => Dispatcher.Invoke(() => ProgressBar.Value = p);
 
         try
         {

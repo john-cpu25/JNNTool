@@ -1,9 +1,9 @@
 {
-    "version":  "2.1.0",
-    "releaseDate":  "2026-10-14",
+    "version":  "2.1.1",
+    "releaseDate":  "2026-10-16",
     "manifestUrl":  "https://raw.githubusercontent.com/john-cpu25/JNNTool/main/version.json",
-    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.1.0/JNNToolSetup_v2.1.0.msi",
+    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.1.1/JNNToolSetup_v2.1.1.msi",
     "changelog":  [
-                      "Tich hop Material.Icons cho UI Manager va bo cai Per-User AppData"
+                      "Cap nhat giao dien License Activation tinh gon chuan Supabase va xoa bo cac truong cu"
                   ]
 }

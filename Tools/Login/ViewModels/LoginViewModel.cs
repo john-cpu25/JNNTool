@@ -1,9 +1,15 @@
 using System;
+using System.IO;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using JNNTool.Tools.Login.Services;
+using JNNTool.Tools.UIManager.Models;
+using JNNTool.Tools.UIManager.Services;
 
 namespace JNNTool.Tools.Login.ViewModels
 {
@@ -14,6 +20,13 @@ namespace JNNTool.Tools.Login.ViewModels
         {
             get => _email;
             set => SetProperty(ref _email, value);
+        }
+
+        private string _password = string.Empty;
+        public string Password
+        {
+            get => _password;
+            set => SetProperty(ref _password, value);
         }
 
         private string _fullName = string.Empty;
@@ -42,6 +55,20 @@ namespace JNNTool.Tools.Login.ViewModels
         {
             get => _activationCode;
             set => SetProperty(ref _activationCode, value);
+        }
+
+        private Brush _primaryBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(RibbonThemeSettings.DefaultColor));
+        public Brush PrimaryBrush
+        {
+            get => _primaryBrush;
+            set => SetProperty(ref _primaryBrush, value);
+        }
+
+        private ImageSource? _logoImage;
+        public ImageSource? LogoImage
+        {
+            get => _logoImage;
+            set => SetProperty(ref _logoImage, value);
         }
 
         private bool _isLoading;
@@ -91,16 +118,25 @@ namespace JNNTool.Tools.Login.ViewModels
         public IAsyncRelayCommand ActivateCommand { get; }
         public IAsyncRelayCommand RegisterRequestCommand { get; }
         public IRelayCommand CopyMachineIdCommand { get; }
+        public IRelayCommand PasteActivationCodeCommand { get; }
         public IRelayCommand ToggleLanguageCommand { get; }
         public IRelayCommand CloseCommand { get; }
 
-        public event Action<bool> RequestClose;
+        public event Action<bool>? RequestClose;
 
         public LoginViewModel()
         {
             _machineId = DeviceFingerprintService.GetDisplayMachineId();
 
-            // Pre-fill email & status from saved license if available
+            // Đồng bộ màu theme theo UI Manager (Ribbon Theme)
+            var currentTheme = RibbonThemeSettings.Load();
+            ApplyThemeColor(currentTheme?.PrimaryColorHex);
+            RibbonThemeService.ThemeApplied += OnThemeApplied;
+
+            // Nạp Logo JNN chính thức
+            LoadLogoImage();
+
+            // Lấy thông tin bản quyền đã lưu nếu có
             var existing = LicenseClientService.Instance.CurrentLicense;
             if (existing != null)
             {
@@ -122,8 +158,108 @@ namespace JNNTool.Tools.Login.ViewModels
             ActivateCommand = new AsyncRelayCommand(ExecuteActivateAsync, () => !IsLoading);
             RegisterRequestCommand = new AsyncRelayCommand(ExecuteRegisterRequestAsync, () => !IsLoading);
             CopyMachineIdCommand = new RelayCommand(ExecuteCopyMachineId);
+            PasteActivationCodeCommand = new RelayCommand(ExecutePasteActivationCode);
             ToggleLanguageCommand = new RelayCommand(ExecuteToggleLanguage);
-            CloseCommand = new RelayCommand(() => RequestClose?.Invoke(false));
+            CloseCommand = new RelayCommand(() =>
+            {
+                Cleanup();
+                RequestClose?.Invoke(false);
+            });
+        }
+
+        public void Cleanup()
+        {
+            RibbonThemeService.ThemeApplied -= OnThemeApplied;
+        }
+
+        private void ApplyThemeColor(string? hex)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(hex)) hex = RibbonThemeSettings.DefaultColor;
+                var color = (Color)ColorConverter.ConvertFromString(hex.Trim());
+                var brush = new SolidColorBrush(color);
+                brush.Freeze();
+                PrimaryBrush = brush;
+            }
+            catch
+            {
+                var fallback = (Color)ColorConverter.ConvertFromString(RibbonThemeSettings.DefaultColor);
+                var brush = new SolidColorBrush(fallback);
+                brush.Freeze();
+                PrimaryBrush = brush;
+            }
+        }
+
+        private void OnThemeApplied(RibbonThemeSettings settings)
+        {
+            if (settings != null && !string.IsNullOrWhiteSpace(settings.PrimaryColorHex))
+            {
+                ApplyThemeColor(settings.PrimaryColorHex);
+            }
+        }
+
+        private void LoadLogoImage()
+        {
+            try
+            {
+                var uri = new Uri("pack://application:,,,/JNNTool;component/Tools/Login/Assets/Logo_JNN.png", UriKind.Absolute);
+                var bmp = new BitmapImage();
+                bmp.BeginInit();
+                bmp.UriSource = uri;
+                bmp.CacheOption = BitmapCacheOption.OnLoad;
+                bmp.EndInit();
+                if (bmp.CanFreeze) bmp.Freeze();
+                LogoImage = bmp;
+                return;
+            }
+            catch { }
+
+            try
+            {
+                string asmDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "";
+                string[] candidates = new[]
+                {
+                    Path.Combine(asmDir, "Resources", "Logo_JNN.png"),
+                    Path.Combine(asmDir, "Logo_JNN.png"),
+                    Path.Combine(asmDir, "..", "Resources", "Logo_JNN.png"),
+                    Path.Combine(asmDir, "..", "Logo_JNN.png")
+                };
+
+                foreach (var p in candidates)
+                {
+                    if (File.Exists(p))
+                    {
+                        var bmp = new BitmapImage();
+                        bmp.BeginInit();
+                        bmp.UriSource = new Uri(p, UriKind.Absolute);
+                        bmp.CacheOption = BitmapCacheOption.OnLoad;
+                        bmp.EndInit();
+                        if (bmp.CanFreeze) bmp.Freeze();
+                        LogoImage = bmp;
+                        return;
+                    }
+                }
+            }
+            catch { }
+        }
+
+        private void ExecutePasteActivationCode()
+        {
+            try
+            {
+                string text = Clipboard.GetText();
+                if (!string.IsNullOrWhiteSpace(text))
+                {
+                    ActivationCode = text.Trim();
+                    StatusMessage = "Đã dán mã Key từ bộ nhớ tạm!";
+                    IsError = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowError($"Không thể dán: {ex.Message}");
+            }
         }
 
         private void ExecuteCopyMachineId()
@@ -149,49 +285,18 @@ namespace JNNTool.Tools.Login.ViewModels
             StatusMessage = Language == "EN" ? "Ready" : "Sẵn sàng";
         }
 
-        private async Task ExecuteRegisterRequestAsync()
+        private Task ExecuteRegisterRequestAsync()
         {
             if (string.IsNullOrWhiteSpace(Email))
             {
-                ShowError("Vui lòng nhập Email để gửi yêu cầu đăng ký.");
-                return;
+                ShowError("Vui lòng nhập Email để gửi cho Quản trị viên.");
+                return Task.CompletedTask;
             }
 
-            IsLoading = true;
+            StatusMessage = "Vui lòng gửi Email và Machine ID của bạn cho Admin để được cấp Key kích hoạt.";
             IsError = false;
-            IsSuccess = false;
-            StatusMessage = "Đang gửi thông tin đăng ký lên hệ thống máy chủ...";
-
-            try
-            {
-                var (success, message, code) = await LicenseClientService.Instance.RegisterAccountRequestAsync(Email.Trim(), FullName, PhoneNumber, MachineId);
-
-                if (success)
-                {
-                    IsSuccess = true;
-                    if (!string.IsNullOrEmpty(code))
-                    {
-                        ActivationCode = code;
-                        StatusMessage = "Tài khoản đã được Quản trị viên phê duyệt! Mã Key Code đã được tự động điền. Bấm Login để tiếp tục.";
-                    }
-                    else
-                    {
-                        StatusMessage = "Đã gửi yêu cầu đăng ký lên server! Quản trị viên trên Web sẽ phê duyệt và cấp Key Code cho bạn.";
-                    }
-                }
-                else
-                {
-                    ShowError(message);
-                }
-            }
-            catch (Exception ex)
-            {
-                ShowError($"Lỗi kết nối máy chủ: {ex.Message}");
-            }
-            finally
-            {
-                IsLoading = false;
-            }
+            IsSuccess = true;
+            return Task.CompletedTask;
         }
 
         private async Task ExecuteActivateAsync()
@@ -202,25 +307,23 @@ namespace JNNTool.Tools.Login.ViewModels
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(ActivationCode))
-            {
-                ShowError("Vui lòng nhập mã Key Code (GUID Activation Code).");
-                return;
-            }
-
             IsLoading = true;
             IsError = false;
             IsSuccess = false;
-            StatusMessage = "Đang kết nối tới máy chủ để xác thực bản quyền...";
+            StatusMessage = "Đang kết nối Supabase để xác thực bản quyền...";
 
             try
             {
-                var (success, message) = await LicenseClientService.Instance.ActivateAsync(Email.Trim(), ActivationCode.Trim());
+                // Gọi Supabase RPC: kiểm tra Email + Mật khẩu + Mã Key (nếu có)
+                var (success, message, data) = await LicenseClientService.Instance.CallVerifyRpcAsync(
+                    Email.Trim(), 
+                    Password, 
+                    ActivationCode?.Trim());
 
                 if (success)
                 {
                     IsSuccess = true;
-                    StatusMessage = "Kích hoạt bản quyền thành công!";
+                    StatusMessage = message ?? "Đăng nhập và xác thực bản quyền thành công!";
                     await Task.Delay(800);
                     RequestClose?.Invoke(true);
                 }

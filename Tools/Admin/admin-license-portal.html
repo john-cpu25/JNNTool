@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JNNTool — Trung Tâm Quản Trị Bản Quyền (Admin License Portal)</title>
+  <style>
+    :root {
+      --bg-body: #F5F7F9;
+      --bg-card: #FFFFFF;
+      --border-color: #DCDDE1;
+      --text-main: #2C3E50;
+      --text-muted: #64748B;
+      --primary: #0078D7;
+      --primary-hover: #0063B1;
+      --success: #10B981;
+      --success-hover: #059669;
+      --danger: #EF4444;
+      --danger-hover: #DC2626;
+      --warning: #F59E0B;
+      --radius: 5px;
+      --font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      font-family: var(--font-family);
+      font-size: 13px;
+      font-weight: normal;
+      line-height: 1.5;
+      padding: 24px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Top App Bar */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .top-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .top-title h1 {
+      font-size: 18px;
+      font-weight: normal;
+      color: var(--text-main);
+    }
+
+    .top-title .badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: var(--radius);
+      background-color: #E0F2FE;
+      color: #0284C7;
+      border: 1px solid #BAE6FD;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #94A3B8;
+    }
+
+    .dot.online {
+      background-color: var(--success);
+    }
+
+    /* Card Panels */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed var(--border-color);
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: normal;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Form & Inputs */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="number"],
+    select {
+      height: 32px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-family: inherit;
+      color: var(--text-main);
+      background-color: #FFFFFF;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--primary);
+    }
+
+    /* Buttons */
+    .btn {
+      height: 32px;
+      padding: 0 14px;
+      font-size: 12px;
+      font-family: inherit;
+      font-weight: normal;
+      border-radius: var(--radius);
+      border: 1px solid transparent;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background-color 0.15s ease, opacity 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: #FFFFFF;
+    }
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-success {
+      background-color: var(--success);
+      color: #FFFFFF;
+    }
+    .btn-success:hover {
+      background-color: var(--success-hover);
+    }
+
+    .btn-outline {
+      background-color: #FFFFFF;
+      color: var(--text-main);
+      border-color: var(--border-color);
+    }
+    .btn-outline:hover {
+      background-color: #F8FAFC;
+      border-color: #CBD5E1;
+    }
+
+    .btn-danger-outline {
+      background-color: #FFFFFF;
+      color: var(--danger);
+      border-color: #FECACA;
+    }
+    .btn-danger-outline:hover {
+      background-color: #FEF2F2;
+      border-color: var(--danger);
+    }
+
+    .btn-sm {
+      height: 26px;
+      padding: 0 8px;
+      font-size: 11px;
+    }
+
+    /* Layout 2 columns */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 900px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Key Generation Result Box */
+    .result-box {
+      margin-top: 16px;
+      padding: 14px;
+      background-color: #F0FDF4;
+      border: 1px solid #BBF7D0;
+      border-radius: var(--radius);
+      display: none;
+    }
+
+    .key-display {
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 18px;
+      color: #15803D;
+      letter-spacing: 1px;
+      text-align: center;
+      padding: 10px;
+      background: #FFFFFF;
+      border: 1px dashed #86EFAC;
+      border-radius: var(--radius);
+      margin: 8px 0;
+      user-select: all;
+    }
+
+    .key-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .key-actions .btn {
+      flex: 1;
+    }
+
+    /* Data Table */
+    .table-container {
+      overflow-x: auto;
+      max-height: 520px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 12px;
+    }
+
+    th {
+      background-color: #F8FAFC;
+      color: var(--text-muted);
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border-color);
+      font-weight: normal;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #EEF2F6;
+      vertical-align: middle;
+    }
+
+    tr:hover td {
+      background-color: #F8FAFC;
+    }
+
+    .badge-tag {
+      display: inline-block;
+      padding: 2px 6px;
+      font-size: 11px;
+      border-radius: var(--radius);
+      border: 1px solid transparent;
+    }
+
+    .badge-active {
+      background-color: #DCFCE7;
+      color: #166534;
+      border-color: #BBF7D0;
+    }
+
+    .badge-unbound {
+      background-color: #EFF6FF;
+      color: #1D4ED8;
+      border-color: #BFDBFE;
+    }
+
+    .badge-bound {
+      background-color: #F1F5F9;
+      color: #475569;
+      border-color: #E2E8F0;
+    }
+
+    .badge-expired {
+      background-color: #FEE2E2;
+      color: #991B1B;
+      border-color: #FECACA;
+    }
+
+    .badge-revoked {
+      background-color: #F3F4F6;
+      color: #6B7280;
+      border-color: #E5E7EB;
+      text-decoration: line-through;
+    }
+
+    .table-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .key-mono {
+      font-family: 'Consolas', monospace;
+      font-size: 12px;
+      color: #0F172A;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1E293B;
+      color: #FFFFFF;
+      padding: 10px 16px;
+      border-radius: var(--radius);
+      font-size: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      display: none;
+      z-index: 9999;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toast.success {
+      background: #059669;
+    }
+
+    .toast.error {
+      background: #DC2626;
+    }
+
+    /* Stat Badges Row */
+    .stats-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .stat-pill {
+      font-size: 12px;
+      padding: 4px 10px;
+      background: #F8FAFC;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      color: var(--text-muted);
+    }
+
+    .stat-pill span {
+      color: var(--text-main);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Top App Bar -->
+  <header class="top-bar">
+    <div class="top-title">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0078D7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+      </svg>
+      <h1>JNNTool — Admin License Portal</h1>
+      <span class="badge">Supabase Edition</span>
+    </div>
+    <div class="status-indicator">
+      <div id="connDot" class="dot"></div>
+      <span id="connText">Chưa kết nối</span>
+    </div>
+  </header>
+
+  <!-- 1. CẤU HÌNH KẾT NỐI & ADMIN SECRET -->
+  <section class="card">
+    <div class="card-header">
+      <span class="card-title">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        Cấu Hình Máy Chủ & Mật Khẩu Quản Trị
+      </span>
+      <span style="font-size: 11px; color: var(--text-muted);">Tự động lưu vào trình duyệt (localStorage)</span>
+    </div>
+    <div class="form-grid">
+      <div class="form-group" style="flex: 2;">
+        <label for="txtSupabaseUrl">Supabase Project URL</label>
+        <input type="text" id="txtSupabaseUrl" value="https://srcijpacycgfkyneoxyu.supabase.co" placeholder="https://<project-ref>.supabase.co">
+      </div>
+      <div class="form-group" style="flex: 2;">
+        <label for="txtAnonKey">Supabase Publishable / Anon Key</label>
+        <input type="text" id="txtAnonKey" value="sb_publishable_31xEGAXxKSJcJLXGOb5wgw_IXv9E_KH" placeholder="sb_publishable_...">
+      </div>
+      <div class="form-group" style="flex: 2;">
+        <label for="txtAdminSecret">Mật Khẩu Quản Trị (Admin Secret)</label>
+        <div style="display: flex; gap: 4px;">
+          <input type="password" id="txtAdminSecret" value="JNN_Admin_Secret_2026_SecureKey" placeholder="Nhập Admin Secret hoặc Service Role Key..." style="flex: 1;">
+          <button type="button" class="btn btn-outline" id="btnToggleSecret" title="Xem/Ẩn mật khẩu" style="padding: 0 8px;">👁</button>
+        </div>
+        <div style="font-size: 11px; color: #10B981; margin-top: 3px;">
+          ✔ Đã cấu hình mật khẩu Admin mặc định (Khớp với file SQL đã chạy trên Supabase).
+        </div>
+      </div>
+      <div class="form-group" style="flex: 1;">
+        <button type="button" class="btn btn-outline" id="btnTestConn" style="width: 100%;">
+          ⚡ Kiểm Tra &amp; Kết Nối
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. GIAO DIỆN CHÍNH: TẠO KEY (BÊN TRÁI) & QUẢN LÝ DANH SÁCH (BÊN PHẢI) -->
+  <div class="main-grid">
+
+    <!-- CỘT 1: TẠO KEY BẢN QUYỀN MỚI -->
+    <section class="card">
+      <div class="card-header">
+        <span class="card-title">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Tạo Key Bản Quyền Mới
+        </span>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label for="txtClientEmail">Email Khách Hàng (*)</label>
+        <input type="text" id="txtClientEmail" placeholder="vd: engineer@company.com">
+      </div>
+
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label for="selPreset">Gói Bản Quyền</label>
+        <select id="selPreset">
+          <option value="365|Annual" selected>Annual — 1 Năm (365 Ngày)</option>
+          <option value="30|Trial">Trial — Dùng thử (30 Ngày)</option>
+          <option value="730|Annual">Gói 2 Năm (730 Ngày)</option>
+          <option value="3650|Lifetime">Lifetime — Vĩnh viễn (10 Năm)</option>
+          <option value="custom">Tùy chỉnh số ngày...</option>
+        </select>
+      </div>
+
+      <div id="customDaysGroup" class="form-group" style="margin-bottom: 12px; display: none;">
+        <label for="txtCustomDays">Số ngày hiệu lực</label>
+        <input type="number" id="txtCustomDays" min="1" value="365">
+      </div>
+
+      <button type="button" class="btn btn-primary" id="btnGenerateKey" style="width: 100%; height: 36px;">
+        ⚡ Tạo Key Bản Quyền
+      </button>
+
+      <!-- Hộp kết quả sinh Key -->
+      <div id="resultBox" class="result-box">
+        <div style="font-size: 11px; color: #166534; margin-bottom: 4px;">✔ Key bản quyền đã được ghi vào Supabase:</div>
+        <div id="resKey" class="key-display">JNN-XXXX-XXXX-XXXX</div>
+        <div style="font-size: 11px; color: var(--text-muted); line-height: 1.6;">
+          <div>• Email: <span id="resEmail" style="color: var(--text-main);">...</span></div>
+          <div>• Hạn dùng: <span id="resExpires" style="color: var(--text-main);">...</span></div>
+          <div>• Khóa máy: <span style="color: #0284C7;">Chưa kích hoạt (Sẽ tự khóa vào máy khách khi nhập)</span></div>
+        </div>
+        <div class="key-actions">
+          <button type="button" class="btn btn-success" id="btnCopyKey">📋 Copy Key</button>
+          <button type="button" class="btn btn-outline" id="btnCopyMessage">💬 Copy Tin Nhắn Gửi Khách</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- CỘT 2: QUẢN LÝ DANH SÁCH BẢN QUYỀN TRÊN HỆ THỐNG -->
+    <section class="card">
+      <div class="card-header">
+        <span class="card-title">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+          </svg>
+          Danh Sách Khách Hàng Đã Cấp Bản Quyền
+        </span>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn btn-outline btn-sm" id="btnRefreshList">
+            🔄 Làm Mới
+          </button>
+        </div>
+      </div>
+
+      <!-- Thống kê nhanh & Thanh tìm kiếm -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 12px; flex-wrap: wrap;">
+        <div class="stats-row" style="margin-bottom: 0;">
+          <div class="stat-pill">Tổng: <span id="statTotal">0</span></div>
+          <div class="stat-pill">Đang hoạt động: <span id="statActive" style="color: #10B981;">0</span></div>
+          <div class="stat-pill">Đã khóa máy: <span id="statBound">0</span></div>
+        </div>
+        <div style="flex: 1; max-width: 280px;">
+          <input type="text" id="txtSearch" placeholder="Tìm theo Email, Key, Thiết bị..." style="width: 100%;">
+        </div>
+      </div>
+
+      <!-- Bảng danh sách -->
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Mã Key</th>
+              <th>Loại & Hạn Dùng</th>
+              <th>Trạng Thái Máy</th>
+              <th style="text-align: right;">Hành Động</th>
+            </tr>
+          </thead>
+          <tbody id="tblLicensesBody">
+            <tr>
+              <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                Chưa tải danh sách. Bấm "Kiểm Tra & Kết Nối" hoặc "Làm Mới".
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+
+</div>
+
+<!-- Toast Thông báo -->
+<div id="toast" class="toast"></div>
+
+<script>
+  // ==============================================================================
+  // JNNTool License Portal Client Controller (Vanilla JS)
+  // ==============================================================================
+
+  const STORAGE_KEY_URL = 'jnntool_admin_sb_url';
+  const STORAGE_KEY_ANON = 'jnntool_admin_sb_anon';
+  const STORAGE_KEY_SECRET = 'jnntool_admin_secret';
+
+  // Elements
+  const txtSupabaseUrl = document.getElementById('txtSupabaseUrl');
+  const txtAnonKey = document.getElementById('txtAnonKey');
+  const txtAdminSecret = document.getElementById('txtAdminSecret');
+  const btnToggleSecret = document.getElementById('btnToggleSecret');
+  const btnTestConn = document.getElementById('btnTestConn');
+  const connDot = document.getElementById('connDot');
+  const connText = document.getElementById('connText');
+
+  const txtClientEmail = document.getElementById('txtClientEmail');
+  const selPreset = document.getElementById('selPreset');
+  const customDaysGroup = document.getElementById('customDaysGroup');
+  const txtCustomDays = document.getElementById('txtCustomDays');
+  const btnGenerateKey = document.getElementById('btnGenerateKey');
+
+  const resultBox = document.getElementById('resultBox');
+  const resKey = document.getElementById('resKey');
+  const resEmail = document.getElementById('resEmail');
+  const resExpires = document.getElementById('resExpires');
+  const btnCopyKey = document.getElementById('btnCopyKey');
+  const btnCopyMessage = document.getElementById('btnCopyMessage');
+
+  const btnRefreshList = document.getElementById('btnRefreshList');
+  const txtSearch = document.getElementById('txtSearch');
+  const tblLicensesBody = document.getElementById('tblLicensesBody');
+  const statTotal = document.getElementById('statTotal');
+  const statActive = document.getElementById('statActive');
+  const statBound = document.getElementById('statBound');
+
+  const toast = document.getElementById('toast');
+
+  let currentLicenses = [];
+  let lastGeneratedData = null;
+
+  // 1. Khôi phục thông số từ localStorage khi mở trang
+  window.addEventListener('DOMContentLoaded', () => {
+    const savedUrl = localStorage.getItem(STORAGE_KEY_URL);
+    const savedAnon = localStorage.getItem(STORAGE_KEY_ANON);
+    const savedSecret = localStorage.getItem(STORAGE_KEY_SECRET);
+
+    if (savedUrl) txtSupabaseUrl.value = savedUrl;
+    if (savedAnon) txtAnonKey.value = savedAnon;
+    const DEFAULT_SECRET = 'JNN_Admin_Secret_2026_SecureKey';
+    if (savedSecret && savedSecret.trim() !== '') {
+      txtAdminSecret.value = savedSecret;
+    } else {
+      txtAdminSecret.value = DEFAULT_SECRET;
+    }
+
+    // Tự động kiểm tra và tải danh sách
+    testAndConnect();
+  });
+
+  // Lưu lại cài đặt khi người dùng chỉnh sửa
+  function saveConfigToStorage() {
+    localStorage.setItem(STORAGE_KEY_URL, txtSupabaseUrl.value.trim());
+    localStorage.setItem(STORAGE_KEY_ANON, txtAnonKey.value.trim());
+    localStorage.setItem(STORAGE_KEY_SECRET, txtAdminSecret.value.trim());
+  }
+
+  // Toggle ẩn/hiện mật khẩu
+  btnToggleSecret.addEventListener('click', () => {
+    txtAdminSecret.type = txtAdminSecret.type === 'password' ? 'text' : 'password';
+  });
+
+  // Tự động kiểm tra và kết nối khi dán service_role key
+  txtAdminSecret.addEventListener('input', () => {
+    saveConfigToStorage();
+    const val = txtAdminSecret.value.trim();
+    if (val.startsWith('eyJ') || val.startsWith('sb_secret_') || val.length > 50) {
+      testAndConnect();
+    }
+  });
+
+  // Thay đổi dropdown gói bản quyền
+  selPreset.addEventListener('change', () => {
+    if (selPreset.value === 'custom') {
+      customDaysGroup.style.display = 'flex';
+    } else {
+      customDaysGroup.style.display = 'none';
+    }
+  });
+
+  // Base32 Crockford Generator (không chứa 0, O, 1, I, L)
+  function generateBase32Key() {
+    const charset = '23456789ABCDEFGHJKMNPQRSTVWXYZ';
+    let p1 = '', p2 = '', p3 = '';
+    for (let i = 0; i < 4; i++) {
+      p1 += charset.charAt(Math.floor(Math.random() * charset.length));
+      p2 += charset.charAt(Math.floor(Math.random() * charset.length));
+      p3 += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    return `JNN-${p1}-${p2}-${p3}`;
+  }
+
+  // Xác định thông tin xác thực hiệu lực
+  function getAuthInfo() {
+    const baseUrl = txtSupabaseUrl.value.trim().replace(/\/+$/, '');
+    const secret = txtAdminSecret.value.trim();
+    const anon = txtAnonKey.value.trim();
+
+    // Nếu secret là JWT token (service_role) hoặc token bắt đầu bằng eyJ... / sb_secret_
+    const isServiceRole = secret.startsWith('eyJ') || secret.startsWith('sb_secret_') || secret.length > 50;
+    const token = isServiceRole ? secret : anon;
+
+    return { baseUrl, token, secret, isServiceRole };
+  }
+
+  // Gọi API RPC tới Supabase
+  async function callSupabaseRpc(functionName, params) {
+    const { baseUrl, token } = getAuthInfo();
+    if (!baseUrl || !token) throw new Error('Vui lòng điền đầy đủ Supabase Project URL và API Key.');
+
+    const endpoint = `${baseUrl}/rest/v1/rpc/${functionName}`;
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': token,
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(params)
+    });
+
+    const data = await response.json();
+    return data;
+  }
+
+  // Kiểm tra kết nối & tải danh sách
+  async function testAndConnect() {
+    saveConfigToStorage();
+    connDot.className = 'dot';
+    connText.textContent = 'Đang kết nối...';
+
+    const auth = getAuthInfo();
+
+    // CHẾ ĐỘ 1: DÙNG SERVICE ROLE KEY (Không cần chạy SQL trên Supabase)
+    if (auth.isServiceRole) {
+      try {
+        const endpoint = `${auth.baseUrl}/rest/v1/licenses?select=*&order=created_at.desc`;
+        const res = await fetch(endpoint, {
+          method: 'GET',
+          headers: {
+            'apikey': auth.token,
+            'Authorization': `Bearer ${auth.token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        const list = await res.json();
+        if (res.ok && Array.isArray(list)) {
+          connDot.className = 'dot online';
+          connText.textContent = 'Đã kết nối Supabase (Service Role Mode - Không cần SQL)';
+          showToast('Kết nối Supabase qua Service Role Key thành công!', 'success');
+
+          currentLicenses = list.map(l => ({
+            ...l,
+            days_remaining: l.expires_at ? Math.max(0, Math.ceil((new Date(l.expires_at) - new Date()) / 86400000)) : 0,
+            is_bound: !!(l.bound_machine_id && l.bound_machine_id.trim())
+          }));
+          renderTable(currentLicenses);
+          return;
+        } else {
+          throw new Error(list.message || 'Lỗi truy vấn bảng licenses');
+        }
+      } catch (err) {
+        connDot.className = 'dot';
+        connText.textContent = 'Lỗi kết nối Service Role';
+        showToast('Lỗi: ' + err.message, 'error');
+        return;
+      }
+    }
+
+    // CHẾ ĐỘ 2: DÙNG HÀM RPC SQL (Kiểm tra mật khẩu Admin Secret)
+    try {
+      const res = await callSupabaseRpc('admin_list_licenses', {
+        p_admin_secret: auth.secret,
+        p_search: '',
+        p_limit: 100
+      });
+
+      if (res && res.success) {
+        connDot.className = 'dot online';
+        connText.textContent = 'Đã kết nối Supabase (Admin Verified)';
+        showToast('Kết nối Supabase và xác thực Admin thành công!', 'success');
+        currentLicenses = res.licenses || [];
+        renderTable(currentLicenses);
+      } else {
+        connDot.className = 'dot';
+        connText.textContent = 'Chưa cấu hình SQL';
+        const msg = res.message || '';
+        if (msg.includes('schema cache') || msg.includes('Could not find')) {
+          showToast('Chưa chạy SQL! Mẹo: Dán mã "service_role" vào ô mật khẩu để tạo trực tiếp mà không cần SQL!', 'error');
+        } else {
+          showToast(msg || 'Sai mật khẩu Admin Secret.', 'error');
+        }
+      }
+    } catch (err) {
+      connDot.className = 'dot';
+      connText.textContent = 'Mất kết nối';
+      showToast('Không thể kết nối: ' + err.message, 'error');
+    }
+  }
+
+  btnTestConn.addEventListener('click', testAndConnect);
+  btnRefreshList.addEventListener('click', testAndConnect);
+
+  // 2. Tạo Key mới
+  btnGenerateKey.addEventListener('click', async () => {
+    const email = txtClientEmail.value.trim();
+    if (!email || !email.includes('@')) {
+      showToast('Vui lòng nhập Email hợp lệ của khách hàng.', 'error');
+      txtClientEmail.focus();
+      return;
+    }
+
+    let days = 365;
+    let type = 'Annual';
+
+    if (selPreset.value === 'custom') {
+      days = parseInt(txtCustomDays.value, 10) || 365;
+    } else {
+      const parts = selPreset.value.split('|');
+      days = parseInt(parts[0], 10);
+      type = parts[1];
+    }
+
+    btnGenerateKey.disabled = true;
+    btnGenerateKey.textContent = 'Đang xử lý...';
+
+    const auth = getAuthInfo();
+
+    // CHẾ ĐỘ TRỰC TIẾP QUA SERVICE ROLE KEY (Không cần hàm SQL trên Supabase)
+    if (auth.isServiceRole) {
+      try {
+        saveConfigToStorage();
+        const newKey = generateBase32Key();
+        const now = new Date();
+        const expiresAt = new Date(now.getTime() + days * 86400000);
+
+        const newRow = {
+          license_key: newKey,
+          assigned_email: email.toLowerCase().trim(),
+          license_type: type,
+          status: 'Active',
+          starts_at: now.toISOString(),
+          expires_at: expiresAt.toISOString(),
+          max_devices: 1,
+          bound_machine_id: null,
+          device_name: null,
+          created_at: now.toISOString()
+        };
+
+        const res = await fetch(`${auth.baseUrl}/rest/v1/licenses`, {
+          method: 'POST',
+          headers: {
+            'apikey': auth.token,
+            'Authorization': `Bearer ${auth.token}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify(newRow)
+        });
+
+        const created = await res.json();
+        if (res.ok) {
+          lastGeneratedData = {
+            license_key: newKey,
+            assigned_email: email,
+            license_type: type,
+            days: days,
+            expires_at: expiresAt.toISOString()
+          };
+
+          resKey.textContent = newKey;
+          resEmail.textContent = email;
+          resExpires.textContent = `${formatDate(expiresAt.toISOString())} (${days} ngày)`;
+          resultBox.style.display = 'block';
+
+          showToast('Tạo Key bản quyền thành công (Direct Supabase Mode)!', 'success');
+          testAndConnect(); // Tải lại danh sách
+        } else {
+          showToast(created.message || 'Không thể tạo key trực tiếp.', 'error');
+        }
+      } catch (err) {
+        showToast('Lỗi: ' + err.message, 'error');
+      } finally {
+        btnGenerateKey.disabled = false;
+        btnGenerateKey.textContent = '⚡ Tạo Key Bản Quyền';
+      }
+      return;
+    }
+
+    // CHẾ ĐỘ GỌI RPC SQL
+    try {
+      saveConfigToStorage();
+      const res = await callSupabaseRpc('admin_generate_key', {
+        p_email: email,
+        p_days: days,
+        p_type: type,
+        p_admin_secret: auth.secret
+      });
+
+      if (res && res.success) {
+        lastGeneratedData = res;
+        resKey.textContent = res.license_key;
+        resEmail.textContent = res.assigned_email;
+        resExpires.textContent = `${formatDate(res.expires_at)} (${days} ngày)`;
+        resultBox.style.display = 'block';
+
+        showToast('Tạo Key bản quyền thành công!', 'success');
+        testAndConnect(); // Tải lại danh sách
+      } else {
+        const msg = res.message || '';
+        if (msg.includes('schema cache') || msg.includes('Could not find')) {
+          showToast('Chưa chạy SQL! Mẹo: Dán mã "service_role" vào ô mật khẩu để tạo trực tiếp mà không cần SQL!', 'error');
+        } else {
+          showToast(msg || 'Không thể tạo key.', 'error');
+        }
+      }
+    } catch (err) {
+      showToast('Lỗi khi gọi API: ' + err.message, 'error');
+    } finally {
+      btnGenerateKey.disabled = false;
+      btnGenerateKey.textContent = '⚡ Tạo Key Bản Quyền';
+    }
+  });
+
+  // Copy Key vào Clipboard
+  btnCopyKey.addEventListener('click', () => {
+    if (!lastGeneratedData) return;
+    navigator.clipboard.writeText(lastGeneratedData.license_key);
+    showToast(`Đã sao chép: ${lastGeneratedData.license_key}`, 'success');
+  });
+
+  // Copy tin nhắn soạn sẵn gửi khách qua Zalo/Email
+  btnCopyMessage.addEventListener('click', () => {
+    if (!lastGeneratedData) return;
+    const msg = 
+`Chào bạn, JNNTool gửi bạn thông tin kích hoạt bản quyền Revit:
+---------------------------------------------
+- Email tài khoản : ${lastGeneratedData.assigned_email}
+- Mã Key kích hoạt: ${lastGeneratedData.license_key}
+- Thời hạn sử dụng: ${formatDate(lastGeneratedData.expires_at)} (${lastGeneratedData.days} ngày)
+---------------------------------------------
+Hướng dẫn: Trên Revit, bạn vào tab "JNNTool" -> bấm nút "Account / License" -> nhập Email và dán mã Key trên rồi bấm Kích Hoạt Bản Quyền.
+Cảm ơn bạn đã tin tưởng sử dụng JNNTool!`;
+
+    navigator.clipboard.writeText(msg);
+    showToast('Đã sao chép mẫu tin nhắn gửi khách hàng!', 'success');
+  });
+
+  // 3. Quản lý hành động từng dòng: Reset Máy, Gia Hạn, Thu Hồi
+  async function handleAction(licenseKey, action, days = 365) {
+    let confirmMsg = '';
+    if (action === 'reset_machine') confirmMsg = `Bạn có chắc muốn HỦY KHÓA MÁY cho Key: ${licenseKey}?\nKhách hàng sẽ có thể kích hoạt trên máy mới.`;
+    if (action === 'renew') confirmMsg = `Gia hạn thêm ${days} ngày cho Key: ${licenseKey}?`;
+    if (action === 'revoke') confirmMsg = `CẢNH BÁO: Thu hồi (khóa) vĩnh viễn Key: ${licenseKey}?`;
+
+    if (!confirm(confirmMsg)) return;
+
+    const auth = getAuthInfo();
+
+    // XỬ LÝ TRỰC TIẾP QUA SERVICE ROLE KEY
+    if (auth.isServiceRole) {
+      try {
+        let patchBody = {};
+        if (action === 'reset_machine') {
+          patchBody = { bound_machine_id: null, device_name: null, last_validated_at: new Date().toISOString() };
+        } else if (action === 'revoke') {
+          patchBody = { status: 'Revoked', last_validated_at: new Date().toISOString() };
+        } else if (action === 'renew') {
+          const currentLic = currentLicenses.find(l => l.license_key === licenseKey);
+          let baseDate = new Date();
+          if (currentLic && currentLic.expires_at && new Date(currentLic.expires_at) > baseDate) {
+            baseDate = new Date(currentLic.expires_at);
+          }
+          const newExp = new Date(baseDate.getTime() + days * 86400000);
+          patchBody = { expires_at: newExp.toISOString(), status: 'Active', last_validated_at: new Date().toISOString() };
+        }
+
+        const endpoint = `${auth.baseUrl}/rest/v1/licenses?license_key=eq.${encodeURIComponent(licenseKey)}`;
+        const res = await fetch(endpoint, {
+          method: 'PATCH',
+          headers: {
+            'apikey': auth.token,
+            'Authorization': `Bearer ${auth.token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(patchBody)
+        });
+
+        if (res.ok) {
+          showToast('Thao tác thành công!', 'success');
+          testAndConnect();
+        } else {
+          const errData = await res.json();
+          showToast('Lỗi: ' + (errData.message || 'Không thể cập nhật'), 'error');
+        }
+      } catch (err) {
+        showToast('Lỗi: ' + err.message, 'error');
+      }
+      return;
+    }
+
+    // XỬ LÝ QUA HÀM RPC SQL
+    try {
+      const res = await callSupabaseRpc('admin_manage_license', {
+        p_license_key: licenseKey,
+        p_action: action,
+        p_days: days,
+        p_admin_secret: auth.secret
+      });
+
+      if (res && res.success) {
+        showToast(res.message, 'success');
+        testAndConnect(); // Tải lại bảng
+      } else {
+        showToast(res.message || 'Lỗi xử lý hành động.', 'error');
+      }
+    } catch (err) {
+      showToast('Lỗi: ' + err.message, 'error');
+    }
+  }
+
+  // 4. Render bảng dữ liệu
+  function renderTable(licenses) {
+    const query = txtSearch.value.trim().toLowerCase();
+    const filtered = licenses.filter(lic => {
+      if (!query) return true;
+      return (lic.assigned_email && lic.assigned_email.toLowerCase().includes(query)) ||
+             (lic.license_key && lic.license_key.toLowerCase().includes(query)) ||
+             (lic.device_name && lic.device_name.toLowerCase().includes(query));
+    });
+
+    // Cập nhật thống kê
+    statTotal.textContent = licenses.length;
+    statActive.textContent = licenses.filter(l => l.status === 'Active' && l.days_remaining > 0).length;
+    statBound.textContent = licenses.filter(l => l.is_bound).length;
+
+    if (filtered.length === 0) {
+      tblLicensesBody.innerHTML = `
+        <tr>
+          <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">
+            Không có dữ liệu bản quyền nào phù hợp.
+          </td>
+        </tr>`;
+      return;
+    }
+
+    tblLicensesBody.innerHTML = filtered.map(lic => {
+      // Status badge
+      let statusBadge = '';
+      if (lic.status === 'Revoked') {
+        statusBadge = `<span class="badge-tag badge-revoked">Đã thu hồi</span>`;
+      } else if (lic.days_remaining <= 0) {
+        statusBadge = `<span class="badge-tag badge-expired">Hết hạn</span>`;
+      } else {
+        statusBadge = `<span class="badge-tag badge-active">Còn ${lic.days_remaining} ngày</span>`;
+      }
+
+      // Device badge
+      let deviceBadge = '';
+      if (lic.is_bound) {
+        deviceBadge = `<span class="badge-tag badge-bound" title="ID: ${lic.bound_machine_id}">🔒 ${escapeHtml(lic.device_name || 'Đã khóa máy')}</span>`;
+      } else {
+        deviceBadge = `<span class="badge-tag badge-unbound">Chưa khóa máy</span>`;
+      }
+
+      return `
+        <tr>
+          <td>
+            <div style="color: var(--text-main);">${escapeHtml(lic.assigned_email)}</div>
+            <div style="font-size: 11px; color: var(--text-muted);">Tạo: ${formatDate(lic.created_at)}</div>
+          </td>
+          <td>
+            <span class="key-mono">${escapeHtml(lic.license_key)}</span>
+            <button class="btn btn-outline btn-sm" onclick="copyText('${lic.license_key}')" style="margin-left: 4px; padding: 0 4px;" title="Copy">📋</button>
+          </td>
+          <td>
+            <div>${statusBadge} <span style="font-size: 11px; color: var(--text-muted); margin-left: 4px;">${lic.license_type}</span></div>
+            <div style="font-size: 11px; color: var(--text-muted);">Đến: ${formatDate(lic.expires_at)}</div>
+          </td>
+          <td>
+            ${deviceBadge}
+          </td>
+          <td style="text-align: right;">
+            <div class="table-actions" style="justify-content: flex-end;">
+              ${lic.is_bound ? `<button class="btn btn-outline btn-sm" onclick="handleAction('${lic.license_key}', 'reset_machine')" title="Gỡ máy để khách đổi sang máy tính khác">🔄 Reset Máy</button>` : ''}
+              <button class="btn btn-outline btn-sm" onclick="handleAction('${lic.license_key}', 'renew', 365)" title="Cộng thêm 365 ngày">➕ Gia Hạn</button>
+              ${lic.status !== 'Revoked' ? `<button class="btn btn-danger-outline btn-sm" onclick="handleAction('${lic.license_key}', 'revoke')" title="Khóa bản quyền ngay">⛔</button>` : ''}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // Tìm kiếm live
+  txtSearch.addEventListener('input', () => {
+    renderTable(currentLicenses);
+  });
+
+  // Utilities
+  function formatDate(isoStr) {
+    if (!isoStr) return '--';
+    try {
+      const d = new Date(isoStr);
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      return `${day}/${month}/${year}`;
+    } catch {
+      return isoStr;
+    }
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function copyText(val) {
+    navigator.clipboard.writeText(val);
+    showToast(`Đã copy: ${val}`, 'success');
+  }
+
+  function showToast(message, type = '') {
+    toast.textContent = message;
+    toast.className = `toast ${type}`;
+    toast.style.display = 'flex';
+    setTimeout(() => {
+      toast.style.display = 'none';
+    }, 3200);
+  }
+</script>
+
+</body>
+</html>

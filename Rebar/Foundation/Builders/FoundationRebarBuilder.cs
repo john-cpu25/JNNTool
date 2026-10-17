@@ -100,7 +100,8 @@ namespace JNNTool.RebarSuite.Foundation.Builders
                     }
                     else
                     {
-                        normal = new XYZ(0, 0, 1);
+                        // Thép chờ cột (ColumnDowel) dạng chữ L đứng: tính pháp tuyến vuông góc với mặt phẳng chứa 2 đoạn chữ L
+                        normal = ComputeDowelPlaneNormal(curves);
                     }
 
                     var rebar = JNNTool.Core.Compat.RebarCompat.CreateFromCurves(
@@ -148,6 +149,27 @@ namespace JNNTool.RebarSuite.Foundation.Builders
             }
 
             return createdCount;
+        }
+
+        private static XYZ ComputeDowelPlaneNormal(IList<Curve> curves)
+        {
+            if (curves.Count >= 2)
+            {
+                var d0 = (curves[0].GetEndPoint(1) - curves[0].GetEndPoint(0)).Normalize();
+                var d1 = (curves[1].GetEndPoint(1) - curves[1].GetEndPoint(0)).Normalize();
+                var cross = d0.CrossProduct(d1);
+                if (cross.GetLength() > 0.001) return cross.Normalize();
+            }
+
+            if (curves.Count >= 1)
+            {
+                var d0 = (curves[0].GetEndPoint(1) - curves[0].GetEndPoint(0)).Normalize();
+                var cross = d0.CrossProduct(XYZ.BasisY);
+                if (cross.GetLength() < 0.001) cross = d0.CrossProduct(XYZ.BasisX);
+                return cross.Normalize();
+            }
+
+            return XYZ.BasisY;
         }
     }
 }

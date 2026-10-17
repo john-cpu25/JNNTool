@@ -29,6 +29,7 @@
     <Compile Remove="Tools\**\obj\**" />
     <Compile Remove="Tools\**\bin\**" />
     <Compile Remove="Tools\Tool\**" />
+    <Compile Remove="Tools\StairDetail\**" />
 
     <Compile Remove="Tools\**\PreviewApp\**" />
     <Compile Remove="Installer\**" />
@@ -38,6 +39,7 @@
     <Page Remove="Tools\**\obj\**" />
     <Page Remove="Tools\**\bin\**" />
     <Page Remove="Tools\Tool\**" />
+    <Page Remove="Tools\StairDetail\**" />
 
     <Page Remove="Tools\**\PreviewApp\**" />
     <Page Remove="Installer\**" />
@@ -47,12 +49,17 @@
     <EmbeddedResource Remove="Tools\**\obj\**" />
     <EmbeddedResource Remove="Tools\**\bin\**" />
     <EmbeddedResource Remove="Tools\Tool\**" />
+    <EmbeddedResource Remove="Tools\StairDetail\**" />
 
     <EmbeddedResource Remove="Tools\**\PreviewApp\**" />
     <EmbeddedResource Remove="Installer\**" />
     <EmbeddedResource Remove="Tests\**" />
     <EmbeddedResource Remove="HtStructural\**" />
     <EmbeddedResource Remove="server\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Tools\Login\Assets\Logo_JNN.png" />
   </ItemGroup>
 
   <!-- Revit API references using Nice3point.Revit.Api -->
@@ -116,31 +123,28 @@
     <Copy SourceFiles="@(OutputDlls)" DestinationFolder="$(BundleFolder)\Contents\%(VersionFolder.Identity)" SkipUnchangedFiles="true" />
     <Copy SourceFiles="$(ProjectDir)JNNTool.addin" DestinationFolder="$(BundleFolder)\Contents\%(VersionFolder.Identity)" SkipUnchangedFiles="true" />
     
-    <!-- Tự động đóng gói toàn bộ biểu tượng nằm trong thư mục Tools -->
+    <!-- Tự động đóng gói biểu tượng nằm trong thư mục Tools (loại trừ code decompile cũ) -->
     <MakeDir Directories="$(BundleFolder)\Contents\Resources" />
     <ItemGroup>
-      <ToolIcons Include="$(ProjectDir)Tools\**\*.png" />
+      <ToolIcons Include="$(ProjectDir)Tools\**\*.png" Exclude="$(ProjectDir)Tools\Tool\**\*.png;$(ProjectDir)Tools\StairDetail\**\*.png" />
     </ItemGroup>
     <Copy SourceFiles="@(ToolIcons)" DestinationFolder="$(BundleFolder)\Contents\Resources\" SkipUnchangedFiles="true" />
     
     <Copy SourceFiles="$(ProjectDir)PackageContents.xml" DestinationFolder="$(BundleFolder)" SkipUnchangedFiles="true" />
-    <!-- Copy version.json vào bundle root để auto-update check -->
-    <Copy SourceFiles="$(ProjectDir)JNNTool.bundle\version.json"
+    <!-- Copy version.json từ thư mục gốc vào bundle root để auto-update check -->
+    <Copy SourceFiles="$(ProjectDir)version.json"
           DestinationFolder="$(BundleFolder)"
-          Condition="Exists('$(ProjectDir)JNNTool.bundle\version.json')"
+          Condition="Exists('$(ProjectDir)version.json')"
           SkipUnchangedFiles="true" />
 
     <!-- Tự động đồng bộ toàn bộ Bundle tới %APPDATA%\Autodesk\ApplicationPlugins để Revit tự nhận diện không cần quyền Admin -->
     <PropertyGroup>
       <UserPluginsBundle>$(AppData)\Autodesk\ApplicationPlugins\JNNTool.bundle</UserPluginsBundle>
-      <ProgramDataBundle>C:\ProgramData\Autodesk\ApplicationPlugins\JNNTool.bundle</ProgramDataBundle>
     </PropertyGroup>
     <MakeDir Directories="$(UserPluginsBundle)" />
     <ItemGroup>
       <BundleFiles Include="$(BundleFolder)\**\*.*" />
     </ItemGroup>
-    <Copy SourceFiles="@(BundleFiles)" DestinationFiles="@(BundleFiles->'$(UserPluginsBundle)\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="false" ContinueOnError="true" />
-    <!-- Đồng bộ thêm tới C:\ProgramData nếu tồn tại để tránh Revit ưu tiên nạp bản cũ -->
-    <Copy SourceFiles="@(BundleFiles)" DestinationFiles="@(BundleFiles->'$(ProgramDataBundle)\%(RecursiveDir)%(Filename)%(Extension)')" Condition="Exists('$(ProgramDataBundle)')" SkipUnchangedFiles="false" ContinueOnError="true" />
+    <Copy SourceFiles="@(BundleFiles)" DestinationFiles="@(BundleFiles->'$(UserPluginsBundle)\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" ContinueOnError="true" />
   </Target>
 </Project>
