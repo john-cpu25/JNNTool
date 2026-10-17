@@ -1,9 +1,9 @@
 {
-    "version":  "2.1.1",
-    "releaseDate":  "2026-10-16",
+    "version":  "2.1.2",
+    "releaseDate":  "2026-10-17",
     "manifestUrl":  "https://raw.githubusercontent.com/john-cpu25/JNNTool/main/version.json",
-    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.1.1/JNNToolSetup_v2.1.1.msi",
+    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.1.2/JNNToolSetup_v2.1.2.msi",
     "changelog":  [
-                      "Cap nhat giao dien License Activation tinh gon chuan Supabase va xoa bo cac truong cu"
+                      "Dong bo theme UI Manager va logo JNN cho cua so Login; Toi uu bo cuc Stacked Items cho Panel Modeling va CSI x Revit"
                   ]
 }
