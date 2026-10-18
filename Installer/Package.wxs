@@ -60,18 +60,18 @@
     </StandardDirectory>
 
     <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
-      <!-- JNNToolInstaller.exe trong LocalAppData\Programs\JNN\JNNTool -->
+      <!-- JNNToolUpdater.exe trong LocalAppData\Programs\JNN\JNNTool -->
       <Component Id="CmpUpdaterExe" Guid="*" Directory="AppDir">
-        <File Id="UpdaterExe" Source="publish\JNNToolInstaller.exe" KeyPath="yes" />
+        <File Id="UpdaterExe" Source="publish\JNNToolUpdater.exe" KeyPath="yes" />
       </Component>
       <Component Id="CmpUpdaterDll" Guid="*" Directory="AppDir">
-        <File Id="UpdaterDll" Source="publish\JNNToolInstaller.dll" KeyPath="yes" />
+        <File Id="UpdaterDll" Source="publish\JNNToolUpdater.dll" KeyPath="yes" />
       </Component>
       <Component Id="CmpUpdaterRuntimeConfig" Guid="*" Directory="AppDir">
-        <File Id="UpdaterRuntimeConfig" Source="publish\JNNToolInstaller.runtimeconfig.json" KeyPath="yes" />
+        <File Id="UpdaterRuntimeConfig" Source="publish\JNNToolUpdater.runtimeconfig.json" KeyPath="yes" />
       </Component>
       <Component Id="CmpUpdaterDeps" Guid="*" Directory="AppDir">
-        <File Id="UpdaterDeps" Source="publish\JNNToolInstaller.deps.json" KeyPath="yes" />
+        <File Id="UpdaterDeps" Source="publish\JNNToolUpdater.deps.json" KeyPath="yes" />
       </Component>
 
       <!-- icon.ico trong AppDir -->
@@ -87,7 +87,7 @@
       <Component Id="StartMenuShortcut" Guid="85873994-3754-4a57-8894-394875489754" Directory="AppMenuFolder">
         <Shortcut Id="UpdaterShortcut"
                   Name="JNNTool Updater"
-                  Target="[AppDir]JNNToolInstaller.exe"
+                  Target="[AppDir]JNNToolUpdater.exe"
                   WorkingDirectory="AppDir"
                   Icon="AppIcon.ico"
                   Description="Quan ly va cap nhat JNNTool Revit Plugin" />

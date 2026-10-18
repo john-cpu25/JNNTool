@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
-using JNNTool.Core.Logging;
+using JNNTool.Tools.QuantityTakeoff.Helpers;
 
 namespace JNNTool.Tools.QuantityTakeoff.Engine
 {
@@ -28,7 +28,7 @@ namespace JNNTool.Tools.QuantityTakeoff.Engine
             try
             {
                 // 1. Tính toán BoundingBoxXYZ bao phủ toàn bộ danh sách phần tử
-                BoundingBoxXYZ? unionBox = null;
+                BoundingBoxXYZ unionBox = null;
                 var validIds = new List<ElementId>();
 
                 foreach (var id in elementIds)
@@ -80,9 +80,8 @@ namespace JNNTool.Tools.QuantityTakeoff.Engine
                 );
 
                 // 2. Tìm hoặc kích hoạt View 3D phù hợp
-                View3D? view3D = uidoc.ActiveView as View3D;
+                View3D view3D = uidoc.ActiveView as View3D;
 
-                // Nếu view hiện tại không phải 3D hoặc là phối cảnh / template bị khóa
                 if (view3D == null || view3D.IsTemplate || view3D.IsPerspective)
                 {
                     view3D = GetOrCreateQto3DView(doc);
@@ -111,21 +110,20 @@ namespace JNNTool.Tools.QuantityTakeoff.Engine
                 }
                 catch
                 {
-                    // Một số bản Revit cũ có thể nuốt exception khi zoom
+                    // Tránh lỗi khi zoom view
                 }
 
                 return true;
             }
             catch (Exception ex)
             {
-                Logger.Error("Lỗi thực hiện Box 3D trong Quantity Takeoff", ex);
+                QtoLogger.Error("Lỗi thực hiện Box 3D trong Quantity Takeoff", ex);
                 return false;
             }
         }
 
-        private static View3D? GetOrCreateQto3DView(Document doc)
+        private static View3D GetOrCreateQto3DView(Document doc)
         {
-            // Tìm view đã có tên {3D - JNN QTO}
             var existingView = new FilteredElementCollector(doc)
                 .OfClass(typeof(View3D))
                 .Cast<View3D>()
@@ -134,7 +132,6 @@ namespace JNNTool.Tools.QuantityTakeoff.Engine
 
             if (existingView != null) return existingView;
 
-            // Tìm ViewFamilyType cho 3D
             var vft = new FilteredElementCollector(doc)
                 .OfClass(typeof(ViewFamilyType))
                 .Cast<ViewFamilyType>()

@@ -55,7 +55,7 @@ public class VersionChecker
             using var http = new HttpClient();
             http.Timeout = TimeSpan.FromSeconds(8);
             http.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue { NoCache = true };
-            http.DefaultRequestHeaders.Add("User-Agent", "JNNToolInstaller");
+            http.DefaultRequestHeaders.Add("User-Agent", "JNNToolUpdater");
 
             // Cache buster tránh bị GitHub CDN lưu đệm
             var url = $"{DefaultGitHubManifestUrl}?t={DateTime.UtcNow.Ticks}";

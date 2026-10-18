@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Enhanced - **Boundary Align (Căn Lề Biên): Nâng cấp toàn diện cho Dầm có bề rộng lớn (400, 550, 600, 800 mm)**
+- **Xử lý chính xác Bề rộng Dầm lớn (`BeamDimensionHelper.cs`)**:
+  - Tự động nhận diện bề rộng dầm qua 3 tầng: (1) Tham số Type/Instance (`b`, `Width`, `B`...), (2) Phân tích tên Type bằng Regex (`B40.50` $\rightarrow 400\text{ mm}$, `B60.40` $\rightarrow 600\text{ mm}$, `B50.75` $\rightarrow 500\text{ mm}$, `B80.50` $\rightarrow 800\text{ mm}$, `400x600`, `550x700`), (3) Đo kích thước thực tế từ 3D BoundingBox của dầm.
+  - Triệt tiêu hoàn toàn lỗi fallback về 200 mm khi tham số dầm đặt tên khác quy ước.
+- **Khắc phục lỗi Cột bị tuột liên kết (`BoundaryAligner.cs`)**:
+  - Đo khoảng cách từ Cột đến đường tim dầm BAN ĐẦU trước khi dời thay vì đường dầm mới, nâng dung sai an toàn lên $2.5\text{ ft}$ ($762\text{ mm}$).
+  - Cột luôn nhận diện chính xác 100% dầm biên $400, 550, 600, 800\text{ mm}$ nối vào để dời đồng bộ theo cùng hướng.
+- **Khắc phục lỗi Hở nút Dầm ngang (`AdjustIntersectingBeams`)**:
+  - Dung sai kết nối dầm ngang được tính tỷ lệ theo bề rộng dầm biên ($connectTol = \max(0.8, B \times 0.85) \approx 340 - 510\text{ mm}$), bắt trọn cả dầm ngang cắm ở tim hoặc ở mép dầm biên lớn.
+  - Bổ sung bộ lọc chống xiên dầm (bỏ qua dầm song song cùng trục) và tự động đồng bộ co/kéo dầm ngang nối vào Cột biên bị dời.
+
+### Added - **Merge Floor: Bổ sung chế độ Active View (Tự động gộp sàn gần nhau không cần chọn)**
+- **Tính năng 1-Click tự động**:
+  - Tự động quét toàn bộ sàn đang hiển thị trong View hiện hành (`ActiveView` - Floor Plan, Structural Plan hoặc 3D View).
+  - Tự động phân loại theo Loại sàn & Cao độ (`GroupByTypeAndElevation`), nhận diện các cụm sàn tiếp giáp/gần nhau ($\le 12\text{ mm}$) qua `FindConnectedComponents`.
+  - Tự động hợp nhất từng cụm có $\ge 2$ sàn chạm nhau thành 1 sàn liên tục duy nhất mà **không cần người dùng phải quét chọn thủ công bằng chuột**.
+  - Các sàn đứng độc lập 1 mình được giữ nguyên 100%, không bị ảnh hưởng.
+  - Tự động phục hồi liên kết Join Geometry với Cột/Dầm và kế thừa toàn bộ tham số (Level, Offset, Structural, Comments, Mark).
+- **Trải nghiệm Ribbon & Palette linh hoạt**:
+  - Nâng cấp nút Ribbon thành **SplitButton** `cmdMergeFloorSplit`:
+    + Nút chính (nút trên cùng): `Merge Floor (Active View)` (`cmdMergeFloorActiveView`) — 1-click chạy ngay chế độ tự động cho view hiện hành.
+    + Nút xổ xuống: `Merge Floor (Selection)` (`cmdMergeFloorSelect`) — quét chọn thủ công các sàn trên màn hình.
+  - Lệnh `MergeFloorCmd`: Nếu đã quét chọn trước $\ge 2$ sàn $\rightarrow$ gộp ngay lập tức; nếu chưa chọn sàn nào $\rightarrow$ hiển thị hộp thoại TaskDialog 2 CommandLinks trực quan để chọn phạm vi (Active View hoặc Pick Elements).
+  - Đăng ký đầy đủ vào `CommandRegistry` (Command Palette) và `RibbonThemeService` (Vector Icon 3x).
+
 ### Changed - **Đồng bộ số lượng công cụ Ribbon và Command Palette (21 tools)**
 - **Khớp 1:1 theo Ribbon thực tế**:
   - Ẩn lệnh `Rebar Column` (`cmdRebarColumn`) khỏi Panel **Modeling** trên cả Ribbon ([`App.cs`](file:///c:/Users/nhann/OneDrive/AI/JNNTool/Core/App.cs)) và Command Palette ([`CommandRegistry.cs`](file:///c:/Users/nhann/OneDrive/AI/JNNTool/Core/Palette/CommandRegistry.cs)), chuyển ngầm vào phân hệ `Rebar Suite`.

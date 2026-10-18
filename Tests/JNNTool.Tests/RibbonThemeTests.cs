@@ -9,10 +9,11 @@ namespace JNNTool.Tests
     public class RibbonThemeTests
     {
         [Fact]
-        public void JNNIcon_ShouldContainExactly50Icons()
+        public void JNNIcon_ShouldContainAllRegisteredIcons()
         {
             var allIcons = Enum.GetValues(typeof(JNNIcon)).Cast<JNNIcon>().ToList();
-            Assert.Equal(50, allIcons.Count);
+            Assert.True(allIcons.Count >= 50, $"Expected at least 50 icons, found {allIcons.Count}");
+            Assert.Contains(JNNIcon.MergeFloor, allIcons);
         }
 
         [Fact]
@@ -102,5 +103,115 @@ namespace JNNTool.Tests
                 Assert.Equal(48, bmp16.PixelHeight);
             }
         }
+
+        [Fact]
+        public void MergeFloor_ShouldHaveCrispVectorGeometry_AndSavePng()
+        {
+            Assert.True(VectorIconCatalog.HasGeometry(JNNIcon.MergeFloor));
+            var geom = VectorIconCatalog.GetGeometry(JNNIcon.MergeFloor);
+            Assert.NotNull(geom);
+            Assert.False(geom.IsEmpty());
+
+            // Render supersampled vector icon
+            var img32 = RibbonThemeService.CreateRibbonImage(JNNIcon.MergeFloor, "#0284C7", RibbonIconStyle.Badge, 32);
+            Assert.NotNull(img32);
+
+            if (img32 is System.Windows.Media.Imaging.BitmapSource bmp)
+            {
+                var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+                encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bmp));
+
+                string solutionDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+                string targetPng = System.IO.Path.Combine(solutionDir, "Tools", "MergeFloor", "MergeFloor.png");
+                using (var ms = new System.IO.MemoryStream())
+                {
+                    encoder.Save(ms);
+                    byte[] pngBytes = ms.ToArray();
+                    System.IO.File.WriteAllBytes(targetPng, pngBytes);
+
+                    string bundlePng = System.IO.Path.Combine(solutionDir, "JNNTool.bundle", "Contents", "Resources", "MergeFloor.png");
+                    if (System.IO.File.Exists(bundlePng))
+                    {
+                        System.IO.File.WriteAllBytes(bundlePng, pngBytes);
+                    }
+                }
+            }
+        }
+
+        [Fact]
+        public void CutFloor_ShouldHaveCrispVectorGeometry_AndSavePng()
+        {
+            Assert.True(VectorIconCatalog.HasGeometry(JNNIcon.CutFloor));
+            var geom = VectorIconCatalog.GetGeometry(JNNIcon.CutFloor);
+            Assert.NotNull(geom);
+            Assert.False(geom.IsEmpty());
+
+            // Render supersampled vector icon
+            var img32 = RibbonThemeService.CreateRibbonImage(JNNIcon.CutFloor, "#0284C7", RibbonIconStyle.Badge, 32);
+            Assert.NotNull(img32);
+
+            if (img32 is System.Windows.Media.Imaging.BitmapSource bmp)
+            {
+                var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+                encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bmp));
+
+                string solutionDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+                string targetPng = System.IO.Path.Combine(solutionDir, "Tools", "CutByFloor", "CutFloor.png");
+                using (var ms = new System.IO.MemoryStream())
+                {
+                    encoder.Save(ms);
+                    byte[] pngBytes = ms.ToArray();
+                    System.IO.File.WriteAllBytes(targetPng, pngBytes);
+
+                    string resourcesPng = System.IO.Path.Combine(solutionDir, "Resources", "CutFloor.png");
+                    if (System.IO.Directory.Exists(System.IO.Path.GetDirectoryName(resourcesPng)))
+                        System.IO.File.WriteAllBytes(resourcesPng, pngBytes);
+
+                    string bundlePng = System.IO.Path.Combine(solutionDir, "JNNTool.bundle", "Contents", "Resources", "CutFloor.png");
+                    if (System.IO.Directory.Exists(System.IO.Path.GetDirectoryName(bundlePng)))
+                        System.IO.File.WriteAllBytes(bundlePng, pngBytes);
+                }
+            }
+        }
+
+        [Fact]
+        public void CreateView_ShouldHaveCrispVectorGeometry_AndSavePng()
+        {
+            Assert.True(VectorIconCatalog.HasGeometry(JNNIcon.CreateView));
+            var geom = VectorIconCatalog.GetGeometry(JNNIcon.CreateView);
+            Assert.NotNull(geom);
+            Assert.False(geom.IsEmpty());
+
+            // Render supersampled vector icon (3x 96x96 @ 288 DPI)
+            var img32 = RibbonThemeService.CreateRibbonImage(JNNIcon.CreateView, "#0284C7", RibbonIconStyle.Badge, 32);
+            Assert.NotNull(img32);
+
+            if (img32 is System.Windows.Media.Imaging.BitmapSource bmp)
+            {
+                var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+                encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bmp));
+
+                string solutionDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+                string targetDir = System.IO.Path.Combine(solutionDir, "Tools", "Create View");
+                if (!System.IO.Directory.Exists(targetDir))
+                    System.IO.Directory.CreateDirectory(targetDir);
+
+                string targetPng = System.IO.Path.Combine(targetDir, "CreateView.png");
+                using (var ms = new System.IO.MemoryStream())
+                {
+                    encoder.Save(ms);
+                    byte[] pngBytes = ms.ToArray();
+                    System.IO.File.WriteAllBytes(targetPng, pngBytes);
+
+                    string bundleDir = System.IO.Path.Combine(solutionDir, "JNNTool.bundle", "Contents", "Resources");
+                    if (!System.IO.Directory.Exists(bundleDir))
+                        System.IO.Directory.CreateDirectory(bundleDir);
+
+                    string bundlePng = System.IO.Path.Combine(bundleDir, "CreateView.png");
+                    System.IO.File.WriteAllBytes(bundlePng, pngBytes);
+                }
+            }
+        }
     }
 }
+

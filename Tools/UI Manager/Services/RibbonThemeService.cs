@@ -35,6 +35,11 @@ namespace JNNTool.Tools.UIManager.Services
             new RibbonButtonItem { CommandId = "cmdCreateFilter", DisplayName = "Create\nFilter", PanelName = "Modeling", Icon = JNNIcon.Filter, ToolTip = "Tạo bộ lọc tự động từ danh sách phần tử và gán màu nhanh." },
             new RibbonButtonItem { CommandId = "cmdSpeedOverriderElement", DisplayName = "Speed\nOverrider", PanelName = "Modeling", Icon = JNNIcon.Flash, ToolTip = "Override hiển thị phần tử nhanh (Speed Overrider)." },
             new RibbonButtonItem { CommandId = "cmdPileLocation", DisplayName = "Pile\nLocation", PanelName = "Modeling", Icon = JNNIcon.Target, ToolTip = "Ghi tọa độ thực tế (mm) của toàn bộ cọc trong view vào parameter." },
+            new RibbonButtonItem { CommandId = "cmdMergeFloorSplit", DisplayName = "Merge\nFloor", PanelName = "Modeling", Icon = JNNIcon.MergeFloor, ToolTip = "Gộp nhiều mảnh sàn liền kề (cùng tiết diện & cùng cao độ) thành 1 sàn duy nhất." },
+            new RibbonButtonItem { CommandId = "cmdMergeFloorActiveView", DisplayName = "Merge Floor\n(View)", PanelName = "Modeling", Icon = JNNIcon.MergeFloor, ToolTip = "Tự động quét và gộp các mảnh sàn tiếp giáp/gần nhau trong View hiện hành mà không cần chọn." },
+            new RibbonButtonItem { CommandId = "cmdMergeFloorSelect", DisplayName = "Merge Floor\n(Select)", PanelName = "Modeling", Icon = JNNIcon.MergeFloor, ToolTip = "Quét chọn thủ công các mảnh sàn trên màn hình để gộp." },
+            new RibbonButtonItem { CommandId = "cmdMergeFloor", DisplayName = "Merge\nFloor", PanelName = "Modeling", Icon = JNNIcon.MergeFloor, ToolTip = "Gộp nhiều mảnh sàn liền kề (cùng tiết diện & cùng cao độ) thành 1 sàn duy nhất." },
+            new RibbonButtonItem { CommandId = "cmdCutFloor", DisplayName = "Cut Floor", PanelName = "Modeling", Icon = JNNIcon.CutFloor, ToolTip = "Quét chọn sàn to và các sàn nhỏ để tự động cắt/khoét ranh giới sàn to theo sàn nhỏ." },
             new RibbonButtonItem { CommandId = "cmdFloorByRoom", DisplayName = "Floor By\nRoom", PanelName = "Modeling", Icon = JNNIcon.FloorByRoom, ToolTip = "Vẽ sàn tự động theo Boundary của Room." },
             new RibbonButtonItem { CommandId = "cmdRebarBeam", DisplayName = "Rebar\nBeam", PanelName = "Modeling", Icon = JNNIcon.RebarBeam, ToolTip = "Bố trí thép dầm liên tục (Lớp trên, dưới, và đai theo L0/4)." },
             new RibbonButtonItem { CommandId = "cmdConnection", DisplayName = "Steel\nConnection", PanelName = "Modeling", Icon = JNNIcon.Connection, ToolTip = "Tạo liên kết thép (Steel Connection) cho dầm và cột." },
@@ -52,6 +57,7 @@ namespace JNNTool.Tools.UIManager.Services
 
             // ───────────────── Panel: Layout ─────────────────
             new RibbonButtonItem { CommandId = "cmdAutoViewSheet", DisplayName = "Auto View\n& Sheet", PanelName = "Layout", Icon = JNNIcon.ViewSheet, ToolTip = "Tự động tạo View (OVER) và dàn Sheet hàng loạt theo tầng và Zone." },
+            new RibbonButtonItem { CommandId = "cmdCreateView", DisplayName = "Create\nViews", PanelName = "Layout", Icon = JNNIcon.CreateView, ToolTip = "Tự động tạo và nhân bản nhiều View theo Level, gán View Template và nhóm cây thư mục Project Browser." },
             new RibbonButtonItem { CommandId = "cmdAutoDimGrid", DisplayName = "Dim\nGrid", PanelName = "Layout", Icon = JNNIcon.Dim, ToolTip = "Dim tự động lưới trục 4 cạnh (2-3 lớp: Tường / Trục / Tổng)." },
             new RibbonButtonItem { CommandId = "cmdAutoDimColumn", DisplayName = "Dim\nCol/Wall", PanelName = "Layout", Icon = JNNIcon.DimColumn, ToolTip = "Ghi kích thước tiết diện Cột, Vách và định vị từ Lưới trục trên mặt bằng." },
             new RibbonButtonItem { CommandId = "cmdElementMark", DisplayName = "Element\nMark", PanelName = "Layout", Icon = JNNIcon.Mark, ToolTip = "Đánh Mark tự động cho Dầm, Cột, Sàn theo quy tắc dự án." },

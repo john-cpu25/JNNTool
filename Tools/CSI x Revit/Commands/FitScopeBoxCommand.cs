@@ -15,7 +15,9 @@ namespace JNNTool.Tools.CSIxRevit.Commands
                 return Result.Cancelled;
 
             var uiapp = commandData.Application;
-            var doc = uiapp?.ActiveUIDocument?.Document;
+            var uidoc = uiapp?.ActiveUIDocument;
+            var doc = uidoc?.Document;
+            var activeView = uidoc?.ActiveView;
             if (doc == null)
             {
                 message = "Hãy mở một dự án Revit trước khi chạy lệnh.";
@@ -27,7 +29,7 @@ namespace JNNTool.Tools.CSIxRevit.Commands
                 using (Transaction tx = new Transaction(doc, "JNN - Fit Scope Box cho Grid & Level"))
                 {
                     tx.Start();
-                    var res = ScopeBoxBuilder.FitGridsAndLevels(doc);
+                    var res = ScopeBoxBuilder.FitGridsAndLevels(doc, activeView);
                     tx.Commit();
 
                     if (!res.Found)
@@ -40,8 +42,9 @@ namespace JNNTool.Tools.CSIxRevit.Commands
 
                     var t = res.Trim;
                     string msg = $"✅ Scope Box '{res.Name}': gán {res.LevelsAssigned} Level, gỡ khóa {res.GridsDetached} Grid để tự cắt đầu trục.\n" +
-                                 $"📏 Cắt 3D Grid theo biên Scope Box: {res.Grids3DFitted} trục.\n\n" +
-                                 $"📍 Kéo bóng vào trong Scope Box: {t.Adjusted} lượt (trục × mặt bằng) trên {t.Views} mặt bằng.\n" +
+                                 $"📏 Cắt 3D Grid: {res.Grids3DFitted} trục (mặt bằng) + {res.GridsVerticalFitted} trục (chiều cao Z mặt đứng/3D).\n" +
+                                 (res.Views3DFitted > 0 ? $"📦 Gán Scope Box cho {res.Views3DFitted} View 3D/Mặt đứng để crop gọn gàng.\n" : "") +
+                                 $"\n📍 Kéo bóng vào trong Scope Box: {t.Adjusted} lượt (trục × mặt bằng) trên {t.Views} mặt bằng.\n" +
                                  $"🎯 Đo bóng thật và ép sát mép: {t.Snapped}/{t.Adjusted}\n" +
                                  (t.Failed > 0 ? $"⚠️ Không chỉnh được: {t.Failed}\n   Lỗi đầu tiên: {t.FirstError}\n" : "") +
                                  (!string.IsNullOrEmpty(res.Error) ? $"❌ Lỗi: {res.Error}\n" : "") +

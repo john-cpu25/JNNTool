@@ -263,5 +263,115 @@ namespace JNNTool.Tests
             var r = ScopeBoxPlanner.Plan(new double[0], new double[0], 0, 0, new BoxMm(0, 0, 0, 1, 1, 1), 1000);
             Assert.False(r.HasBuilding);
         }
+
+        [Fact]
+        public void Parse_SDV_A_Debug_T4Beams()
+        {
+            string path = @"C:\Users\nhann\OneDrive\AI\JNNTool\Tools\CSI x Revit\SDV-A-2026.10.17.$et";
+            if (!System.IO.File.Exists(path)) return;
+
+            var tables = new JNNTool.Tools.CSIxRevit.Parser.E2KReader().Read(path);
+            new JNNTool.Tools.CSIxRevit.Parser.E2KParser().Parse(tables,
+                out var points,
+                out var beams,
+                out var columns,
+                out var walls,
+                out var floors,
+                out var sectionProperties,
+                out var stories,
+                out var grids,
+                out var sectionDefs);
+
+            var t4Story = stories.FirstOrDefault(s => s.Name == "T4");
+            Assert.NotNull(t4Story);
+
+            var t4Beams = beams.Where(b => b.Name.EndsWith("_T4")).ToList();
+            var b4035Beams = beams.Where(b => b.Section == "B40.35").ToList();
+
+            var b93 = beams.FirstOrDefault(b => b.Name.StartsWith("B93_"));
+            var b97 = beams.FirstOrDefault(b => b.Name.StartsWith("B97_"));
+
+            var p93_1 = points.FirstOrDefault(p => p.Name == b93?.PointI);
+            var p93_2 = points.FirstOrDefault(p => p.Name == b93?.PointJ);
+            var p97_1 = points.FirstOrDefault(p => p.Name == b97?.PointI);
+            var p97_2 = points.FirstOrDefault(p => p.Name == b97?.PointJ);
+
+            // Check SectionDefinition of B40.35
+            bool hasDef = sectionDefs.TryGetValue("B40.35", out var b4035Def);
+
+            // Check beam groups as in ImportE2KCommand
+            var beamGroups = beams.GroupBy(b => b.Section).Select(g => new { Section = g.Key, Count = g.Count() }).ToList();
+            var b4035Group = beamGroups.FirstOrDefault(g => g.Section == "B40.35");
+            Assert.NotNull(b4035Group);
+
+            // Check SectionDefinition
+            sectionDefs.TryGetValue("B40.35", out var def);
+            Assert.NotNull(def);
+            Assert.Equal(400, def.WidthMm);
+            Assert.Equal(350, def.DepthMm);
+            Assert.Equal("Concrete Rectangular", def.Shape);
+
+            // Check suggestion
+            Assert.NotNull(b93);
+            Assert.NotNull(b97);
+            Assert.Equal("T4", b93.Name.Split('_')[1]);
+            Assert.Equal("T4", b97.Name.Split('_')[1]);
+            Assert.Equal(400, b93.WidthMm);
+            Assert.Equal(350, b93.DepthMm);
+            Assert.Equal(400, b97.WidthMm);
+            Assert.Equal(350, b97.DepthMm);
+        }
+
+        [Fact]
+        public void LevelMappingItem_CustomNamingAndSelection()
+        {
+            var item = new JNNTool.Tools.CSIxRevit.Models.LevelMappingItem
+            {
+                EtabsStoryName = "T4",
+                ElevationFeet = 14.4 / 0.3048,
+                HeightFeet = 3.6 / 0.3048,
+                TargetLevelName = "T4",
+                IsSelected = true
+            };
+
+            Assert.True(item.IsSelected);
+            Assert.Equal("T4", item.EtabsStoryName);
+            Assert.Equal("T4", item.TargetLevelName);
+            Assert.Equal(14.4, item.ElevationM, 1);
+            Assert.Equal(3.6, item.HeightM, 1);
+
+            // Rename with prefix
+            item.TargetLevelName = "Tầng " + item.EtabsStoryName;
+            Assert.Equal("Tầng T4", item.TargetLevelName);
+
+            // Deselect
+            item.IsSelected = false;
+            Assert.False(item.IsSelected);
+
+            // Map to existing
+            item.MappedLevelName = "Level 4";
+            Assert.Equal("Level 4", item.MappedLevelName);
+        }
+
+        [Theory]
+        [InlineData("B40.50", 0, 400.0)]
+        [InlineData("B60.40", 0, 600.0)]
+        [InlineData("B50.75", 0, 500.0)]
+        [InlineData("B80.50", 0, 800.0)]
+        [InlineData("B40.35", 0, 400.0)]
+        [InlineData("400x600", 0, 400.0)]
+        [InlineData("600x400", 0, 600.0)]
+        [InlineData("550x700", 0, 550.0)]
+        [InlineData("B550x700", 0, 550.0)]
+        [InlineData("B400*600", 0, 400.0)]
+        [InlineData("D400", 0, 400.0)]
+        [InlineData("CustomBeam", 550.0, 550.0)]
+        [InlineData("Unknown", 0, 200.0)] // Fallback 200
+        public void BeamDimensionHelper_ExtractWidth(string typeName, double paramBMm, double expectedWidthMm)
+        {
+            double actual = JNNTool.Tools.CSIxRevit.Builder.BeamDimensionHelper.ExtractBeamWidthMm(typeName, paramBMm);
+            Assert.Equal(expectedWidthMm, actual, 1);
+        }
     }
 }
+

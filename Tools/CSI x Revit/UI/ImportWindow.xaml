@@ -93,9 +93,8 @@
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Template">
                 <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                    <ControlTemplate TargetType="Button">                        <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -164,7 +163,7 @@
             <Setter Property="Background" Value="White"/>
             <Setter Property="BorderBrush" Value="#E2E8F0"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="CornerRadius" Value="5"/>
             <Setter Property="Padding" Value="14,12"/>
             <Setter Property="Margin" Value="0,0,0,10"/>
         </Style>
@@ -199,7 +198,7 @@
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,10">
-                                <TextBlock Text="Default Templates" FontSize="13" FontWeight="SemiBold" Foreground="#0F172A" VerticalAlignment="Center"/>
+                                <TextBlock Text="Default Templates" FontSize="13" FontWeight="Normal" Foreground="#0F172A" VerticalAlignment="Center"/>
                                 <TextBlock Text="  ·  Type used as the base to duplicate new sections, per element type"
                                            FontSize="11.5" Foreground="#94A3B8" VerticalAlignment="Center"/>
                             </StackPanel>
@@ -266,7 +265,16 @@
                               FontWeight="Normal" FontSize="12">
                         <DataGrid.Columns>
                             <DataGridCheckBoxColumn Header="Create" Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" Width="55"/>
-                            <DataGridTextColumn Header="ETABS Section" Binding="{Binding SectionName}" Width="110" IsReadOnly="True"/>
+                            <DataGridTemplateColumn Header="ETABS Section" Width="110">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding SectionName}"
+                                                   Foreground="{Binding TextColor}"
+                                                   VerticalAlignment="Center" Margin="4,0"
+                                                   FontWeight="Normal"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                             <DataGridTextColumn Header="Element Type" Binding="{Binding ElementType}" Width="140" IsReadOnly="True"/>
                             <DataGridTextColumn Header="Size (B×H / Thk)" Binding="{Binding DimensionSummary}" Width="120" IsReadOnly="True" Foreground="#0284C7"/>
                             <DataGridTemplateColumn Header="Family" Width="170">
@@ -274,6 +282,7 @@
                                     <DataTemplate>
                                         <ComboBox ItemsSource="{Binding AvailableFamilies}"
                                                   SelectedItem="{Binding SelectedFamily, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                  Foreground="{Binding TextColor}"
                                                   IsEnabled="{Binding CanEdit}"
                                                   Margin="2" VerticalAlignment="Center"/>
                                     </DataTemplate>
@@ -285,6 +294,7 @@
                                         <ComboBox ItemsSource="{Binding AvailableTemplates}"
                                                   SelectedItem="{Binding SelectedTemplate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                   DisplayMemberPath="Name"
+                                                  Foreground="{Binding TextColor}"
                                                   IsEnabled="{Binding CanEdit}"
                                                   Margin="2" VerticalAlignment="Center"/>
                                     </DataTemplate>
@@ -295,8 +305,9 @@
                                     <DataTemplate>
                                         <TextBox Text="{Binding TargetTypeName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                  IsEnabled="{Binding CanEdit}"
+                                                 Foreground="{Binding TextColor}"
                                                  Margin="2" Padding="4,2" VerticalAlignment="Center" VerticalContentAlignment="Center"
-                                                 BorderBrush="#CBD5E1" Foreground="#0F172A"
+                                                 BorderBrush="#CBD5E1"
                                                  ToolTip="Defaults to the ETABS section name. You can edit it before creating."/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
@@ -306,7 +317,7 @@
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" ToolTip="{Binding StatusText}">
                                             <Border x:Name="Badge" Width="16" Height="16" CornerRadius="8" Background="#94A3B8" Margin="0,0,6,0" VerticalAlignment="Center">
-                                                <TextBlock x:Name="BadgeGlyph" Text="•" Foreground="White" FontSize="10" FontWeight="Bold"
+                                                <TextBlock x:Name="BadgeGlyph" Text="•" Foreground="White" FontSize="10" FontWeight="Normal"
                                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
                                             <TextBlock x:Name="StatusLabel" Text="{Binding StatusText}" Foreground="#334155" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
@@ -351,7 +362,7 @@
                 </Grid>
             </TabItem>
 
-            <!-- TAB 2: SECTION MAPPING -->
+            <!-- TAB 2: SECTION MAPPING & MODEL SELECTION -->
             <TabItem x:Name="TabMapping" Header="2.  Section Mapping">
                 <Grid Margin="0,10,0,0">
                     <Grid.RowDefinitions>
@@ -360,22 +371,55 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Top Bar: Level & Options -->
+                    <!-- Top Bar: Scope Selection & Base Options -->
                     <Border Grid.Row="0" Style="{StaticResource Card}">
-                        <WrapPanel VerticalAlignment="Center">
-                            <StackPanel Margin="0,0,24,0">
-                                <TextBlock Text="BASE LEVEL IN REVIT" Style="{StaticResource FieldLabel}" Margin="0,0,0,5"/>
-                                <ComboBox x:Name="CmbLevels" Width="200" Style="{StaticResource TemplateCombo}"/>
-                            </StackPanel>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
 
-                            <CheckBox x:Name="ChkApplyCardinalPoint" Content="Apply ETABS Cardinal Point" IsChecked="True"
-                                      VerticalAlignment="Bottom" Foreground="#334155" Margin="0,0,24,7"
-                                      ToolTip="Align the beam top face with the story elevation (CARDINALPT 8)"/>
+                            <!-- Row 0: Scope Checkboxes -->
+                            <WrapPanel Grid.Row="0" VerticalAlignment="Center" Margin="0,0,0,10">
+                                <TextBlock Text="ELEMENT SCOPE:" Style="{StaticResource FieldLabel}" Margin="0,0,14,0" VerticalAlignment="Center"/>
+                                <CheckBox x:Name="ChkScopeGrids" Content="Grids" IsChecked="True" Margin="0,0,14,0" ToolTip="Model grid lines"/>
+                                <CheckBox x:Name="ChkScopeLevels" Content="Levels" IsChecked="True" Margin="0,0,14,0" ToolTip="Model levels (configured in Tab 3)"/>
+                                <CheckBox x:Name="ChkScopeColumns" Content="Columns" IsChecked="True" Margin="0,0,14,0" ToolTip="Model structural columns"/>
+                                <CheckBox x:Name="ChkScopeBeams" Content="Beams" IsChecked="True" Margin="0,0,14,0" ToolTip="Model structural beams"/>
+                                <CheckBox x:Name="ChkScopeWalls" Content="Walls" IsChecked="True" Margin="0,0,14,0" ToolTip="Model structural walls"/>
+                                <CheckBox x:Name="ChkScopeFloors" Content="Floors / Slabs" IsChecked="True" Margin="0,0,18,0" ToolTip="Model floors and foundation slabs"/>
 
-                            <CheckBox x:Name="ChkFitScopeBox" Content="Place Scope Box 'JNN_SB' at building center" IsChecked="True"
-                                      VerticalAlignment="Bottom" Foreground="#334155" Margin="0,0,0,7"
-                                      ToolTip="After building, places Scope Box named 'JNN_SB' at the exact building center (X, Y, Z) so you can easily locate and adjust it around the house. Then click 'Fit Scope Box' on the ribbon to lock Grids and Levels."/>
-                        </WrapPanel>
+                                <Border Width="1" Height="18" Background="#CBD5E1" Margin="0,0,18,0"/>
+
+                                <CheckBox x:Name="ChkApplyCardinalPoint" Content="Apply Cardinal Point" IsChecked="True" Margin="0,0,14,0"
+                                          ToolTip="Align beam top face with story elevation (CARDINALPT 8)"/>
+                                <CheckBox x:Name="ChkFitScopeBox" Content="Scope Box 'JNN_SB'" IsChecked="True"
+                                          ToolTip="Place Scope Box 'JNN_SB' at building center"/>
+                            </WrapPanel>
+
+                            <!-- Row 1: Base Level & Table Action Buttons -->
+                            <DockPanel Grid.Row="1" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
+                                    <TextBlock Text="BASE LEVEL IN REVIT:" Style="{StaticResource FieldLabel}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <ComboBox x:Name="CmbLevels" Width="180" Style="{StaticResource TemplateCombo}" Margin="0,0,20,0"/>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                    <Button x:Name="BtnSelectAllMapping" Content="Select All (Model)" Height="28" Padding="10,0" Margin="0,0,8,0"
+                                            Style="{StaticResource SecondaryButton}" Click="BtnSelectAllMapping_Click"
+                                            ToolTip="Tick all sections to be modeled"/>
+                                    <Button x:Name="BtnDeselectAllMapping" Content="Deselect All" Height="28" Padding="10,0" Margin="0,0,8,0"
+                                            Style="{StaticResource SecondaryButton}" Click="BtnDeselectAllMapping_Click"
+                                            ToolTip="Untick all sections (model none)"/>
+                                    <Button x:Name="BtnAutoMatch" Content="Auto Match" Height="28" Padding="12,0" Margin="0,0,8,0"
+                                            Style="{StaticResource AccentOutlineButton}" Click="BtnAutoMatch_Click"
+                                            ToolTip="Auto-assign a Revit type to every ETABS section by name and size"/>
+                                    <Button x:Name="BtnReload" Content="Refresh" Height="28" Padding="10,0"
+                                            Style="{StaticResource SecondaryButton}" Click="BtnReload_Click"
+                                            ToolTip="Re-read families / types from the Revit document"/>
+                                </StackPanel>
+                            </DockPanel>
+                        </Grid>
                     </Border>
 
                     <!-- Section mapping grid -->
@@ -384,7 +428,17 @@
                               HorizontalGridLinesBrush="#E2E8F0" BorderBrush="#CBD5E1" BorderThickness="1"
                               FontWeight="Normal" FontSize="12">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="ETABS Section" Binding="{Binding EtabsSectionName}" Width="140" IsReadOnly="True"/>
+                            <DataGridCheckBoxColumn Header="Model" Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" Width="55"/>
+                            <DataGridTemplateColumn Header="ETABS Section" Width="140">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding EtabsSectionName}"
+                                                   Foreground="{Binding TextColor}"
+                                                   VerticalAlignment="Center" Margin="4,0"
+                                                   FontWeight="Normal"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                             <DataGridTextColumn Header="Section Info (Size - Material)" Binding="{Binding SectionDetails}" Width="230" IsReadOnly="True" Foreground="#475569"/>
                             <DataGridTextColumn Header="Element Type" Binding="{Binding ElementType}" Width="140" IsReadOnly="True"/>
                             <DataGridTextColumn Header="Count" Binding="{Binding ObjectCount}" Width="70" IsReadOnly="True" Foreground="#475569"/>
@@ -394,6 +448,7 @@
                                         <ComboBox ItemsSource="{Binding AvailableTypes}"
                                                   SelectedItem="{Binding SelectedType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                   DisplayMemberPath="Name"
+                                                  Foreground="{Binding TextColor}"
                                                   Margin="2" VerticalAlignment="Center"
                                                   FontWeight="Normal"/>
                                     </DataTemplate>
@@ -404,15 +459,88 @@
 
                     <!-- Bottom Bar of Tab 2 -->
                     <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
-                        <Button x:Name="BtnAutoMatch" Content="Auto Match" MinWidth="120" Margin="0,0,10,0"
-                                Style="{StaticResource AccentOutlineButton}" Click="BtnAutoMatch_Click"
-                                ToolTip="Auto-assign a Revit type to every ETABS section by name and size"/>
-                        <Button x:Name="BtnReload" Content="Refresh" MinWidth="100" Margin="0,0,10,0"
-                                Style="{StaticResource SecondaryButton}" Click="BtnReload_Click"
-                                ToolTip="Re-read families / types from the Revit document"/>
                         <Button x:Name="BtnCancel" Content="Cancel" MinWidth="90" Margin="0,0,10,0"
                                 Style="{StaticResource GhostButton}" Click="BtnCancel_Click"/>
                         <Button x:Name="BtnImport" Content="Build Model" MinWidth="150"
+                                Style="{StaticResource SuccessButton}" Click="BtnImport_Click"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <!-- TAB 3: STORIES & LEVELS -->
+            <TabItem x:Name="TabLevels" Header="3.  Stories / Levels">
+                <Grid Margin="0,10,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Top Bar: Story actions -->
+                    <Border Grid.Row="0" Style="{StaticResource Card}">
+                        <DockPanel VerticalAlignment="Center">
+                            <StackPanel Orientation="Vertical" DockPanel.Dock="Left" VerticalAlignment="Center">
+                                <TextBlock Text="Configure story names, elevations, and mapping to existing Revit levels"
+                                           FontSize="12" Foreground="#475569"/>
+                                <TextBlock Text="Uncheck 'Create' to skip creating a Level for that story. Elements will snap to the nearest level."
+                                           FontSize="11" Foreground="#94A3B8" Margin="0,2,0,0"/>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <Button x:Name="BtnAddLevelPrefix" Content="Add 'Tầng' Prefix" Height="28" Padding="12,0" Margin="0,0,8,0"
+                                        Style="{StaticResource AccentOutlineButton}" Click="BtnAddLevelPrefix_Click"
+                                        ToolTip="Prepend 'Tầng ' to numbered story names (e.g. T4 -> Tầng 4, M -> Tầng Mái)"/>
+                                <Button x:Name="BtnResetLevelNames" Content="Reset Names" Height="28" Padding="10,0" Margin="0,0,8,0"
+                                        Style="{StaticResource SecondaryButton}" Click="BtnResetLevelNames_Click"
+                                        ToolTip="Reset all target level names back to original ETABS names"/>
+                                <Button x:Name="BtnSelectAllLevels" Content="Select All" Height="28" Padding="10,0" Margin="0,0,8,0"
+                                        Style="{StaticResource SecondaryButton}" Click="BtnSelectAllLevels_Click"
+                                        ToolTip="Tick all stories"/>
+                                <Button x:Name="BtnDeselectAllLevels" Content="Deselect All" Height="28" Padding="10,0"
+                                        Style="{StaticResource SecondaryButton}" Click="BtnDeselectAllLevels_Click"
+                                        ToolTip="Untick all stories"/>
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+
+                    <!-- Levels DataGrid -->
+                    <DataGrid x:Name="DgLevels" Grid.Row="1" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single"
+                              HeadersVisibility="Column" Background="White" RowHeight="34" GridLinesVisibility="Horizontal"
+                              HorizontalGridLinesBrush="#E2E8F0" BorderBrush="#CBD5E1" BorderThickness="1"
+                              FontWeight="Normal" FontSize="12">
+                        <DataGrid.Columns>
+                            <DataGridCheckBoxColumn Header="Create" Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" Width="65"/>
+                            <DataGridTextColumn Header="ETABS Story" Binding="{Binding EtabsStoryName}" Width="120" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Elevation (m)" Binding="{Binding ElevationM}" Width="110" IsReadOnly="True" Foreground="#0284C7"/>
+                            <DataGridTextColumn Header="Height (m)" Binding="{Binding HeightM}" Width="100" IsReadOnly="True" Foreground="#64748B"/>
+                            <DataGridTemplateColumn Header="Revit Level Name (editable)" Width="*" MinWidth="180">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBox Text="{Binding TargetLevelName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 Margin="2" Padding="6,2" VerticalAlignment="Center" VerticalContentAlignment="Center"
+                                                 BorderBrush="#CBD5E1" Foreground="#0F172A"
+                                                 ToolTip="Enter custom name for this level in Revit"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Map to Existing Revit Level (Optional)" Width="250">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <ComboBox ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=ExistingLevelNames}"
+                                                  SelectedItem="{Binding MappedLevelName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                  Margin="2" VerticalAlignment="Center"
+                                                  ToolTip="Select an existing Revit Level to map this story to (leave empty to create/rename)"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Bottom Bar of Tab 3 -->
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                        <Button x:Name="BtnCancelLevels" Content="Cancel" MinWidth="90" Margin="0,0,10,0"
+                                Style="{StaticResource GhostButton}" Click="BtnCancel_Click"/>
+                        <Button x:Name="BtnImportFromLevels" Content="Build Model" MinWidth="150"
                                 Style="{StaticResource SuccessButton}" Click="BtnImport_Click"/>
                     </StackPanel>
                 </Grid>

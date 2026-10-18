@@ -33,44 +33,74 @@ namespace JNNTool.Tools.CSIxRevit.Builder
                     topPt = topPt + offset;
                 }
 
-                Level level = allLevels.OrderBy(l => Math.Abs(l.Elevation - botPt.Z)).FirstOrDefault();
-                if (level == null) return;
+                // 1. Xác định Base Level và Top Level theo cao độ Z
+                Level baseLevel = allLevels.OrderBy(l => Math.Abs(l.Elevation - botPt.Z)).FirstOrDefault();
+                Level topLevel = allLevels.OrderBy(l => Math.Abs(l.Elevation - topPt.Z)).FirstOrDefault();
+                if (baseLevel == null) return;
 
-                double baseOffset = botPt.Z - level.Elevation;
-                double topOffset = (column.TopElevation > column.BottomElevation)
-                    ? (column.TopElevation - level.Elevation)
-                    : (baseOffset + 10.0);
+                if (topLevel == null || topLevel.Elevation < baseLevel.Elevation)
+                {
+                    topLevel = allLevels.Where(l => l.Elevation >= baseLevel.Elevation)
+                                        .OrderBy(l => l.Elevation)
+                                        .FirstOrDefault() ?? baseLevel;
+                }
+
+                // 2. Base Offset tính từ Base Level, Top Offset tính từ Top Level (KHÔNG tính từ Base Level)
+                double baseOffset = botPt.Z - baseLevel.Elevation;
+                double topOffset = (topLevel.Id != baseLevel.Id)
+                    ? (topPt.Z - topLevel.Elevation)
+                    : (topPt.Z - baseLevel.Elevation);
 
                 FamilyInstance instance = null;
 
-                if (botPt.IsAlmostEqualTo(topPt))
+                if (Math.Abs(botPt.X - topPt.X) < 0.001 && Math.Abs(botPt.Y - topPt.Y) < 0.001)
                 {
-                    // Vertical column defined by a single point
-                    instance = doc.Create.NewFamilyInstance(botPt, symbol, level, StructuralType.Column);
-                }
-                else if (Math.Abs(botPt.X - topPt.X) < 0.001 && Math.Abs(botPt.Y - topPt.Y) < 0.001)
-                {
-                    // Perfectly vertical column between two distinct Z points
-                    instance = doc.Create.NewFamilyInstance(botPt, symbol, level, StructuralType.Column);
-                    topOffset = topPt.Z - level.Elevation;
+                    // Cột thẳng đứng (Vertical column)
+                    instance = doc.Create.NewFamilyInstance(botPt, symbol, baseLevel, StructuralType.Column);
+                    if (instance != null)
+                    {
+                        try
+                        {
+                            var topLvlParam = instance.get_Parameter(BuiltInParameter.FAMILY_TOP_LEVEL_PARAM);
+                            if (topLvlParam != null && !topLvlParam.IsReadOnly && topLevel.Id != baseLevel.Id)
+                            {
+                                topLvlParam.Set(topLevel.Id);
+                            }
+
+                            var baseOffParam = instance.get_Parameter(BuiltInParameter.FAMILY_BASE_LEVEL_OFFSET_PARAM);
+                            if (baseOffParam != null && !baseOffParam.IsReadOnly)
+                            {
+                                baseOffParam.Set(baseOffset);
+                            }
+
+                            var topOffParam = instance.get_Parameter(BuiltInParameter.FAMILY_TOP_LEVEL_OFFSET_PARAM);
+                            if (topOffParam != null && !topOffParam.IsReadOnly)
+                            {
+                                topOffParam.Set(topOffset);
+                            }
+                        }
+                        catch
+                        {
+                            try
+                            {
+                                instance.get_Parameter(BuiltInParameter.FAMILY_TOP_LEVEL_OFFSET_PARAM)?.Set(topOffset);
+                                instance.get_Parameter(BuiltInParameter.FAMILY_TOP_LEVEL_PARAM)?.Set(topLevel.Id);
+                                instance.get_Parameter(BuiltInParameter.FAMILY_BASE_LEVEL_OFFSET_PARAM)?.Set(baseOffset);
+                            }
+                            catch { }
+                        }
+                    }
                 }
                 else
                 {
-                    // Slanted column
+                    // Cột xiên (Slanted column)
                     if (botPt.DistanceTo(topPt) < 0.001) return;
                     Curve curve = Line.CreateBound(botPt, topPt);
-                    instance = doc.Create.NewFamilyInstance(curve, symbol, level, StructuralType.Column);
-                    topOffset = topPt.Z - level.Elevation;
+                    instance = doc.Create.NewFamilyInstance(curve, symbol, baseLevel, StructuralType.Column);
                 }
 
                 if (instance != null)
                 {
-                    try
-                    {
-                        instance.get_Parameter(BuiltInParameter.FAMILY_BASE_LEVEL_OFFSET_PARAM)?.Set(baseOffset);
-                        instance.get_Parameter(BuiltInParameter.FAMILY_TOP_LEVEL_OFFSET_PARAM)?.Set(topOffset);
-                    }
-                    catch { }
 
                     // Determine effective rotation angle
                     double etabsW = column.WidthMm;

@@ -474,9 +474,46 @@ namespace JNNTool
             btnPileLocationData.ToolTip = "Chọn 1 cọc gốc → tool tự tìm tất cả cọc (Pile) trong view → ghi toạ độ thực tế (mm) vào X Coordinate / Y Coordinate.";
             SetRibbonItemIcon(btnPileLocationData, "PileLocation.png", resourcesPath);
 
-            // Xếp 2 cột nút nhỏ (2 Cột x 3 Hàng) vào Modeling Panel
+            // ------------------- Merge Floor & Cut Floor (Nút nhỏ xếp tầng) -------------------
+            SplitButtonData splitMergeFloorData = new SplitButtonData("cmdMergeFloorSplit", "Merge Floor");
+            SetRibbonItemIcon(splitMergeFloorData, "MergeFloor.png", resourcesPath);
+
+            PushButtonData btnCutFloorData = new PushButtonData(
+                "cmdCutFloor",
+                "Cut Floor",
+                assemblyPath,
+                "JNNTool.Tools.CutByFloor.CutByFloorCmd"
+            );
+            btnCutFloorData.ToolTip = "Quét chọn sàn to và các sàn nhỏ (hoặc chọn theo 2 bước) để tự động cắt/khoét ranh giới sàn to theo sàn nhỏ.";
+            SetRibbonItemIcon(btnCutFloorData, "CutFloor.png", resourcesPath);
+
+            // Xếp các nút nhỏ (icon nhỏ 16x16) vào Modeling Panel
             modelingPanel.AddStackedItems(btnSplitBeamData, btnCreateSectionData, btnDisallowData);
             modelingPanel.AddStackedItems(btnCreateFilterData, btnSpeedOverriderData, btnPileLocationData);
+            IList<RibbonItem> floorStacked = modelingPanel.AddStackedItems(splitMergeFloorData, btnCutFloorData);
+
+            if (floorStacked != null && floorStacked.Count >= 1 && floorStacked[0] is SplitButton splitMergeFloor)
+            {
+                PushButtonData btnMergeActiveViewData = new PushButtonData(
+                    "cmdMergeFloorActiveView",
+                    "Merge Floor (Active View)",
+                    assemblyPath,
+                    "JNNTool.Tools.MergeFloor.MergeFloorActiveViewCmd"
+                );
+                btnMergeActiveViewData.ToolTip = "Tự động quét và gộp tất cả các mảnh sàn tiếp giáp/gần nhau (cùng loại & cùng cao độ) trong View hiện hành mà không cần chọn tay.";
+                SetRibbonItemIcon(btnMergeActiveViewData, "MergeFloor.png", resourcesPath);
+                splitMergeFloor.AddPushButton(btnMergeActiveViewData);
+
+                PushButtonData btnMergeSelectData = new PushButtonData(
+                    "cmdMergeFloorSelect",
+                    "Merge Floor (Selection)",
+                    assemblyPath,
+                    "JNNTool.Tools.MergeFloor.MergeFloorSelectCmd"
+                );
+                btnMergeSelectData.ToolTip = "Quét chọn thủ công các mảnh sàn trên màn hình để gộp thành 1 sàn duy nhất.";
+                SetRibbonItemIcon(btnMergeSelectData, "MergeFloor.png", resourcesPath);
+                splitMergeFloor.AddPushButton(btnMergeSelectData);
+            }
 
             // ═══════════════════════════════════════════════════════════════
             //  Panel: CSI x Revit
@@ -747,6 +784,29 @@ namespace JNNTool
                         img.EndInit();
                         btnAutoViewSheet.LargeImage = img;
                         btnAutoViewSheet.Image = img;
+                    }
+
+                    // ------------------- Create View -------------------
+                    string iconPathCreateView = Path.Combine(resourcesPath, "CreateView.png");
+                    string createViewBtnId = tabIdx == 0 ? "cmdCreateView" : $"cmdCreateView_{tabIdx}";
+                    PushButtonData btnCreateViewData = new PushButtonData(
+                        createViewBtnId,
+                        "Create\nViews",
+                        assemblyPath,
+                        "JNNTool.Tools.CreateView.Commands.CreateViewCommand"
+                    );
+                    btnCreateViewData.ToolTip = "Tự động tạo và nhân bản nhiều View theo Level, gán View Template và nhóm cây thư mục Project Browser.";
+
+                    PushButton btnCreateView = layoutPanel.AddItem(btnCreateViewData) as PushButton;
+                    if (btnCreateView != null && File.Exists(iconPathCreateView))
+                    {
+                        BitmapImage img = new BitmapImage();
+                        img.BeginInit();
+                        img.UriSource = new Uri(iconPathCreateView, UriKind.Absolute);
+                        img.CacheOption = BitmapCacheOption.OnLoad;
+                        img.EndInit();
+                        btnCreateView.LargeImage = img;
+                        btnCreateView.Image = img;
                     }
 
                     // ------------------- Auto Dim Grid -------------------
@@ -1024,7 +1084,7 @@ namespace JNNTool
                                 dlg.MainIcon        = TaskDialogIcon.TaskDialogIconInformation;
                                 dlg.MainInstruction = $"🔔 JNNTool v{latest.Version} đã sẵn sàng!";
                                 dlg.MainContent     = $"Bạn đang dùng v{installed.Version}.\n" +
-                                                      $"Vui lòng chạy JNNToolInstaller.exe để cập nhật.";
+                                                      $"Vui lòng chạy JNNToolUpdater.exe để cập nhật.";
                                 dlg.Show();
                             });
                         }
@@ -1084,6 +1144,15 @@ namespace JNNTool
             try
             {
                 string iconPath = Path.Combine(resourcesPath, iconFileName);
+                if (!File.Exists(iconPath))
+                {
+                    string baseDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                    string parentDir = Directory.GetParent(baseDir)?.FullName ?? baseDir;
+                    string toolName = Path.GetFileNameWithoutExtension(iconFileName);
+                    string toolIcon = Path.Combine(parentDir, "Tools", toolName, iconFileName);
+                    if (File.Exists(toolIcon)) iconPath = toolIcon;
+                }
+
                 if (File.Exists(iconPath))
                 {
                     var img = new BitmapImage();

@@ -99,6 +99,32 @@ namespace JNNTool.Core.Palette
                 "Tự động tìm cọc trong view và ghi tọa độ thực tế (mm) vào parameter.",
                 "PileLocation.png", "toa do coc pile location toa do x y coordinate dinh vi coc"
             ),
+            new ToolCommandInfo(
+                "cmdMergeFloorActiveView", "Merge Floor\n(View)", "Merge Floor (Active View)", "Modeling",
+                "JNNTool.Tools.MergeFloor.MergeFloorActiveViewCmd",
+                "Tự động quét và gộp tất cả các mảnh sàn tiếp giáp/gần nhau trong View hiện hành mà không cần chọn tay.",
+                "MergeFloor.png", "merge floor active view gop san view tu dong hop nhat khong can chon",
+                "cmdMergeFloorSplit"
+            ),
+            new ToolCommandInfo(
+                "cmdMergeFloorSelect", "Merge Floor\n(Select)", "Merge Floor (Selection)", "Modeling",
+                "JNNTool.Tools.MergeFloor.MergeFloorSelectCmd",
+                "Quét chọn thủ công các mảnh sàn trên màn hình để gộp thành 1 sàn duy nhất.",
+                "MergeFloor.png", "merge floor select gop san quet chon tay",
+                "cmdMergeFloorSplit"
+            ),
+            new ToolCommandInfo(
+                "cmdMergeFloor", "Merge\nFloor", "Merge Floor", "Modeling",
+                "JNNTool.Tools.MergeFloor.MergeFloorCmd",
+                "Gộp nhiều mảnh sàn liền kề (cùng tiết diện & cùng cao độ) thành 1 sàn duy nhất.",
+                "MergeFloor.png", "merge floor gop san hop nhat san join slab noi san"
+            ),
+            new ToolCommandInfo(
+                "cmdCutFloor", "Cut\nFloor", "Cut Floor", "Modeling",
+                "JNNTool.Tools.CutByFloor.CutByFloorCmd",
+                "Quét chọn sàn to và các sàn nhỏ để tự động cắt/khoét ranh giới sàn to theo sàn nhỏ.",
+                "CutFloor.png", "cut floor cat san khoet san mo lo slab difference"
+            ),
 #if false
             // Tạm ẩn đồng bộ theo Ribbon (App.cs) - Chuyển ngầm qua Rebar Suite
             new ToolCommandInfo(
@@ -185,6 +211,12 @@ namespace JNNTool.Core.Palette
                 "RincoNhan.Tools.AutoViewSheet.AutoViewSheetCommand",
                 "Tự động tạo View (OVER) và dàn Sheet hàng loạt theo tầng và Zone.",
                 "AutoViewSheet.png", "tao view dan sheet auto view sheet over loading plan ban ve"
+            ),
+            new ToolCommandInfo(
+                "cmdCreateView", "Create\nViews", "Create Views", "Layout",
+                "JNNTool.Tools.CreateView.Commands.CreateViewCommand",
+                "Tự động tạo và nhân bản nhiều View theo Level, gán View Template và nhóm cây thư mục.",
+                "CreateView.png", "create view tao view duplicate view template xr grid column pile mbc thang mat bang"
             ),
             new ToolCommandInfo(
                 "cmdAutoDimGrid", "Dim\nGrid", "Dim Grid", "Layout",

@@ -12,20 +12,20 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
-using JNNTool.Core.Logging;
+using Microsoft.Win32;
 using JNNTool.Tools.QuantityTakeoff.Commands;
 using JNNTool.Tools.QuantityTakeoff.Engine;
+using JNNTool.Tools.QuantityTakeoff.Helpers;
 using JNNTool.Tools.QuantityTakeoff.Models;
-using Microsoft.Win32;
 
 namespace JNNTool.Tools.QuantityTakeoff.ViewModels
 {
     public class SimpleRelayCommand : ICommand
     {
-        private readonly Action<object?> _execute;
-        private readonly Predicate<object?>? _canExecute;
+        private readonly Action<object> _execute;
+        private readonly Predicate<object> _canExecute;
 
-        public SimpleRelayCommand(Action<object?> execute, Predicate<object?>? canExecute = null)
+        public SimpleRelayCommand(Action<object> execute, Predicate<object> canExecute = null)
         {
             _execute = execute ?? throw new ArgumentNullException(nameof(execute));
             _canExecute = canExecute;
@@ -33,10 +33,10 @@ namespace JNNTool.Tools.QuantityTakeoff.ViewModels
 
         public SimpleRelayCommand(Action execute) : this(_ => execute(), null) { }
 
-        public bool CanExecute(object? parameter) => _canExecute == null || _canExecute(parameter);
-        public void Execute(object? parameter) => _execute(parameter);
+        public bool CanExecute(object parameter) => _canExecute == null || _canExecute(parameter);
+        public void Execute(object parameter) => _execute(parameter);
 
-        public event EventHandler? CanExecuteChanged
+        public event EventHandler CanExecuteChanged
         {
             add => CommandManager.RequerySuggested += value;
             remove => CommandManager.RequerySuggested -= value;
@@ -45,12 +45,12 @@ namespace JNNTool.Tools.QuantityTakeoff.ViewModels
 
     public class QuantityTakeoffViewModel : INotifyPropertyChanged
     {
-        public event PropertyChangedEventHandler? PropertyChanged;
+        public event PropertyChangedEventHandler PropertyChanged;
 
         private readonly Dispatcher _dispatcher = Dispatcher.CurrentDispatcher;
-        private UIApplication? _uiApp;
-        private QuantityTakeoffHandler? _handler;
-        private ExternalEvent? _externalEvent;
+        private UIApplication _uiApp;
+        private QuantityTakeoffHandler _handler;
+        private ExternalEvent _externalEvent;
 
         private bool _isBusy;
         public bool IsBusy
@@ -73,7 +73,7 @@ namespace JNNTool.Tools.QuantityTakeoff.ViewModels
             "Entire Project"
         };
 
-        private string _selectedScopeOption = "Active View";
+        private string _selectedScopeOption = "Entire Project";
         public string SelectedScopeOption
         {
             get => _selectedScopeOption;
@@ -90,7 +90,7 @@ namespace JNNTool.Tools.QuantityTakeoff.ViewModels
             }
         }
 
-        private TakeoffScope _scope = TakeoffScope.ActiveView;
+        private TakeoffScope _scope = TakeoffScope.EntireProject;
         public TakeoffScope Scope
         {
             get => _scope;
@@ -203,8 +203,8 @@ namespace JNNTool.Tools.QuantityTakeoff.ViewModels
         public ObservableCollection<LevelChartItem> LevelChartItems { get; } = new ObservableCollection<LevelChartItem>();
         public ObservableCollection<CategoryChartItem> CategoryChartItems { get; } = new ObservableCollection<CategoryChartItem>();
 
-        private LevelChartItem? _selectedLevelChartItem;
-        public LevelChartItem? SelectedLevelChartItem
+        private LevelChartItem _selectedLevelChartItem;
+        public LevelChartItem SelectedLevelChartItem
         {
             get => _selectedLevelChartItem;
             set
@@ -236,8 +236,8 @@ namespace JNNTool.Tools.QuantityTakeoff.ViewModels
         public ObservableCollection<string> AvailableCategoryNames { get; } = new ObservableCollection<string>();
         public ObservableCollection<string> AvailableLevelNames { get; } = new ObservableCollection<string>();
 
-        private LevelSummaryItem? _selectedLevelSummary;
-        public LevelSummaryItem? SelectedLevelSummary
+        private LevelSummaryItem _selectedLevelSummary;
+        public LevelSummaryItem SelectedLevelSummary
         {
             get => _selectedLevelSummary;
             set
@@ -272,22 +272,22 @@ namespace JNNTool.Tools.QuantityTakeoff.ViewModels
 
         public ObservableCollection<CategorySummaryItem> CurrentLevelBreakdowns { get; } = new ObservableCollection<CategorySummaryItem>();
 
-        private CategorySummaryItem? _selectedCategorySummary;
-        public CategorySummaryItem? SelectedCategorySummary
+        private CategorySummaryItem _selectedCategorySummary;
+        public CategorySummaryItem SelectedCategorySummary
         {
             get => _selectedCategorySummary;
             set => SetField(ref _selectedCategorySummary, value);
         }
 
-        private TakeoffElementItem? _selectedElement;
-        public TakeoffElementItem? SelectedElement
+        private TakeoffElementItem _selectedElement;
+        public TakeoffElementItem SelectedElement
         {
             get => _selectedElement;
             set => SetField(ref _selectedElement, value);
         }
 
-        private ICollectionView? _elementsView;
-        public ICollectionView? ElementsView => _elementsView;
+        private ICollectionView _elementsView;
+        public ICollectionView ElementsView => _elementsView;
 
         // Commands
         public ICommand RefreshDataCommand { get; }
@@ -336,8 +336,6 @@ namespace JNNTool.Tools.QuantityTakeoff.ViewModels
             _externalEvent = externalEvent;
 
             // Tự động nhận diện Scope ban đầu:
-            // Nếu người dùng đã chọn sẵn cấu kiện trên Revit canvas -> Dùng "Current Selection"
-            // Nếu không chọn -> Dùng "Active View" (không bao giờ tự ý quét Entire Project để tránh quá tải)
             var selIds = uiApp.ActiveUIDocument?.Selection?.GetElementIds();
             if (selIds != null && selIds.Count > 0)
             {
@@ -346,14 +344,14 @@ namespace JNNTool.Tools.QuantityTakeoff.ViewModels
             }
             else
             {
-                _scope = TakeoffScope.ActiveView;
-                _selectedScopeOption = "Active View";
+                _scope = TakeoffScope.EntireProject;
+                _selectedScopeOption = "Entire Project";
             }
             OnPropertyChanged(nameof(SelectedScopeOption));
             OnPropertyChanged(nameof(Scope));
 
             Categories.Clear();
-            foreach (var cat in QuantityExtractorEngine.DefaultCategories)
+            foreach (var cat in QuantityExtractorEngine.CreateDefaultCategories())
             {
                 cat.PropertyChanged += (s, e) =>
                 {
@@ -368,13 +366,11 @@ namespace JNNTool.Tools.QuantityTakeoff.ViewModels
             _elementsView = CollectionViewSource.GetDefaultView(Elements);
             _elementsView.Filter = FilterElementPredicate;
             OnPropertyChanged(nameof(ElementsView));
-
-            RefreshData();
         }
 
         private bool FilterElementPredicate(object obj)
         {
-            if (obj is not TakeoffElementItem item) return false;
+            if (!(obj is TakeoffElementItem item)) return false;
 
             if (!string.IsNullOrEmpty(SelectedCategoryFilter) && SelectedCategoryFilter != "All Categories")
             {
@@ -408,6 +404,174 @@ namespace JNNTool.Tools.QuantityTakeoff.ViewModels
             return true;
         }
 
+        public void ExecuteExtraction(UIApplication app)
+        {
+            if (app?.ActiveUIDocument == null) return;
+
+            try
+            {
+                var uidoc = app.ActiveUIDocument;
+                var doc = uidoc.Document;
+                var activeView = uidoc.ActiveView;
+                var selectedIds = uidoc.Selection.GetElementIds();
+
+                List<BuiltInCategory> selectedCats;
+                if (_dispatcher.CheckAccess())
+                {
+                    selectedCats = Categories.Where(c => c.IsSelected)
+                                             .Select(c => c.BuiltInCategory)
+                                             .ToList();
+                }
+                else
+                {
+                    selectedCats = _dispatcher.Invoke(() =>
+                        Categories.Where(c => c.IsSelected)
+                                  .Select(c => c.BuiltInCategory)
+                                  .ToList());
+                }
+
+                var extracted = QuantityExtractorEngine.ExtractElements(
+                    doc,
+                    Scope,
+                    selectedCats,
+                    activeView,
+                    selectedIds);
+
+                Action updateUiAction = () =>
+                {
+                    try
+                    {
+                        Elements.Clear();
+                        foreach (var elem in extracted)
+                        {
+                            Elements.Add(elem);
+                        }
+
+                        var catCounts = extracted.GroupBy(e => e.BuiltInCategory)
+                                                 .ToDictionary(g => g.Key, g => g.Count());
+                        foreach (var cat in Categories)
+                        {
+                            cat.Count = catCounts.TryGetValue(cat.BuiltInCategory, out int cnt) ? cnt : 0;
+                        }
+
+                        var lvlSummaries = QuantityExtractorEngine.BuildLevelSummaries(extracted);
+                        LevelSummaries.Clear();
+                        foreach (var ls in lvlSummaries)
+                        {
+                            LevelSummaries.Add(ls);
+                        }
+                        if (LevelSummaries.Count > 0)
+                        {
+                            SelectedLevelSummary = LevelSummaries.FirstOrDefault();
+                        }
+                        else
+                        {
+                            CurrentLevelBreakdowns.Clear();
+                        }
+
+                        var catSummaries = QuantityExtractorEngine.BuildCategorySummaries(extracted);
+                        CategorySummaries.Clear();
+                        foreach (var cs in catSummaries)
+                        {
+                            CategorySummaries.Add(cs);
+                        }
+
+                        // Cập nhật biểu đồ LevelChartItems (theo chiều cao từ trên xuống)
+                        LevelChartItems.Clear();
+                        double maxLvlVol = lvlSummaries.Count > 0 ? lvlSummaries.Max(l => l.TotalVolume) : 0;
+                        double sumLvlVol = lvlSummaries.Sum(l => l.TotalVolume);
+                        foreach (var ls in lvlSummaries.OrderByDescending(l => l.Elevation))
+                        {
+                            double pct = sumLvlVol > 0 ? (ls.TotalVolume / sumLvlVol) * 100.0 : 0;
+                            double ratio = maxLvlVol > 0 ? (ls.TotalVolume / maxLvlVol) : 0;
+                            LevelChartItems.Add(new LevelChartItem
+                            {
+                                LevelName = ls.LevelName,
+                                Elevation = ls.Elevation,
+                                Volume = ls.TotalVolume,
+                                Formwork = ls.FormworkArea,
+                                Rebar = ls.SteelRebarWeight,
+                                Percentage = pct,
+                                BarWidthRatio = Math.Max(0.08, ratio),
+                                ElementIds = ls.ElementIds,
+                                IsSelected = SelectedLevelSummary?.LevelName == ls.LevelName
+                            });
+                        }
+
+                        // Cập nhật biểu đồ CategoryChartItems
+                        CategoryChartItems.Clear();
+                        double sumCatTotal = catSummaries.Sum(c => c.TotalVolume);
+                        string[] palette = { "#2563EB", "#0284C7", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899", "#EF4444", "#14B8A6", "#64748B" };
+                        int cIdx = 0;
+                        foreach (var cs in catSummaries.OrderByDescending(c => c.TotalVolume))
+                        {
+                            double pct = sumCatTotal > 0 ? (cs.TotalVolume / sumCatTotal) * 100.0 : 0;
+                            CategoryChartItems.Add(new CategoryChartItem
+                            {
+                                CategoryName = cs.CategoryName,
+                                Volume = cs.TotalVolume,
+                                Percentage = pct,
+                                ElementCount = cs.Count,
+                                ColorHex = palette[cIdx % palette.Length],
+                                ElementIds = cs.ElementIds
+                            });
+                            cIdx++;
+                        }
+
+                        UpdateFilterDropdowns(extracted);
+
+                        double totalConcrete = lvlSummaries.Sum(l => l.ConcreteVolume);
+                        double totalFormwork = lvlSummaries.Sum(l => l.FormworkArea);
+                        double totalSteel = lvlSummaries.Sum(l => l.SteelRebarWeight);
+                        int totalCount = extracted.Sum(e => e.Count);
+
+                        TotalConcreteVolumeDisplay = $"{totalConcrete:N2} m³";
+                        TotalFormworkAreaDisplay = $"{totalFormwork:N2} m²";
+                        TotalSteelWeightDisplay = $"{totalSteel:N3} Tấn";
+                        TotalElementsCountDisplay = $"{totalCount:N0} cấu kiện";
+
+                        _elementsView?.Refresh();
+
+                        IsBusy = false;
+                        StatusMessage = $"Đã tải {extracted.Count} cấu kiện ({DateTime.Now:HH:mm:ss})";
+                    }
+                    catch (Exception ex)
+                    {
+                        QtoLogger.Error("Lỗi cập nhật UI Quantity Takeoff", ex);
+                        IsBusy = false;
+                        StatusMessage = "Lỗi xử lý dữ liệu: " + ex.Message;
+                    }
+                };
+
+                if (_dispatcher.CheckAccess())
+                {
+                    updateUiAction();
+                }
+                else
+                {
+                    _dispatcher.Invoke(updateUiAction);
+                }
+            }
+            catch (Exception ex)
+            {
+                QtoLogger.Error("Lỗi trích xuất khối lượng", ex);
+                Action reportError = () =>
+                {
+                    IsBusy = false;
+                    StatusMessage = "Lỗi trích xuất: " + ex.Message;
+                };
+
+                if (_dispatcher.CheckAccess())
+                {
+                    reportError();
+                }
+                else
+                {
+                    _dispatcher.Invoke(reportError);
+                }
+            }
+        }
+
         public void RefreshData()
         {
             if (_uiApp?.ActiveUIDocument == null) return;
@@ -416,141 +580,7 @@ namespace JNNTool.Tools.QuantityTakeoff.ViewModels
 
             _handler?.SetAction(app =>
             {
-                try
-                {
-                    var uidoc = app.ActiveUIDocument;
-                    if (uidoc == null)
-                    {
-                        _dispatcher.Invoke(() => IsBusy = false);
-                        return;
-                    }
-
-                    var doc = uidoc.Document;
-                    var activeView = uidoc.ActiveView;
-                    var selectedIds = uidoc.Selection.GetElementIds();
-
-                    var selectedCats = Categories.Where(c => c.IsSelected)
-                                                 .Select(c => c.BuiltInCategory)
-                                                 .ToList();
-
-                    var extracted = QuantityExtractorEngine.ExtractElements(
-                        doc,
-                        Scope,
-                        selectedCats,
-                        activeView,
-                        selectedIds);
-
-                    _dispatcher.Invoke(() =>
-                    {
-                        try
-                        {
-                            Elements.Clear();
-                            foreach (var elem in extracted)
-                            {
-                                Elements.Add(elem);
-                            }
-
-                            var catCounts = extracted.GroupBy(e => e.BuiltInCategory)
-                                                     .ToDictionary(g => g.Key, g => g.Count());
-                            foreach (var cat in Categories)
-                            {
-                                cat.Count = catCounts.TryGetValue(cat.BuiltInCategory, out int cnt) ? cnt : 0;
-                            }
-
-                            var lvlSummaries = QuantityExtractorEngine.BuildLevelSummaries(extracted);
-                            LevelSummaries.Clear();
-                            foreach (var ls in lvlSummaries)
-                            {
-                                LevelSummaries.Add(ls);
-                            }
-                            if (LevelSummaries.Count > 0)
-                            {
-                                SelectedLevelSummary = LevelSummaries.FirstOrDefault();
-                            }
-
-                            var catSummaries = QuantityExtractorEngine.BuildCategorySummaries(extracted);
-                            CategorySummaries.Clear();
-                            foreach (var cs in catSummaries)
-                            {
-                                CategorySummaries.Add(cs);
-                            }
-
-                            // Cập nhật biểu đồ LevelChartItems (theo chiều cao từ trên xuống)
-                            LevelChartItems.Clear();
-                            double maxLvlVol = lvlSummaries.Count > 0 ? lvlSummaries.Max(l => l.TotalVolume) : 0;
-                            double sumLvlVol = lvlSummaries.Sum(l => l.TotalVolume);
-                            foreach (var ls in lvlSummaries.OrderByDescending(l => l.Elevation))
-                            {
-                                double pct = sumLvlVol > 0 ? (ls.TotalVolume / sumLvlVol) * 100.0 : 0;
-                                double ratio = maxLvlVol > 0 ? (ls.TotalVolume / maxLvlVol) : 0;
-                                LevelChartItems.Add(new LevelChartItem
-                                {
-                                    LevelName = ls.LevelName,
-                                    Elevation = ls.Elevation,
-                                    Volume = ls.TotalVolume,
-                                    Formwork = ls.FormworkArea,
-                                    Rebar = ls.SteelRebarWeight,
-                                    Percentage = pct,
-                                    BarWidthRatio = Math.Max(0.08, ratio),
-                                    ElementIds = ls.ElementIds,
-                                    IsSelected = SelectedLevelSummary?.LevelName == ls.LevelName
-                                });
-                            }
-
-                            // Cập nhật biểu đồ CategoryChartItems
-                            CategoryChartItems.Clear();
-                            double sumCatTotal = catSummaries.Sum(c => c.TotalVolume);
-                            string[] palette = { "#2563EB", "#0284C7", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899", "#EF4444", "#14B8A6", "#64748B" };
-                            int cIdx = 0;
-                            foreach (var cs in catSummaries.OrderByDescending(c => c.TotalVolume))
-                            {
-                                double pct = sumCatTotal > 0 ? (cs.TotalVolume / sumCatTotal) * 100.0 : 0;
-                                CategoryChartItems.Add(new CategoryChartItem
-                                {
-                                    CategoryName = cs.CategoryName,
-                                    Volume = cs.TotalVolume,
-                                    Percentage = pct,
-                                    ElementCount = cs.Count,
-                                    ColorHex = palette[cIdx % palette.Length],
-                                    ElementIds = cs.ElementIds
-                                });
-                                cIdx++;
-                            }
-
-                            UpdateFilterDropdowns(extracted);
-
-                            double totalConcrete = lvlSummaries.Sum(l => l.ConcreteVolume);
-                            double totalFormwork = lvlSummaries.Sum(l => l.FormworkArea);
-                            double totalSteel = lvlSummaries.Sum(l => l.SteelRebarWeight);
-                            int totalCount = extracted.Sum(e => e.Count);
-
-                            TotalConcreteVolumeDisplay = $"{totalConcrete:N2} m³";
-                            TotalFormworkAreaDisplay = $"{totalFormwork:N2} m²";
-                            TotalSteelWeightDisplay = $"{totalSteel:N3} Tấn";
-                            TotalElementsCountDisplay = $"{totalCount:N0} cấu kiện";
-
-                            _elementsView?.Refresh();
-
-                            IsBusy = false;
-                            StatusMessage = $"Đã tải {extracted.Count} cấu kiện ({DateTime.Now:HH:mm:ss})";
-                        }
-                        catch (Exception ex)
-                        {
-                            Logger.Error("Lỗi cập nhật UI Quantity Takeoff", ex);
-                            IsBusy = false;
-                            StatusMessage = "Lỗi xử lý dữ liệu: " + ex.Message;
-                        }
-                    });
-                }
-                catch (Exception ex)
-                {
-                    Logger.Error("Lỗi trích xuất khối lượng", ex);
-                    _dispatcher.Invoke(() =>
-                    {
-                        IsBusy = false;
-                        StatusMessage = "Lỗi trích xuất: " + ex.Message;
-                    });
-                }
+                ExecuteExtraction(app);
             });
 
             _externalEvent?.Raise();
@@ -577,14 +607,14 @@ namespace JNNTool.Tools.QuantityTakeoff.ViewModels
             SelectedLevelFilter = AvailableLevelNames.Contains(currentLvl) ? currentLvl : "All Levels";
         }
 
-        public void Box3D(object? parameter)
+        public void Box3D(object parameter)
         {
             List<ElementId> targetIds = GetTargetElementIds(parameter);
 
             if (targetIds == null || targetIds.Count == 0)
             {
                 MessageBox.Show("Vui lòng chọn ít nhất một cấu kiện hoặc tầng để tạo Box 3D.",
-                                "JNN — 3D Section Box",
+                                "JNNTool — 3D Section Box",
                                 MessageBoxButton.OK,
                                 MessageBoxImage.Information);
                 return;
@@ -610,7 +640,7 @@ namespace JNNTool.Tools.QuantityTakeoff.ViewModels
             _externalEvent?.Raise();
         }
 
-        public void SelectInModel(object? parameter)
+        public void SelectInModel(object parameter)
         {
             List<ElementId> targetIds = GetTargetElementIds(parameter);
             if (targetIds == null || targetIds.Count == 0) return;
@@ -631,7 +661,7 @@ namespace JNNTool.Tools.QuantityTakeoff.ViewModels
             _externalEvent?.Raise();
         }
 
-        private List<ElementId> GetTargetElementIds(object? parameter)
+        private List<ElementId> GetTargetElementIds(object parameter)
         {
             var list = new List<ElementId>();
 
@@ -686,7 +716,7 @@ namespace JNNTool.Tools.QuantityTakeoff.ViewModels
             if (Elements.Count == 0)
             {
                 MessageBox.Show("Không có dữ liệu khối lượng để xuất. Vui lòng bấm 'Refresh' trước.",
-                                "JNN — Export Excel",
+                                "JNNTool — Export Excel",
                                 MessageBoxButton.OK,
                                 MessageBoxImage.Warning);
                 return;
@@ -695,8 +725,8 @@ namespace JNNTool.Tools.QuantityTakeoff.ViewModels
             var saveDlg = new SaveFileDialog
             {
                 Title = "Xuất Bảng Khối Lượng Excel (JNN QTO)",
-                Filter = "Excel XML Workbook (*.xls)|*.xls|CSV (Comma Delimited) (*.csv)|*.csv",
-                FileName = $"JNN_QuantityTakeoff_{DateTime.Now:yyyyMMdd_HHmm}.xls"
+                Filter = "Excel Workbook (*.xlsx)|*.xlsx|CSV (Comma Delimited) (*.csv)|*.csv",
+                FileName = $"JNN_QuantityTakeoff_{DateTime.Now:yyyyMMdd_HHmm}.xlsx"
             };
 
             if (saveDlg.ShowDialog() != true) return;
@@ -712,7 +742,7 @@ namespace JNNTool.Tools.QuantityTakeoff.ViewModels
                 }
                 else
                 {
-                    ExcelExportEngine.ExportToExcelXml(
+                    ExcelExportEngine.ExportToExcel(
                         saveDlg.FileName,
                         projectName,
                         LevelSummaries.ToList(),
@@ -724,7 +754,7 @@ namespace JNNTool.Tools.QuantityTakeoff.ViewModels
 
                 var openResult = MessageBox.Show(
                     $"Xuất bảng khối lượng thành công!\n\nĐường dẫn:\n{saveDlg.FileName}\n\nBạn có muốn mở file ngay bây giờ không?",
-                    "JNN — Export Hoàn Tất",
+                    "JNNTool — Export Hoàn Tất",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Information);
 
@@ -735,8 +765,8 @@ namespace JNNTool.Tools.QuantityTakeoff.ViewModels
             }
             catch (Exception ex)
             {
-                Logger.Error("Lỗi xuất file Excel trong Quantity Takeoff", ex);
-                MessageBox.Show($"Lỗi xuất file: {ex.Message}", "JNN — Export Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                QtoLogger.Error("Lỗi xuất file Excel trong Quantity Takeoff", ex);
+                MessageBox.Show($"Lỗi xuất file: {ex.Message}", "JNNTool — Export Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -764,7 +794,7 @@ namespace JNNTool.Tools.QuantityTakeoff.ViewModels
             }
         }
 
-        protected bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+        protected bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
         {
             if (EqualityComparer<T>.Default.Equals(field, value)) return false;
             field = value;
@@ -772,7 +802,7 @@ namespace JNNTool.Tools.QuantityTakeoff.ViewModels
             return true;
         }
 
-        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }

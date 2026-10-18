@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:models="clr-namespace:JNNTool.Tools.QuantityTakeoff.Models"
-        Title="JNN — Quantity Takeoff &amp; 3D Section Box"
+        Title="JNNTool — Quantity Takeoff &amp; 3D Section Box"
         Height="720" Width="1240" MinHeight="580" MinWidth="920"
         WindowStartupLocation="CenterScreen"
         Background="#F5F7F9"
@@ -106,7 +106,7 @@
                         <Border x:Name="bd" Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="5">
+                                CornerRadius="5" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -237,7 +237,7 @@
             </Setter>
         </Style>
 
-        <!-- Standard Button (CornerRadius 5, Normal Font) -->
+        <!-- Standard Button -->
         <Style TargetType="Button" x:Key="BtnSecondary">
             <Setter Property="Height" Value="28"/>
             <Setter Property="Padding" Value="12,0"/>
@@ -254,7 +254,7 @@
                         <Border x:Name="bd" Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="5">
+                                CornerRadius="5" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -281,7 +281,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="5">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="5" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -307,7 +307,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="5">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="5" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -337,7 +337,7 @@
                         <Border x:Name="bd" Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="3">
+                                CornerRadius="3" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -350,7 +350,7 @@
             </Setter>
         </Style>
 
-        <!-- TabControl & TabItem Styles (CornerRadius 5, Normal Font) -->
+        <!-- TabControl & TabItem Styles -->
         <Style TargetType="TabItem">
             <Setter Property="Height" Value="28"/>
             <Setter Property="Padding" Value="16,0"/>
@@ -378,25 +378,21 @@
                                 <Setter TargetName="tabBorder" Property="BorderBrush" Value="{StaticResource BorderColor}"/>
                                 <Setter Property="Foreground" Value="{StaticResource Accent}"/>
                             </Trigger>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="tabBorder" Property="Background" Value="#F8FAFC"/>
-                            </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
 
-        <!-- DataGrid Style -->
+        <!-- DataGrid Modern Styling -->
         <Style TargetType="DataGrid">
             <Setter Property="Background" Value="White"/>
             <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="RowHeight" Value="26"/>
+            <Setter Property="RowHeaderWidth" Value="0"/>
             <Setter Property="GridLinesVisibility" Value="Horizontal"/>
             <Setter Property="HorizontalGridLinesBrush" Value="#E2E8F0"/>
             <Setter Property="VerticalGridLinesBrush" Value="Transparent"/>
-            <Setter Property="HeadersVisibility" Value="Column"/>
             <Setter Property="AutoGenerateColumns" Value="False"/>
             <Setter Property="CanUserAddRows" Value="False"/>
             <Setter Property="CanUserDeleteRows" Value="False"/>
@@ -478,7 +474,7 @@
 
                     <!-- Categories Filter Toggle & Popup -->
                     <Grid Margin="10,0,0,0" VerticalAlignment="Center">
-                        <ToggleButton x:Name="BtnCategoryFilter" Content="Categories Filter ▼"
+                        <ToggleButton x:Name="BtnCategoryFilter"
                                       IsChecked="{Binding Path=IsOpen, ElementName=PopupCatFilter, Mode=TwoWay}"
                                       Height="28" Padding="12,0" Background="White" Foreground="{StaticResource Ink}"
                                       BorderBrush="{StaticResource BorderColor}" BorderThickness="1"
@@ -489,7 +485,10 @@
                                             BorderBrush="{TemplateBinding BorderBrush}"
                                             BorderThickness="{TemplateBinding BorderThickness}"
                                             CornerRadius="5" Padding="{TemplateBinding Padding}">
-                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Data="M10,18h4v-2h-4v2zM3,6v2h18V6H3zm3,7h12v-2H6v2z" Fill="{StaticResource Ink}" Width="13" Height="13" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Categories Filter ▼" VerticalAlignment="Center"/>
+                                        </StackPanel>
                                     </Border>
                                     <ControlTemplate.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
@@ -527,7 +526,7 @@
                                     <ScrollViewer MaxHeight="260" VerticalScrollBarVisibility="Auto">
                                         <ItemsControl ItemsSource="{Binding Categories}">
                                             <ItemsControl.ItemTemplate>
-                                                <DataTemplate DataType="{x:Type models:CategoryFilterItem}">
+                                                <DataTemplate>
                                                     <CheckBox IsChecked="{Binding IsSelected}" Margin="2,4"
                                                               Content="{Binding DisplayName}" FontWeight="Normal" FontSize="12"/>
                                                 </DataTemplate>
@@ -540,18 +539,43 @@
                     </Grid>
                 </StackPanel>
 
-                <!-- Action Buttons -->
+                <!-- Action Buttons with Vector Icons -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Content="⟳ Refresh" Command="{Binding RefreshDataCommand}"
-                            Style="{StaticResource BtnSecondary}" Margin="0,0,8,0"/>
-                    <Button Content="📊 Visual Preview" Command="{Binding TogglePreviewCommand}"
-                            Style="{StaticResource BtnTogglePreview}" Margin="0,0,8,0"/>
-                    <Button Content="Select in Model" Command="{Binding SelectInModelCommand}"
-                            Style="{StaticResource BtnSecondary}" Margin="0,0,8,0"/>
-                    <Button Content="⤢ Box 3D" Command="{Binding Box3DCommand}"
-                            Style="{StaticResource BtnPrimary}" Margin="0,0,8,0"/>
-                    <Button Content="📊 Export Excel" Command="{Binding ExportExcelCommand}"
-                            Style="{StaticResource BtnGreen}"/>
+                    <Button Command="{Binding RefreshDataCommand}"
+                            Style="{StaticResource BtnSecondary}" Margin="0,0,8,0" ToolTip="Làm mới dữ liệu khối lượng">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" Fill="{StaticResource Ink}" Width="13" Height="13" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Refresh" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding TogglePreviewCommand}"
+                            Style="{StaticResource BtnTogglePreview}" Margin="0,0,8,0" ToolTip="Bật / Tắt Dashboard trực quan">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Width="13" Height="13" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Visual Preview" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding SelectInModelCommand}"
+                            Style="{StaticResource BtnSecondary}" Margin="0,0,8,0" ToolTip="Chọn cấu kiện trong Revit Model">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" Fill="{StaticResource Ink}" Width="13" Height="13" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Select in Model" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding Box3DCommand}"
+                            Style="{StaticResource BtnPrimary}" Margin="0,0,8,0" ToolTip="Tạo Section Box 3D cho đối tượng được chọn">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 2l6 3.5v7L12 19l-6-3.5v-7L12 5z" Fill="White" Width="13" Height="13" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Box 3D" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding ExportExcelCommand}"
+                            Style="{StaticResource BtnGreen}" ToolTip="Xuất bảng khối lượng ra file Excel (.xlsx)">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Data="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" Fill="White" Width="13" Height="13" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Export Excel" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Border>
@@ -571,40 +595,68 @@
             <Border Grid.Column="0" Background="{StaticResource CardBg}"
                     BorderBrush="{StaticResource BorderColor}" BorderThickness="1"
                     CornerRadius="5" Padding="12,8" Margin="0,0,6,0">
-                <StackPanel>
-                    <TextBlock Text="Bê Tông (Concrete Volume)" FontSize="11" Foreground="{StaticResource Muted}" FontWeight="Normal"/>
-                    <TextBlock Text="{Binding TotalConcreteVolumeDisplay}" FontSize="16" Foreground="{StaticResource Accent}" FontWeight="Normal" Margin="0,3,0,0"/>
-                </StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Bê Tông (Concrete Volume)" FontSize="11" Foreground="{StaticResource Muted}" FontWeight="Normal"/>
+                        <TextBlock Text="{Binding TotalConcreteVolumeDisplay}" FontSize="16" Foreground="{StaticResource Accent}" FontWeight="Normal" Margin="0,3,0,0"/>
+                    </StackPanel>
+                    <Path Grid.Column="1" Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z" Fill="{StaticResource Accent}" Opacity="0.8" Width="20" Height="20" Stretch="Uniform" VerticalAlignment="Center"/>
+                </Grid>
             </Border>
 
             <!-- Card 2: Formwork Area -->
             <Border Grid.Column="1" Background="{StaticResource CardBg}"
                     BorderBrush="{StaticResource BorderColor}" BorderThickness="1"
                     CornerRadius="5" Padding="12,8" Margin="3,0,3,0">
-                <StackPanel>
-                    <TextBlock Text="Ván Khuôn (Formwork Area)" FontSize="11" Foreground="{StaticResource Muted}" FontWeight="Normal"/>
-                    <TextBlock Text="{Binding TotalFormworkAreaDisplay}" FontSize="16" Foreground="#0284C7" FontWeight="Normal" Margin="0,3,0,0"/>
-                </StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Ván Khuôn (Formwork Area)" FontSize="11" Foreground="{StaticResource Muted}" FontWeight="Normal"/>
+                        <TextBlock Text="{Binding TotalFormworkAreaDisplay}" FontSize="16" Foreground="#0284C7" FontWeight="Normal" Margin="0,3,0,0"/>
+                    </StackPanel>
+                    <Path Grid.Column="1" Data="M11.99 18.54l-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27-7.38 5.74zM12 16l7.36-5.73L21 9l-9-7-9 7 1.63 1.27L12 16z" Fill="#0284C7" Opacity="0.8" Width="20" Height="20" Stretch="Uniform" VerticalAlignment="Center"/>
+                </Grid>
             </Border>
 
             <!-- Card 3: Steel / Rebar Weight -->
             <Border Grid.Column="2" Background="{StaticResource CardBg}"
                     BorderBrush="{StaticResource BorderColor}" BorderThickness="1"
                     CornerRadius="5" Padding="12,8" Margin="3,0,3,0">
-                <StackPanel>
-                    <TextBlock Text="Thép / Rebar (Weight)" FontSize="11" Foreground="{StaticResource Muted}" FontWeight="Normal"/>
-                    <TextBlock Text="{Binding TotalSteelWeightDisplay}" FontSize="16" Foreground="#D97706" FontWeight="Normal" Margin="0,3,0,0"/>
-                </StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Thép / Rebar (Weight)" FontSize="11" Foreground="{StaticResource Muted}" FontWeight="Normal"/>
+                        <TextBlock Text="{Binding TotalSteelWeightDisplay}" FontSize="16" Foreground="#D97706" FontWeight="Normal" Margin="0,3,0,0"/>
+                    </StackPanel>
+                    <Path Grid.Column="1" Data="M4 4h16v2H4V4zm2 4h12v2H6V8zm-2 4h16v2H4v-2zm2 4h12v2H6v-2zm-2 4h16v2H4v-2z" Fill="#D97706" Opacity="0.8" Width="20" Height="20" Stretch="Uniform" VerticalAlignment="Center"/>
+                </Grid>
             </Border>
 
             <!-- Card 4: Total Elements -->
             <Border Grid.Column="3" Background="{StaticResource CardBg}"
                     BorderBrush="{StaticResource BorderColor}" BorderThickness="1"
                     CornerRadius="5" Padding="12,8" Margin="6,0,0,0">
-                <StackPanel>
-                    <TextBlock Text="Tổng Số Cấu Kiện (Elements)" FontSize="11" Foreground="{StaticResource Muted}" FontWeight="Normal"/>
-                    <TextBlock Text="{Binding TotalElementsCountDisplay}" FontSize="16" Foreground="{StaticResource Ink}" FontWeight="Normal" Margin="0,3,0,0"/>
-                </StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Tổng Số Cấu Kiện (Elements)" FontSize="11" Foreground="{StaticResource Muted}" FontWeight="Normal"/>
+                        <TextBlock Text="{Binding TotalElementsCountDisplay}" FontSize="16" Foreground="{StaticResource Ink}" FontWeight="Normal" Margin="0,3,0,0"/>
+                    </StackPanel>
+                    <Path Grid.Column="1" Data="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z" Fill="{StaticResource Ink}" Opacity="0.7" Width="20" Height="20" Stretch="Uniform" VerticalAlignment="Center"/>
+                </Grid>
             </Border>
         </Grid>
 
@@ -621,171 +673,191 @@
             <TabControl Grid.Column="0" Background="White" BorderBrush="{StaticResource BorderColor}"
                         BorderThickness="1" Padding="8">
 
-            <!-- ───────── TAB 1: BY LEVEL (THEO TẦNG) ───────── -->
-            <TabItem Header="By Level (Theo Tầng)">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="3*"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="2*"/>
-                    </Grid.RowDefinitions>
+                <!-- ───────── TAB 1: BY LEVEL (THEO TẦNG) ───────── -->
+                <TabItem Header="By Level (Theo Tầng)">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="3*"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="2*"/>
+                        </Grid.RowDefinitions>
 
-                    <!-- Table: Level Summaries -->
-                    <Border Grid.Row="0" BorderBrush="{StaticResource BorderColor}" BorderThickness="1" CornerRadius="5">
-                        <DataGrid ItemsSource="{Binding LevelSummaries}"
-                                  SelectedItem="{Binding SelectedLevelSummary, Mode=TwoWay}"
-                                  MouseDoubleClick="OnLevelGridDoubleClick">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Tầng (Level)" Binding="{Binding LevelName}" Width="160"/>
-                                <DataGridTextColumn Header="Cao Độ" Binding="{Binding ElevationDisplay}" Width="100"/>
-                                <DataGridTextColumn Header="Số Lượng" Binding="{Binding ElementCount}" Width="90"/>
-                                <DataGridTextColumn Header="Bê Tông (m³)" Binding="{Binding ConcreteVolumeDisplay}" Width="120"/>
-                                <DataGridTextColumn Header="Cốp Pha (m²)" Binding="{Binding FormworkAreaDisplay}" Width="120"/>
-                                <DataGridTextColumn Header="Thép (Tấn)" Binding="{Binding SteelRebarWeightDisplay}" Width="120"/>
-                                <DataGridTextColumn Header="Tổng Thể Tích (m³)" Binding="{Binding TotalVolumeDisplay}" Width="130"/>
-                                <DataGridTemplateColumn Header="Action" Width="80">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <Button Content="Box 3D" Style="{StaticResource BtnRowAction}"
-                                                    Command="{Binding DataContext.Box3DCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    CommandParameter="{Binding}"/>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                            </DataGrid.Columns>
-                        </DataGrid>
-                    </Border>
+                        <!-- Table: Level Summaries -->
+                        <Border Grid.Row="0" BorderBrush="{StaticResource BorderColor}" BorderThickness="1" CornerRadius="5">
+                            <DataGrid ItemsSource="{Binding LevelSummaries}"
+                                      SelectedItem="{Binding SelectedLevelSummary, Mode=TwoWay}"
+                                      MouseDoubleClick="OnLevelGridDoubleClick">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Tầng (Level)" Binding="{Binding LevelName}" Width="160"/>
+                                    <DataGridTextColumn Header="Cao Độ" Binding="{Binding ElevationDisplay}" Width="100"/>
+                                    <DataGridTextColumn Header="Số Lượng" Binding="{Binding ElementCount}" Width="90"/>
+                                    <DataGridTextColumn Header="Bê Tông (m³)" Binding="{Binding ConcreteVolumeDisplay}" Width="120"/>
+                                    <DataGridTextColumn Header="Cốp Pha (m²)" Binding="{Binding FormworkAreaDisplay}" Width="120"/>
+                                    <DataGridTextColumn Header="Thép (Tấn)" Binding="{Binding SteelRebarWeightDisplay}" Width="120"/>
+                                    <DataGridTextColumn Header="Tổng Thể Tích (m³)" Binding="{Binding TotalVolumeDisplay}" Width="130"/>
+                                    <DataGridTemplateColumn Header="Action" Width="85">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Style="{StaticResource BtnRowAction}"
+                                                        Command="{Binding DataContext.Box3DCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}" ToolTip="Tạo Section Box 3D cho tầng này">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Path Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 2l6 3.5v7L12 19l-6-3.5v-7L12 5z" Fill="{StaticResource Accent}" Width="10" Height="10" Stretch="Uniform" Margin="0,0,3,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="Box 3D" FontSize="11" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
 
-                    <!-- Splitter Label -->
-                    <Grid Grid.Row="1" Margin="0,8,0,4">
-                        <TextBlock Text="Chi Tiết Cấu Kiện Trong Tầng Được Chọn (Category Breakdown):"
-                                   FontSize="11" Foreground="{StaticResource Muted}" FontWeight="Normal"/>
+                        <!-- Splitter Label -->
+                        <Grid Grid.Row="1" Margin="0,8,0,4">
+                            <TextBlock Text="Chi Tiết Cấu Kiện Trong Tầng Được Chọn (Category Breakdown):"
+                                       FontSize="11" Foreground="{StaticResource Muted}" FontWeight="Normal"/>
+                        </Grid>
+
+                        <!-- Sub-Table: Categories Breakdown in Selected Level -->
+                        <Border Grid.Row="2" BorderBrush="{StaticResource BorderColor}" BorderThickness="1" CornerRadius="5">
+                            <DataGrid ItemsSource="{Binding CurrentLevelBreakdowns}"
+                                      MouseDoubleClick="OnCategoryBreakdownDoubleClick">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Loại Cấu Kiện (Category)" Binding="{Binding CategoryName}" Width="200"/>
+                                    <DataGridTextColumn Header="Số Lượng" Binding="{Binding Count}" Width="100"/>
+                                    <DataGridTextColumn Header="Thể Tích (m³)" Binding="{Binding TotalVolumeDisplay}" Width="130"/>
+                                    <DataGridTextColumn Header="Diện Tích (m²)" Binding="{Binding TotalAreaDisplay}" Width="130"/>
+                                    <DataGridTextColumn Header="Thép / Rebar (Tấn)" Binding="{Binding TotalWeightDisplay}" Width="130"/>
+                                    <DataGridTemplateColumn Header="Action" Width="85">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Style="{StaticResource BtnRowAction}"
+                                                        Command="{Binding DataContext.Box3DCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}" ToolTip="Tạo Section Box 3D cho cấu kiện này">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Path Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 2l6 3.5v7L12 19l-6-3.5v-7L12 5z" Fill="{StaticResource Accent}" Width="10" Height="10" Stretch="Uniform" Margin="0,0,3,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="Box 3D" FontSize="11" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
                     </Grid>
+                </TabItem>
 
-                    <!-- Sub-Table: Categories Breakdown in Selected Level -->
-                    <Border Grid.Row="2" BorderBrush="{StaticResource BorderColor}" BorderThickness="1" CornerRadius="5">
-                        <DataGrid ItemsSource="{Binding CurrentLevelBreakdowns}"
-                                  MouseDoubleClick="OnCategoryBreakdownDoubleClick">
+                <!-- ───────── TAB 2: BY CATEGORY (THEO CẤU KIỆN) ───────── -->
+                <TabItem Header="By Category (Theo Cấu Kiện)">
+                    <Border BorderBrush="{StaticResource BorderColor}" BorderThickness="1" CornerRadius="5">
+                        <DataGrid ItemsSource="{Binding CategorySummaries}"
+                                  SelectedItem="{Binding SelectedCategorySummary, Mode=TwoWay}"
+                                  MouseDoubleClick="OnCategoryGridDoubleClick">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Loại Cấu Kiện (Category)" Binding="{Binding CategoryName}" Width="200"/>
+                                <DataGridTextColumn Header="Loại Cấu Kiện (Category)" Binding="{Binding CategoryName}" Width="220"/>
                                 <DataGridTextColumn Header="Số Lượng" Binding="{Binding Count}" Width="100"/>
-                                <DataGridTextColumn Header="Thể Tích (m³)" Binding="{Binding TotalVolumeDisplay}" Width="130"/>
-                                <DataGridTextColumn Header="Diện Tích (m²)" Binding="{Binding TotalAreaDisplay}" Width="130"/>
-                                <DataGridTextColumn Header="Thép / Rebar (Tấn)" Binding="{Binding TotalWeightDisplay}" Width="130"/>
-                                <DataGridTemplateColumn Header="Action" Width="80">
+                                <DataGridTextColumn Header="Thể Tích (m³)" Binding="{Binding TotalVolumeDisplay}" Width="140"/>
+                                <DataGridTextColumn Header="Diện Tích (m²)" Binding="{Binding TotalAreaDisplay}" Width="140"/>
+                                <DataGridTextColumn Header="Chiều Dài (m)" Binding="{Binding TotalLength, StringFormat={}{0:N2}}" Width="120"/>
+                                <DataGridTextColumn Header="Trọng Lượng (Tấn)" Binding="{Binding TotalWeightDisplay}" Width="140"/>
+                                <DataGridTemplateColumn Header="Action" Width="90">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <Button Content="Box 3D" Style="{StaticResource BtnRowAction}"
+                                            <Button Style="{StaticResource BtnRowAction}"
                                                     Command="{Binding DataContext.Box3DCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    CommandParameter="{Binding}"/>
+                                                    CommandParameter="{Binding}" ToolTip="Tạo Section Box 3D">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Path Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 2l6 3.5v7L12 19l-6-3.5v-7L12 5z" Fill="{StaticResource Accent}" Width="10" Height="10" Stretch="Uniform" Margin="0,0,3,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="Box 3D" FontSize="11" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Border>
-                </Grid>
-            </TabItem>
+                </TabItem>
 
-            <!-- ───────── TAB 2: BY CATEGORY (THEO CẤU KIỆN) ───────── -->
-            <TabItem Header="By Category (Theo Cấu Kiện)">
-                <Border BorderBrush="{StaticResource BorderColor}" BorderThickness="1" CornerRadius="5">
-                    <DataGrid ItemsSource="{Binding CategorySummaries}"
-                              SelectedItem="{Binding SelectedCategorySummary, Mode=TwoWay}"
-                              MouseDoubleClick="OnCategoryGridDoubleClick">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Loại Cấu Kiện (Category)" Binding="{Binding CategoryName}" Width="220"/>
-                            <DataGridTextColumn Header="Số Lượng" Binding="{Binding Count}" Width="100"/>
-                            <DataGridTextColumn Header="Thể Tích (m³)" Binding="{Binding TotalVolumeDisplay}" Width="140"/>
-                            <DataGridTextColumn Header="Diện Tích (m²)" Binding="{Binding TotalAreaDisplay}" Width="140"/>
-                            <DataGridTextColumn Header="Chiều Dài (m)" Binding="{Binding TotalLength, StringFormat={}{0:N2}}" Width="120"/>
-                            <DataGridTextColumn Header="Trọng Lượng (Tấn)" Binding="{Binding TotalWeightDisplay}" Width="140"/>
-                            <DataGridTemplateColumn Header="Action" Width="90">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Button Content="Box 3D" Style="{StaticResource BtnRowAction}"
-                                                Command="{Binding DataContext.Box3DCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                CommandParameter="{Binding}"/>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Border>
-            </TabItem>
+                <!-- ───────── TAB 3: ELEMENT DETAILS (CHI TIẾT) ───────── -->
+                <TabItem Header="Element Details (Chi Tiết Cấu Kiện)">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
 
-            <!-- ───────── TAB 3: ELEMENT DETAILS (CHI TIẾT) ───────── -->
-            <TabItem Header="Element Details (Chi Tiết Cấu Kiện)">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
+                        <!-- Filter Bar for Details -->
+                        <Grid Grid.Row="0" Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="220"/>
+                                <ColumnDefinition Width="160"/>
+                                <ColumnDefinition Width="160"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
 
-                    <!-- Filter Bar for Details -->
-                    <Grid Grid.Row="0" Margin="0,0,0,8">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="220"/>
-                            <ColumnDefinition Width="160"/>
-                            <ColumnDefinition Width="160"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
+                            <!-- Search Box -->
+                            <TextBox Grid.Column="0" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                     Margin="0,0,8,0" Tag="Tìm kiếm..."/>
 
-                        <!-- Search Box -->
-                        <TextBox Grid.Column="0" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                                 Margin="0,0,8,0" Tag="Tìm kiếm..."/>
+                            <!-- Category Filter Dropdown -->
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding AvailableCategoryNames}"
+                                      SelectedItem="{Binding SelectedCategoryFilter, Mode=TwoWay}"
+                                      Margin="0,0,8,0"/>
 
-                        <!-- Category Filter Dropdown -->
-                        <ComboBox Grid.Column="1" ItemsSource="{Binding AvailableCategoryNames}"
-                                  SelectedItem="{Binding SelectedCategoryFilter, Mode=TwoWay}"
-                                  Margin="0,0,8,0"/>
+                            <!-- Level Filter Dropdown -->
+                            <ComboBox Grid.Column="2" ItemsSource="{Binding AvailableLevelNames}"
+                                      SelectedItem="{Binding SelectedLevelFilter, Mode=TwoWay}"
+                                      Margin="0,0,8,0"/>
+                        </Grid>
 
-                        <!-- Level Filter Dropdown -->
-                        <ComboBox Grid.Column="2" ItemsSource="{Binding AvailableLevelNames}"
-                                  SelectedItem="{Binding SelectedLevelFilter, Mode=TwoWay}"
-                                  Margin="0,0,8,0"/>
+                        <!-- DataGrid of Elements -->
+                        <Border Grid.Row="1" BorderBrush="{StaticResource BorderColor}" BorderThickness="1" CornerRadius="5">
+                            <DataGrid ItemsSource="{Binding ElementsView}"
+                                      SelectedItem="{Binding SelectedElement, Mode=TwoWay}"
+                                      MouseDoubleClick="OnElementGridDoubleClick">
+                                <DataGrid.Columns>
+                                    <DataGridTemplateColumn Width="36">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <CheckBox IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"
+                                                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="ID" Binding="{Binding IdValue}" Width="75"/>
+                                    <DataGridTextColumn Header="Category" Binding="{Binding CategoryName}" Width="130"/>
+                                    <DataGridTextColumn Header="Tầng (Level)" Binding="{Binding LevelName}" Width="110"/>
+                                    <DataGridTextColumn Header="Family" Binding="{Binding FamilyName}" Width="130"/>
+                                    <DataGridTextColumn Header="Type" Binding="{Binding TypeName}" Width="140"/>
+                                    <DataGridTextColumn Header="Mark" Binding="{Binding Mark}" Width="80"/>
+                                    <DataGridTextColumn Header="Vật Liệu" Binding="{Binding MaterialName}" Width="120"/>
+                                    <DataGridTextColumn Header="Thể Tích (m³)" Binding="{Binding VolumeDisplay}" Width="100"/>
+                                    <DataGridTextColumn Header="Diện Tích (m²)" Binding="{Binding AreaDisplay}" Width="100"/>
+                                    <DataGridTextColumn Header="Chiều Dài (m)" Binding="{Binding LengthDisplay}" Width="95"/>
+                                    <DataGridTextColumn Header="Thép (Tấn)" Binding="{Binding WeightDisplay}" Width="90"/>
+                                    <DataGridTemplateColumn Header="Action" Width="75">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Style="{StaticResource BtnRowAction}"
+                                                        Command="{Binding DataContext.Box3DCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}" ToolTip="Tạo Section Box 3D">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Path Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 2l6 3.5v7L12 19l-6-3.5v-7L12 5z" Fill="{StaticResource Accent}" Width="10" Height="10" Stretch="Uniform" Margin="0,0,3,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="Box 3D" FontSize="11" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
                     </Grid>
-
-                    <!-- DataGrid of Elements -->
-                    <Border Grid.Row="1" BorderBrush="{StaticResource BorderColor}" BorderThickness="1" CornerRadius="5">
-                        <DataGrid ItemsSource="{Binding ElementsView}"
-                                  SelectedItem="{Binding SelectedElement, Mode=TwoWay}"
-                                  MouseDoubleClick="OnElementGridDoubleClick">
-                            <DataGrid.Columns>
-                                <DataGridTemplateColumn Width="36">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <CheckBox IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"
-                                                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                                <DataGridTextColumn Header="ID" Binding="{Binding IdValue}" Width="75"/>
-                                <DataGridTextColumn Header="Category" Binding="{Binding CategoryName}" Width="130"/>
-                                <DataGridTextColumn Header="Tầng (Level)" Binding="{Binding LevelName}" Width="110"/>
-                                <DataGridTextColumn Header="Family" Binding="{Binding FamilyName}" Width="130"/>
-                                <DataGridTextColumn Header="Type" Binding="{Binding TypeName}" Width="140"/>
-                                <DataGridTextColumn Header="Mark" Binding="{Binding Mark}" Width="80"/>
-                                <DataGridTextColumn Header="Vật Liệu" Binding="{Binding MaterialName}" Width="120"/>
-                                <DataGridTextColumn Header="Thể Tích (m³)" Binding="{Binding VolumeDisplay}" Width="100"/>
-                                <DataGridTextColumn Header="Diện Tích (m²)" Binding="{Binding AreaDisplay}" Width="100"/>
-                                <DataGridTextColumn Header="Chiều Dài (m)" Binding="{Binding LengthDisplay}" Width="95"/>
-                                <DataGridTextColumn Header="Thép (Tấn)" Binding="{Binding WeightDisplay}" Width="90"/>
-                                <DataGridTemplateColumn Header="Action" Width="70">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <Button Content="Box 3D" Style="{StaticResource BtnRowAction}"
-                                                    Command="{Binding DataContext.Box3DCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    CommandParameter="{Binding}"/>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                            </DataGrid.Columns>
-                        </DataGrid>
-                    </Border>
-                </Grid>
-            </TabItem>
-        </TabControl>
+                </TabItem>
+            </TabControl>
 
             <!-- Right: Integrated Visual Preview Dashboard -->
             <Border Grid.Column="1" Margin="8,0,0,0" Width="390"
@@ -842,7 +914,7 @@
                             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                                 <ItemsControl ItemsSource="{Binding LevelChartItems}">
                                     <ItemsControl.ItemTemplate>
-                                        <DataTemplate DataType="{x:Type models:LevelChartItem}">
+                                        <DataTemplate>
                                             <Border Margin="0,2" Padding="8,6" CornerRadius="4" BorderThickness="1" Cursor="Hand"
                                                     ToolTip="{Binding TooltipText}">
                                                 <Border.Style>
@@ -896,15 +968,20 @@
                                                             <TextBlock Text="{Binding PercentageDisplay, StringFormat=' ({0})'}" FontSize="10" Foreground="{StaticResource Muted}"/>
                                                         </StackPanel>
 
-                                                        <Button Grid.Column="3" Content="Box 3D" Style="{StaticResource BtnRowAction}"
+                                                        <Button Grid.Column="3" Style="{StaticResource BtnRowAction}"
                                                                 Command="{Binding DataContext.Box3DCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                                CommandParameter="{Binding}" ToolTip="Tạo Section Box 3D cho tầng này"/>
+                                                                CommandParameter="{Binding}" ToolTip="Tạo Section Box 3D cho tầng này">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <Path Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 2l6 3.5v7L12 19l-6-3.5v-7L12 5z" Fill="{StaticResource Accent}" Width="10" Height="10" Stretch="Uniform" Margin="0,0,3,0" VerticalAlignment="Center"/>
+                                                                <TextBlock Text="Box 3D" FontSize="11" VerticalAlignment="Center"/>
+                                                            </StackPanel>
+                                                        </Button>
                                                     </Grid>
 
                                                     <ProgressBar Grid.Row="1" Height="8"
                                                                  Template="{StaticResource FlatProgressBar}"
                                                                  Background="#E2E8F0" Foreground="#0284C7"
-                                                                 Value="{Binding RelativePercentage}" Maximum="100"/>
+                                                                 Value="{Binding RelativePercentage, Mode=OneWay}" Maximum="100"/>
                                                 </Grid>
                                             </Border>
                                         </DataTemplate>
@@ -928,7 +1005,7 @@
                             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                                 <ItemsControl ItemsSource="{Binding CategoryChartItems}">
                                     <ItemsControl.ItemTemplate>
-                                        <DataTemplate DataType="{x:Type models:CategoryChartItem}">
+                                        <DataTemplate>
                                             <Border Margin="0,3" Padding="8,6" CornerRadius="4" BorderThickness="1"
                                                     Background="#F8FAFC" BorderBrush="#E2E8F0" ToolTip="{Binding TooltipText}">
                                                 <Grid>
@@ -957,15 +1034,20 @@
                                                                    FontSize="11" Foreground="{StaticResource Ink}" FontWeight="Normal"
                                                                    VerticalAlignment="Center" Margin="0,0,6,0"/>
 
-                                                        <Button Grid.Column="3" Content="Box 3D" Style="{StaticResource BtnRowAction}"
+                                                        <Button Grid.Column="3" Style="{StaticResource BtnRowAction}"
                                                                 Command="{Binding DataContext.Box3DCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                                CommandParameter="{Binding}" ToolTip="Tạo Section Box 3D cho cấu kiện này"/>
+                                                                CommandParameter="{Binding}" ToolTip="Tạo Section Box 3D cho cấu kiện này">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <Path Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 2l6 3.5v7L12 19l-6-3.5v-7L12 5z" Fill="{StaticResource Accent}" Width="10" Height="10" Stretch="Uniform" Margin="0,0,3,0" VerticalAlignment="Center"/>
+                                                                <TextBlock Text="Box 3D" FontSize="11" VerticalAlignment="Center"/>
+                                                            </StackPanel>
+                                                        </Button>
                                                     </Grid>
 
                                                     <ProgressBar Grid.Row="1" Height="8"
                                                                  Template="{StaticResource FlatProgressBar}"
                                                                  Background="#E2E8F0" Foreground="{Binding ColorBrush}"
-                                                                 Value="{Binding Percentage}" Maximum="100"/>
+                                                                 Value="{Binding Percentage, Mode=OneWay}" Maximum="100"/>
                                                 </Grid>
                                             </Border>
                                         </DataTemplate>

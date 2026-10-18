@@ -1,144 +1,147 @@
-# JNNTool — Danh Mục Tổng Hợp Công Cụ (HIỆN & ẨN)
+﻿# JNNTool â€” Danh Má»¥c Tá»•ng Há»£p CÃ´ng Cá»¥ (HIá»†N & áº¨N)
 
-> **Cập nhật ngày:** 2026-10-17  
-> **Vị trí file:** `c:\Users\nhann\OneDrive\AI\JNNTool\Tools\UI Manager\JNNTOOL_TOOLS_CATALOG.md`  
-> **Nguyên tắc cốt lõi:** Đồng bộ 1:1 giữa **Ribbon JNNTool** và **Command Palette (Dockable Pane)**.
+> **Cáº­p nháº­t ngÃ y:** 2026-10-17  
+> **Vá»‹ trÃ­ file:** `c:\Users\nhann\OneDrive\AI\JNNTool\Tools\UI Manager\JNNTOOL_TOOLS_CATALOG.md`  
+> **NguyÃªn táº¯c cá»‘t lÃµi:** Äá»“ng bá»™ 1:1 giá»¯a **Ribbon JNNTool** vÃ  **Command Palette (Dockable Pane)**.
 
 ---
 
-## 📊 Bảng Thống Kê Tổng Quan
+## ðŸ“Š Báº£ng Thá»‘ng KÃª Tá»•ng Quan
 
-| Trạng thái | Số lượng | Vị trí kiểm soát mã nguồn | Ghi chú |
+| Tráº¡ng thÃ¡i | Sá»‘ lÆ°á»£ng | Vá»‹ trÃ­ kiá»ƒm soÃ¡t mÃ£ nguá»“n | Ghi chÃº |
 |---|:---:|---|---|
-| 🟢 **ĐANG HIỆN** | **21** | [`Core/App.cs`](file:///c:/Users/nhann/OneDrive/AI/JNNTool/Core/App.cs) & [`Core/Palette/CommandRegistry.cs`](file:///c:/Users/nhann/OneDrive/AI/JNNTool/Core/Palette/CommandRegistry.cs) | Đang hiển thị trực tiếp trên thanh Ribbon và Command Palette |
-| 🔴 **ĐANG ẨN** | **22** | Được gom gọn an toàn trong khối `#if false` | Đã code sẵn, sẵn sàng mở lại bất cứ lúc nào |
-| ⚙️ **ADMIN CLI/WEB**| **2** | `Tools/Admin/` & `scripts/` | Cổng web offline và script PowerShell cấp key độc lập |
-| 🚀 **TỔNG CỘNG** | **45** | Toàn bộ dự án JNNTool | |
+| ðŸŸ¢ **ÄANG HIá»†N** | **21** | [`Core/App.cs`](file:///c:/Users/nhann/OneDrive/AI/JNNTool/Core/App.cs) & [`Core/Palette/CommandRegistry.cs`](file:///c:/Users/nhann/OneDrive/AI/JNNTool/Core/Palette/CommandRegistry.cs) | Äang hiá»ƒn thá»‹ trá»±c tiáº¿p trÃªn thanh Ribbon vÃ  Command Palette |
+| ðŸ”´ **ÄANG áº¨N** | **22** | ÄÆ°á»£c gom gá»n an toÃ n trong khá»‘i `#if false` | ÄÃ£ code sáºµn, sáºµn sÃ ng má»Ÿ láº¡i báº¥t cá»© lÃºc nÃ o |
+| âš™ï¸ **ADMIN CLI/WEB**| **2** | `Tools/Admin/` & `scripts/` | Cá»•ng web offline vÃ  script PowerShell cáº¥p key Ä‘á»™c láº­p |
+| ðŸš€ **Tá»”NG Cá»˜NG** | **45** | ToÃ n bá»™ dá»± Ã¡n JNNTool | |
 
 ---
 
-## 🟢 PHẦN 1: DANH SÁCH CÔNG CỤ ĐANG HIỆN (21 TOOLS)
+## ðŸŸ¢ PHáº¦N 1: DANH SÃCH CÃ”NG Cá»¤ ÄANG HIá»†N (21 TOOLS)
 
-Toàn bộ 21 công cụ dưới đây hiển thị trực tiếp trên thanh Ribbon của Revit và đồng bộ xuất hiện trong Command Palette:
+ToÃ n bá»™ 21 cÃ´ng cá»¥ dÆ°á»›i Ä‘Ã¢y hiá»ƒn thá»‹ trá»±c tiáº¿p trÃªn thanh Ribbon cá»§a Revit vÃ  Ä‘á»“ng bá»™ xuáº¥t hiá»‡n trong Command Palette:
 
-### 1. Panel `General` (3 công cụ)
-| STT | Tên Ribbon / Palette | Command ID | Icon Enum | Class thực thi | Chức năng chính |
+### 1. Panel `General` (3 cÃ´ng cá»¥)
+| STT | TÃªn Ribbon / Palette | Command ID | Icon Enum | Class thá»±c thi | Chá»©c nÄƒng chÃ­nh |
 |:---:|---|---|:---:|---|---|
-| 1 | **Command Palette** | `cmdPalette` | `CommandPalette` | `JNNTool.Core.Palette.TogglePaletteCmd` | Bảng điều khiển tra cứu (Ctrl+F) tìm kiếm nhanh toàn bộ công cụ JNNTool, hỗ trợ gõ tiếng Việt không dấu, ghim lệnh yêu thích ★. |
-| 2 | **Account & License** | `cmdLicense` | `Key` | `JNNTool.Tools.Login.Commands.LoginCmd` | Quản lý bản quyền, đăng nhập tài khoản, nhập mã key kích hoạt máy tính qua đám mây Supabase. |
-| 3 | **Ribbon Theme** | `cmdUIManager` | `Palette` | `JNNTool.Tools.UIManager.Commands.UIManagerCmd` | Quản lý giao diện, đổi 12 bảng màu theme và chuyển đổi 4 phong cách biểu tượng (Badge, Glyph, Circle, Outline). |
+| 1 | **Command Palette** | `cmdPalette` | `CommandPalette` | `JNNTool.Core.Palette.TogglePaletteCmd` | Báº£ng Ä‘iá»u khiá»ƒn tra cá»©u (Ctrl+F) tÃ¬m kiáº¿m nhanh toÃ n bá»™ cÃ´ng cá»¥ JNNTool, há»— trá»£ gÃµ tiáº¿ng Viá»‡t khÃ´ng dáº¥u, ghim lá»‡nh yÃªu thÃ­ch â˜…. |
+| 2 | **Account & License** | `cmdLicense` | `Key` | `JNNTool.Tools.Login.Commands.LoginCmd` | Quáº£n lÃ½ báº£n quyá»n, Ä‘Äƒng nháº­p tÃ i khoáº£n, nháº­p mÃ£ key kÃ­ch hoáº¡t mÃ¡y tÃ­nh qua Ä‘Ã¡m mÃ¢y Supabase. |
+| 3 | **Ribbon Theme** | `cmdUIManager` | `Palette` | `JNNTool.Tools.UIManager.Commands.UIManagerCmd` | Quáº£n lÃ½ giao diá»‡n, Ä‘á»•i 12 báº£ng mÃ u theme vÃ  chuyá»ƒn Ä‘á»•i 4 phong cÃ¡ch biá»ƒu tÆ°á»£ng (Badge, Glyph, Circle, Outline). |
 
-### 2. Panel `Modeling` (6 công cụ - Bố cục 2 Cột x 3 Nút nhỏ Stacked)
-> **Bố cục Ribbon:** Gom gọn thành **2 cột nút nhỏ xếp tầng** (Stacked Items 16×16 px), tiết kiệm 50% diện tích chiều ngang thanh Ribbon:
-> - **Cột 1:** `Split Beam`, `Create Section`, `Disallow Join Beam`
-> - **Cột 2:** `Create Filter`, `Speed Overrider`, `Pile Location`
+### 2. Panel `Modeling` (6 cÃ´ng cá»¥ - Bá»‘ cá»¥c 2 Cá»™t x 3 NÃºt nhá» Stacked)
+> **Bá»‘ cá»¥c Ribbon:** Gom gá»n thÃ nh **2 cá»™t nÃºt nhá» xáº¿p táº§ng** (Stacked Items 16Ã—16 px), tiáº¿t kiá»‡m 50% diá»‡n tÃ­ch chiá»u ngang thanh Ribbon:
+> - **Cá»™t 1:** `Split Beam`, `Create Section`, `Disallow Join Beam`
+> - **Cá»™t 2:** `Create Filter`, `Speed Overrider`, `Pile Location`
 
-| STT | Tên Ribbon / Palette | Command ID | Icon Enum | Class thực thi | Chức năng chính |
+| STT | TÃªn Ribbon / Palette | Command ID | Icon Enum | Class thá»±c thi | Chá»©c nÄƒng chÃ­nh |
 |:---:|---|---|:---:|---|---|
-| 4 | **Split Beam** | `cmdSplitBeamByColumn` | `Split` | `JNNTool.SplitBeamByColumnCmd` | Tự động ngắt dầm thành từng đoạn ngắn tại các vị trí giao nhau với cột hoặc dầm ngang. |
-| 5 | **Create Section** | `cmdCreateSection` | `Section` | `JNNTool.CreateSectionCmd` | Duplicate hàng loạt Type dầm/cột với kích thước tiết diện $b \times h$ mới siêu tốc. |
-| 6 | **Disallow Join Beam** | `cmdDisallowJoinBeam` | `DisallowJoin` | `JNNTool.Tools.DisallowJoinBeam.DisallowJoinBeamCmd` | Quét chọn nhiều dầm và thực hiện Disallow Join ở cả 2 đầu dầm chống lỗi tự động nhảy liên kết. |
-| 7 | **Create Filter** | `cmdCreateFilter` | `Filter` | `JNNTool.Tools.CreateFilter.Command` | Tạo bộ lọc View Filter tự động từ danh sách phần tử và gán màu sắc trực quan. |
-| 8 | **Speed Overrider** | `cmdSpeedOverriderElement` | `Flash` | `JNNTool.Tools.SpeedOverriderElement.Command` | Ghi đè màu sắc đồ họa và độ trong suốt của phần tử nhanh trong view hiện hành. |
-| 9 | **Pile Location** | `cmdPileLocation` | `Target` | `JNNTool.Tools.PileLocation.Command` | Chọn 1 cọc gốc $\rightarrow$ tool tự tìm tất cả cọc trong view và ghi tọa độ thực tế ($X, Y$) mm vào tham số. |
+| 4 | **Split Beam** | `cmdSplitBeamByColumn` | `Split` | `JNNTool.SplitBeamByColumnCmd` | Tá»± Ä‘á»™ng ngáº¯t dáº§m thÃ nh tá»«ng Ä‘oáº¡n ngáº¯n táº¡i cÃ¡c vá»‹ trÃ­ giao nhau vá»›i cá»™t hoáº·c dáº§m ngang. |
+| 5 | **Create Section** | `cmdCreateSection` | `Section` | `JNNTool.CreateSectionCmd` | Duplicate hÃ ng loáº¡t Type dáº§m/cá»™t vá»›i kÃ­ch thÆ°á»›c tiáº¿t diá»‡n $b \times h$ má»›i siÃªu tá»‘c. |
+| 6 | **Disallow Join Beam** | `cmdDisallowJoinBeam` | `DisallowJoin` | `JNNTool.Tools.DisallowJoinBeam.DisallowJoinBeamCmd` | QuÃ©t chá»n nhiá»u dáº§m vÃ  thá»±c hiá»‡n Disallow Join á»Ÿ cáº£ 2 Ä‘áº§u dáº§m chá»‘ng lá»—i tá»± Ä‘á»™ng nháº£y liÃªn káº¿t. |
+| 7 | **Create Filter** | `cmdCreateFilter` | `Filter` | `JNNTool.Tools.CreateFilter.Command` | Táº¡o bá»™ lá»c View Filter tá»± Ä‘á»™ng tá»« danh sÃ¡ch pháº§n tá»­ vÃ  gÃ¡n mÃ u sáº¯c trá»±c quan. |
+| 8 | **Speed Overrider** | `cmdSpeedOverriderElement` | `Flash` | `JNNTool.Tools.SpeedOverriderElement.Command` | Ghi Ä‘Ã¨ mÃ u sáº¯c Ä‘á»“ há»a vÃ  Ä‘á»™ trong suá»‘t cá»§a pháº§n tá»­ nhanh trong view hiá»‡n hÃ nh. |
+| 9 | **Pile Location** | `cmdPileLocation` | `Target` | `JNNTool.Tools.PileLocation.Command` | Chá»n 1 cá»c gá»‘c $\rightarrow$ tool tá»± tÃ¬m táº¥t cáº£ cá»c trong view vÃ  ghi tá»a Ä‘á»™ thá»±c táº¿ ($X, Y$) mm vÃ o tham sá»‘. |
+| 10 | **Merge Floor** | `cmdMergeFloorSplit`<br>â€¢ `cmdMergeFloorActiveView`<br>â€¢ `cmdMergeFloorSelect` | `MergeFloor` | `JNNTool.Tools.MergeFloor.MergeFloorCmd`<br>â€¢ `MergeFloorActiveViewCmd`<br>â€¢ `MergeFloorSelectCmd` | *(SplitButton)* Gá»™p cÃ¡c máº£nh sÃ n liá»n ká» (cÃ¹ng tiáº¿t diá»‡n & cao Ä‘á»™) thÃ nh 1 sÃ n duy nháº¥t. Há»— trá»£ **Active View** (tá»± Ä‘á»™ng gá»™p sÃ n gáº§n nhau trong view mÃ  khÃ´ng cáº§n chá»n) vÃ  **Selection** (quÃ©t chá»n tay). |
 
-### 3. Panel `CSI x Revit` (5 công cụ - 1 Nút lớn + 1 Cột 3 Nút nhỏ Stacked)
-> **Bố cục Ribbon:**
-> - **Nút lớn độc lập (32×32 px):** `Import E2K` (lệnh trung tâm nổi bật)
-> - **1 Cột 3 nút nhỏ xếp tầng (16×16 px):** `Fit Scope Box`, `Boundary Align`, và `Auto Join` (SplitButton: Active View / Entire Project)
+### 3. Panel `CSI x Revit` (5 cÃ´ng cá»¥ - 1 NÃºt lá»›n + 1 Cá»™t 3 NÃºt nhá» Stacked)
+> **Bá»‘ cá»¥c Ribbon:**
+> - **NÃºt lá»›n Ä‘á»™c láº­p (32Ã—32 px):** `Import E2K` (lá»‡nh trung tÃ¢m ná»•i báº­t)
+> - **1 Cá»™t 3 nÃºt nhá» xáº¿p táº§ng (16Ã—16 px):** `Fit Scope Box`, `Boundary Align`, vÃ  `Auto Join` (SplitButton: Active View / Entire Project)
 
-| STT | Tên Ribbon / Palette | Command ID | Icon Enum | Class thực thi | Chức năng chính |
+| STT | TÃªn Ribbon / Palette | Command ID | Icon Enum | Class thá»±c thi | Chá»©c nÄƒng chÃ­nh |
 |:---:|---|---|:---:|---|---|
-| 10 | **Import E2K** | `cmdImportE2K` | `Cad` | `JNNTool.Tools.CSIxRevit.Commands.ImportE2KCommand` | Chuyển đổi mô hình ETABS/SAP2000 (file `.e2k`, `.$et`) sang cấu kiện native Revit chuẩn xác. |
-| 11 | **Fit Scope Box** | `cmdFitScopeBox` | `ScopeBox` | `JNNTool.Tools.CSIxRevit.Commands.FitScopeBoxCommand` | Cắt khớp và khóa toàn bộ đầu Lưới trục (Grid) và Cao độ (Level) theo Scope Box `JNN_SB`. |
-| 12 | **Boundary Align** | `cmdBoundaryAlign` | `Align` | `JNNTool.Tools.CSIxRevit.Commands.BoundaryAlignCommand` | Căn dầm/cột biên vào trong ranh đất / lưới trục ($B/2$), tự động co/kéo các dầm ngang kết nối vào. |
-| 13 | **Auto Join (View)** | `cmdAutoJoinActiveView` | `Join` | `JNNTool.Tools.AutoJoin.AutoJoinActiveViewCommand` | Tự động Join và đảo thứ tự ưu tiên ($Cột > Dầm > Sàn$) trong View hiện hành *(SplitButton)*. |
-| 14 | **Auto Join (Project)** | `cmdAutoJoinProject` | `Join` | `JNNTool.Tools.AutoJoin.AutoJoinProjectCommand` | Tự động Join và đảo thứ tự ưu tiên ($Cột > Dầm > Sàn$) cho toàn bộ mô hình dự án *(SplitButton)*. |
+| 10 | **Import E2K** | `cmdImportE2K` | `Cad` | `JNNTool.Tools.CSIxRevit.Commands.ImportE2KCommand` | Chuyá»ƒn Ä‘á»•i mÃ´ hÃ¬nh ETABS/SAP2000 (file `.e2k`, `.$et`) sang cáº¥u kiá»‡n native Revit chuáº©n xÃ¡c. |
+| 11 | **Fit Scope Box** | `cmdFitScopeBox` | `ScopeBox` | `JNNTool.Tools.CSIxRevit.Commands.FitScopeBoxCommand` | Cáº¯t khá»›p vÃ  khÃ³a toÃ n bá»™ Ä‘áº§u LÆ°á»›i trá»¥c (Grid) vÃ  Cao Ä‘á»™ (Level) theo Scope Box `JNN_SB`. |
+| 12 | **Boundary Align** | `cmdBoundaryAlign` | `Align` | `JNNTool.Tools.CSIxRevit.Commands.BoundaryAlignCommand` | CÄƒn dáº§m/cá»™t biÃªn vÃ o trong ranh Ä‘áº¥t / lÆ°á»›i trá»¥c ($B/2$), tá»± Ä‘á»™ng co/kÃ©o cÃ¡c dáº§m ngang káº¿t ná»‘i vÃ o. |
+| 13 | **Auto Join (View)** | `cmdAutoJoinActiveView` | `Join` | `JNNTool.Tools.AutoJoin.AutoJoinActiveViewCommand` | Tá»± Ä‘á»™ng Join vÃ  Ä‘áº£o thá»© tá»± Æ°u tiÃªn ($Cá»™t > Dáº§m > SÃ n$) trong View hiá»‡n hÃ nh *(SplitButton)*. |
+| 14 | **Auto Join (Project)** | `cmdAutoJoinProject` | `Join` | `JNNTool.Tools.AutoJoin.AutoJoinProjectCommand` | Tá»± Ä‘á»™ng Join vÃ  Ä‘áº£o thá»© tá»± Æ°u tiÃªn ($Cá»™t > Dáº§m > SÃ n$) cho toÃ n bá»™ mÃ´ hÃ¬nh dá»± Ã¡n *(SplitButton)*. |
 
-### 4. Panel `Layout` (4 công cụ)
-| STT | Tên Ribbon / Palette | Command ID | Icon Enum | Class thực thi | Chức năng chính |
+### 4. Panel `Layout` (5 cÃ´ng cá»¥)
+| STT | TÃªn Ribbon / Palette | Command ID | Icon Enum | Class thá»±c thi | Chá»©c nÄƒng chÃ­nh |
 |:---:|---|---|:---:|---|---|
-| 15 | **Auto View & Sheet** | `cmdAutoViewSheet` | `ViewSheet` | `RincoNhan.Tools.AutoViewSheet.AutoViewSheetCommand` | Tự động sinh View mặt bằng kết cấu / Loading Plan và tự dàn vào Sheet theo tầng và Zone. |
-| 16 | **Dim Grid** | `cmdAutoDimGrid` | `Dim` | `JNNTool.Tools.AutoDimGrid.AutoDimGridCommand` | Tự động Dim lưới trục 4 cạnh (2 hoặc 3 lớp: Tường / Trục / Tổng), hoặc Dim thủ công theo điểm chọn. |
-| 17 | **Dim Col/Wall** | `cmdAutoDimColumn` | `DimColumn` | `JNNTool.Tools.AutoDimColumn.Commands.AutoDimColumnCommand` | Tự động ghi kích thước tiết diện Cột, Vách ($b \times h / L$) và khoảng cách định vị từ Lưới trục. |
-| 18 | **Element Mark** | `cmdElementMark` | `Mark` | `JNNTool.Tools.ElementMark.ElementMarkCommand` | Đánh số hiệu Mark tự động cho Dầm, Cột, Sàn theo quy tắc dự án (Trái $\rightarrow$ Phải, Trên $\rightarrow$ Dưới). |
+| 15 | **Auto View & Sheet** | `cmdAutoViewSheet` | `ViewSheet` | `RincoNhan.Tools.AutoViewSheet.AutoViewSheetCommand` | Tá»± Ä‘á»™ng sinh View máº·t báº±ng káº¿t cáº¥u / Loading Plan vÃ  tá»± dÃ n vÃ o Sheet theo táº§ng vÃ  Zone. |
+| 16 | **Create Views** | `cmdCreateView` | `CreateView` | `JNNTool.Tools.CreateView.Commands.CreateViewCommand` | Tá»± Ä‘á»™ng táº¡o vÃ  nhÃ¢n báº£n nhiá»u View theo Level, gÃ¡n View Template vÃ  nhÃ³m cÃ¢y thÆ° má»¥c Project Browser theo chuáº©n dá»± Ã¡n. |
+| 17 | **Dim Grid** | `cmdAutoDimGrid` | `Dim` | `JNNTool.Tools.AutoDimGrid.AutoDimGridCommand` | Tá»± Ä‘á»™ng Dim lÆ°á»›i trá»¥c 4 cáº¡nh (2 hoáº·c 3 lá»›p: TÆ°á»ng / Trá»¥c / Tá»•ng), hoáº·c Dim thá»§ cÃ´ng theo Ä‘iá»ƒm chá»n. |
+| 18 | **Dim Col/Wall** | `cmdAutoDimColumn` | `DimColumn` | `JNNTool.Tools.AutoDimColumn.Commands.AutoDimColumnCommand` | Tá»± Ä‘á»™ng ghi kÃ­ch thÆ°á»›c tiáº¿t diá»‡n Cá»™t, VÃ¡ch ($b \times h / L$) vÃ  khoáº£ng cÃ¡ch Ä‘á»‹nh vá»‹ tá»« LÆ°á»›i trá»¥c. |
+| 19 | **Element Mark** | `cmdElementMark` | `Mark` | `JNNTool.Tools.ElementMark.ElementMarkCommand` | ÄÃ¡nh sá»‘ hiá»‡u Mark tá»± Ä‘á»™ng cho Dáº§m, Cá»™t, SÃ n theo quy táº¯c dá»± Ã¡n (TrÃ¡i $\rightarrow$ Pháº£i, TrÃªn $\rightarrow$ DÆ°á»›i). |
 
-### 5. Panel `Stair` (2 công cụ)
-| STT | Tên Ribbon / Palette | Command ID | Icon Enum | Class thực thi | Chức năng chính |
+### 5. Panel `Stair` (2 cÃ´ng cá»¥)
+| STT | TÃªn Ribbon / Palette | Command ID | Icon Enum | Class thá»±c thi | Chá»©c nÄƒng chÃ­nh |
 |:---:|---|---|:---:|---|---|
-| 19 | **Stair Model** | `cmdStairModel` | `Stair` | `JNNTool.Tools.StairModel.Commands.StairModelCommand` | Tự động dựng cầu thang BTCT (Thẳng, Chữ U, Chữ L) gồm bản thang nghiêng, chiếu nghỉ và dầm đỡ. |
-| 20 | **Stair Designer** | `cmdStairDesigner` | `StairDesigner` | `JNN.Stair.Commands.StairDesignerCommand` | Thiết kế tham số cầu thang 3D Solid (kèm bậc rẽ quạt Winder) và tự động xuất nạp Family (`.rfa`). |
+| 19 | **Stair Model** | `cmdStairModel` | `Stair` | `JNNTool.Tools.StairModel.Commands.StairModelCommand` | Tá»± Ä‘á»™ng dá»±ng cáº§u thang BTCT (Tháº³ng, Chá»¯ U, Chá»¯ L) gá»“m báº£n thang nghiÃªng, chiáº¿u nghá»‰ vÃ  dáº§m Ä‘á»¡. |
+| 20 | **Stair Designer** | `cmdStairDesigner` | `StairDesigner` | `JNN.Stair.Commands.StairDesignerCommand` | Thiáº¿t káº¿ tham sá»‘ cáº§u thang 3D Solid (kÃ¨m báº­c ráº½ quáº¡t Winder) vÃ  tá»± Ä‘á»™ng xuáº¥t náº¡p Family (`.rfa`). |
 
-### 6. Panel `Quantity` (1 công cụ)
-| STT | Tên Ribbon / Palette | Command ID | Icon Enum | Class thực thi | Chức năng chính |
+### 6. Panel `Quantity` (1 cÃ´ng cá»¥)
+| STT | TÃªn Ribbon / Palette | Command ID | Icon Enum | Class thá»±c thi | Chá»©c nÄƒng chÃ­nh |
 |:---:|---|---|:---:|---|---|
-| 21 | **Quantity Takeoff** | `cmdQuantityTakeoff` | `Quantity` | `JNNTool.Tools.QuantityTakeoff.Commands.QuantityTakeoffCommand` | Bóc tách khối lượng toàn diện (Bê tông, Ván khuôn, Thép), tạo lập tức 3D Section Box và xuất file Excel. |
+| 21 | **Quantity Takeoff** | `cmdQuantityTakeoff` | `Quantity` | `JNNTool.Tools.QuantityTakeoff.Commands.QuantityTakeoffCommand` | BÃ³c tÃ¡ch khá»‘i lÆ°á»£ng toÃ n diá»‡n (BÃª tÃ´ng, VÃ¡n khuÃ´n, ThÃ©p), táº¡o láº­p tá»©c 3D Section Box vÃ  xuáº¥t file Excel. |
 
 ---
 
-## 🔴 PHẦN 2: DANH SÁCH CÔNG CỤ ĐANG ẨN (22 TOOLS)
+## ðŸ”´ PHáº¦N 2: DANH SÃCH CÃ”NG Cá»¤ ÄANG áº¨N (22 TOOLS)
 
-Tất cả công cụ này được giữ nguyên trong source code (bọc trong khối `#if false`) để phục vụ mở lại khi cần hoặc khi hoàn thiện tính năng:
+Táº¥t cáº£ cÃ´ng cá»¥ nÃ y Ä‘Æ°á»£c giá»¯ nguyÃªn trong source code (bá»c trong khá»‘i `#if false`) Ä‘á»ƒ phá»¥c vá»¥ má»Ÿ láº¡i khi cáº§n hoáº·c khi hoÃ n thiá»‡n tÃ­nh nÄƒng:
 
-### 1. Nhóm Modeling & Dầm tạm ẩn (7 công cụ)
-| STT | Tên công cụ | Command ID | Class thực thi | Lý do & Hướng mở lại |
+### 1. NhÃ³m Modeling & Dáº§m táº¡m áº©n (7 cÃ´ng cá»¥)
+| STT | TÃªn cÃ´ng cá»¥ | Command ID | Class thá»±c thi | LÃ½ do & HÆ°á»›ng má»Ÿ láº¡i |
 |:---:|---|---|---|---|
-| 1 | **Floor By Room** | `cmdFloorByRoom` | `JNNTool.FloorByRoomCmd` | Tự vẽ sàn theo Boundary của Room. Tạm ẩn để tinh gọn panel Modeling. |
-| 2 | **Rebar Beam (Quick)** | `cmdRebarBeam` | `JNNTool.RebarBeamCmd` | Bố trí thép dầm bản cũ. Đã có phân hệ Rebar Beam Suite chuyên sâu thay thế. |
-| 3 | **Steel Connection** | `cmdConnection` | `JNNTool.Tools.Connection.Command` | Tạo liên kết thép cho dầm cột. Tạm ẩn do ít dự án kết cấu thép sử dụng. |
-| 4 | **Clash Detection** | `cmdClashDetection` | `JNNTool.Tools.ClashDetection.Command` | Kiểm tra va chạm mô hình với Revit Link. |
-| 5 | **Dim Beam** | `cmdCreateDimBeam` | `JNNTool.Tools.CreateDim.CreateDimBeamCmd` | Tự tạo Dim chiều dài tổng 2 đầu dầm trên mặt bằng. |
-| 6 | **Extend Beam** | `cmdExtendBeam` | `JNNTool.Tools.ExtendBeam.ExtendBeamCmd` | Tự nhận diện mặt gối ở 2 đầu dầm và kéo tim dầm tới mặt gối chính xác. |
-| 7 | **Rebar Column (Quick)** | `cmdRebarColumn` | `JNNTool.Tools.RebarColumn.Command` | Bố trí thép cột nhanh. Đã chuyển ngầm gom vào phân hệ Rebar Suite. |
+| 1 | **Floor By Room** | `cmdFloorByRoom` | `JNNTool.FloorByRoomCmd` | Tá»± váº½ sÃ n theo Boundary cá»§a Room. Táº¡m áº©n Ä‘á»ƒ tinh gá»n panel Modeling. |
+| 2 | **Rebar Beam (Quick)** | `cmdRebarBeam` | `JNNTool.RebarBeamCmd` | Bá»‘ trÃ­ thÃ©p dáº§m báº£n cÅ©. ÄÃ£ cÃ³ phÃ¢n há»‡ Rebar Beam Suite chuyÃªn sÃ¢u thay tháº¿. |
+| 3 | **Steel Connection** | `cmdConnection` | `JNNTool.Tools.Connection.Command` | Táº¡o liÃªn káº¿t thÃ©p cho dáº§m cá»™t. Táº¡m áº©n do Ã­t dá»± Ã¡n káº¿t cáº¥u thÃ©p sá»­ dá»¥ng. |
+| 4 | **Clash Detection** | `cmdClashDetection` | `JNNTool.Tools.ClashDetection.Command` | Kiá»ƒm tra va cháº¡m mÃ´ hÃ¬nh vá»›i Revit Link. |
+| 5 | **Dim Beam** | `cmdCreateDimBeam` | `JNNTool.Tools.CreateDim.CreateDimBeamCmd` | Tá»± táº¡o Dim chiá»u dÃ i tá»•ng 2 Ä‘áº§u dáº§m trÃªn máº·t báº±ng. |
+| 6 | **Extend Beam** | `cmdExtendBeam` | `JNNTool.Tools.ExtendBeam.ExtendBeamCmd` | Tá»± nháº­n diá»‡n máº·t gá»‘i á»Ÿ 2 Ä‘áº§u dáº§m vÃ  kÃ©o tim dáº§m tá»›i máº·t gá»‘i chÃ­nh xÃ¡c. |
+| 7 | **Rebar Column (Quick)** | `cmdRebarColumn` | `JNNTool.Tools.RebarColumn.Command` | Bá»‘ trÃ­ thÃ©p cá»™t nhanh. ÄÃ£ chuyá»ƒn ngáº§m gom vÃ o phÃ¢n há»‡ Rebar Suite. |
 
-### 2. Nhóm CSI x Revit / IFC tạm ẩn (2 công cụ)
-| STT | Tên công cụ | Command ID | Class thực thi | Lý do & Hướng mở lại |
+### 2. NhÃ³m CSI x Revit / IFC táº¡m áº©n (2 cÃ´ng cá»¥)
+| STT | TÃªn cÃ´ng cá»¥ | Command ID | Class thá»±c thi | LÃ½ do & HÆ°á»›ng má»Ÿ láº¡i |
 |:---:|---|---|---|---|
-| 8 | **ETABS Converter** | `cmdEtabsConverter` | `JNNTool.Tools.IFCEtabs.Commands.EtabsConverterCommand` | Chuyển đổi trực tiếp mô hình ETABS sang cấu kiện native kèm tham số IFC (Đang hoàn thiện). |
-| 9 | **Property Viewer** | `cmdPropertyViewer` | `JNNTool.Tools.IFCEtabs.Commands.PropertyViewerCommand` | Tra cứu thuộc tính nguồn gốc IFC/ETABS của cấu kiện. |
+| 8 | **ETABS Converter** | `cmdEtabsConverter` | `JNNTool.Tools.IFCEtabs.Commands.EtabsConverterCommand` | Chuyá»ƒn Ä‘á»•i trá»±c tiáº¿p mÃ´ hÃ¬nh ETABS sang cáº¥u kiá»‡n native kÃ¨m tham sá»‘ IFC (Äang hoÃ n thiá»‡n). |
+| 9 | **Property Viewer** | `cmdPropertyViewer` | `JNNTool.Tools.IFCEtabs.Commands.PropertyViewerCommand` | Tra cá»©u thuá»™c tÃ­nh nguá»“n gá»‘c IFC/ETABS cá»§a cáº¥u kiá»‡n. |
 
-### 3. Nhóm Stair tạm ẩn (1 công cụ)
-| STT | Tên công cụ | Command ID | Class thực thi | Lý do & Hướng mở lại |
+### 3. NhÃ³m Stair táº¡m áº©n (1 cÃ´ng cá»¥)
+| STT | TÃªn cÃ´ng cá»¥ | Command ID | Class thá»±c thi | LÃ½ do & HÆ°á»›ng má»Ÿ láº¡i |
 |:---:|---|---|---|---|
-| 10 | **Stair Rebar** | `cmdStairRebarSuiteNew` | `JNN.Stair.Commands.StairDetailingCommand` | Bố trí thép thang đan chéo chịu kéo góc lõm chống bung nổ bê tông theo TCVN 5574:2018. |
+| 10 | **Stair Rebar** | `cmdStairRebarSuiteNew` | `JNN.Stair.Commands.StairDetailingCommand` | Bá»‘ trÃ­ thÃ©p thang Ä‘an chÃ©o chá»‹u kÃ©o gÃ³c lÃµm chá»‘ng bung ná»• bÃª tÃ´ng theo TCVN 5574:2018. |
 
-### 4. Phân hệ `JNN Rebar Suite` (12 công cụ - Ẩn nguyên Panel)
-| STT | Tên công cụ | Command ID | Class thực thi | Nội dung tính năng |
+### 4. PhÃ¢n há»‡ `JNN Rebar Suite` (12 cÃ´ng cá»¥ - áº¨n nguyÃªn Panel)
+| STT | TÃªn cÃ´ng cá»¥ | Command ID | Class thá»±c thi | Ná»™i dung tÃ­nh nÄƒng |
 |:---:|---|---|---|---|
-| 11 | **Rebar Slab** | `cmdSlabRebar` | `JNNTool.RebarSuite.Slab.SlabRebarCommand` | Bố trí thép sàn tự động: Lớp dưới, lớp trên và thép mũ gối $L/4$ theo TCVN 5574:2018. |
-| 12 | **Rebar Beam Suite** | `cmdBeamRebarSuite` | `JNNTool.RebarSuite.Beam.BeamRebarCommand` | Bố trí thép dầm liên tục nhiều nhịp: Thép chủ, gia cường gối, đai dày/thưa, tự tạo MCD/MCN. |
-| 13 | **Rebar Column Suite**| `cmdColumnRebarSuite` | `JNNTool.RebarSuite.Column.ColumnRebarCommand` | Bố trí thép chuỗi cột theo tầng: Bẻ cổ chai 1:6 khi đổi tiết diện, đai AB/CN, tự tạo MCD. |
-| 14 | **Rebar Wall** | `cmdWallRebarSuite` | `JNNTool.RebarSuite.Wall.WallRebarCommand` | Bố trí thép vách 2 lớp: Thép đứng, ngang, đai C ghim biên, chống thấm bể nước. |
-| 15 | **Rebar Footing** | `cmdFoundationRebarSuite` | `JNNTool.RebarSuite.Foundation.FoundationRebarCommand` | Bố trí thép móng đơn, móng băng, đài cọc: Lưới đáy móc uốn 90°, thép chờ cột chân vịt. |
-| 16 | **Rebar Pile** | `cmdPileRebarSuite` | `JNNTool.RebarSuite.Pile.PileRebarCommand` | Bố trí thép cọc khoan nhồi / cọc vuông: Lồng thép, đai phân vùng và xuất tọa độ CSV. |
-| 17 | **Rebar Stair Suite** | `cmdStairRebarSuite` | `JNNTool.RebarSuite.Stair.StairRebarCommand` | Bố trí thép bản thang chịu nhịp và thép neo dầm chiếu nghỉ. |
-| 18 | **Rebar Volume** | `cmdRebarVolume` | `JNNTool.RebarSuite.Utilities.Commands.RebarVolumeCommand` | Tiện ích: Thống kê khối lượng thép (CSV) theo đường kính, cấu kiện và tầng. |
-| 19 | **Rebar Number** | `cmdRebarNumber` | `JNNTool.RebarSuite.Utilities.Commands.RebarNumberCommand` | Tiện ích: Tự động đánh số hiệu thép (Auto Mark). |
-| 20 | **View Unobscured** | `cmdRebarUnobscured` | `JNNTool.RebarSuite.Utilities.Commands.RebarUnobscuredCommand` | Tiện ích: Bật/tắt chế độ nhìn xuyên cốt thép trong 3D View (Unobscured). |
-| 21 | **Isolate Rebar** | `cmdRebarIsolate` | `JNNTool.RebarSuite.Utilities.Commands.IsolateRebarCommand` | Tiện ích: Cô lập cốt thép theo cấu kiện trong view đang mở. |
-| 22 | **Rebar Type Manager**| `cmdRebarTypeManager`| `JNNTool.RebarSuite.Utilities.Commands.RebarTypeManagerCommand` | Tiện ích: Tạo và chuẩn hóa RebarBarType D6–D32, HookType, CoverType theo TCVN. |
+| 11 | **Rebar Slab** | `cmdSlabRebar` | `JNNTool.RebarSuite.Slab.SlabRebarCommand` | Bá»‘ trÃ­ thÃ©p sÃ n tá»± Ä‘á»™ng: Lá»›p dÆ°á»›i, lá»›p trÃªn vÃ  thÃ©p mÅ© gá»‘i $L/4$ theo TCVN 5574:2018. |
+| 12 | **Rebar Beam Suite** | `cmdBeamRebarSuite` | `JNNTool.RebarSuite.Beam.BeamRebarCommand` | Bá»‘ trÃ­ thÃ©p dáº§m liÃªn tá»¥c nhiá»u nhá»‹p: ThÃ©p chá»§, gia cÆ°á»ng gá»‘i, Ä‘ai dÃ y/thÆ°a, tá»± táº¡o MCD/MCN. |
+| 13 | **Rebar Column Suite**| `cmdColumnRebarSuite` | `JNNTool.RebarSuite.Column.ColumnRebarCommand` | Bá»‘ trÃ­ thÃ©p chuá»—i cá»™t theo táº§ng: Báº» cá»• chai 1:6 khi Ä‘á»•i tiáº¿t diá»‡n, Ä‘ai AB/CN, tá»± táº¡o MCD. |
+| 14 | **Rebar Wall** | `cmdWallRebarSuite` | `JNNTool.RebarSuite.Wall.WallRebarCommand` | Bá»‘ trÃ­ thÃ©p vÃ¡ch 2 lá»›p: ThÃ©p Ä‘á»©ng, ngang, Ä‘ai C ghim biÃªn, chá»‘ng tháº¥m bá»ƒ nÆ°á»›c. |
+| 15 | **Rebar Footing** | `cmdFoundationRebarSuite` | `JNNTool.RebarSuite.Foundation.FoundationRebarCommand` | Bá»‘ trÃ­ thÃ©p mÃ³ng Ä‘Æ¡n, mÃ³ng bÄƒng, Ä‘Ã i cá»c: LÆ°á»›i Ä‘Ã¡y mÃ³c uá»‘n 90Â°, thÃ©p chá» cá»™t chÃ¢n vá»‹t. |
+| 16 | **Rebar Pile** | `cmdPileRebarSuite` | `JNNTool.RebarSuite.Pile.PileRebarCommand` | Bá»‘ trÃ­ thÃ©p cá»c khoan nhá»“i / cá»c vuÃ´ng: Lá»“ng thÃ©p, Ä‘ai phÃ¢n vÃ¹ng vÃ  xuáº¥t tá»a Ä‘á»™ CSV. |
+| 17 | **Rebar Stair Suite** | `cmdStairRebarSuite` | `JNNTool.RebarSuite.Stair.StairRebarCommand` | Bá»‘ trÃ­ thÃ©p báº£n thang chá»‹u nhá»‹p vÃ  thÃ©p neo dáº§m chiáº¿u nghá»‰. |
+| 18 | **Rebar Volume** | `cmdRebarVolume` | `JNNTool.RebarSuite.Utilities.Commands.RebarVolumeCommand` | Tiá»‡n Ã­ch: Thá»‘ng kÃª khá»‘i lÆ°á»£ng thÃ©p (CSV) theo Ä‘Æ°á»ng kÃ­nh, cáº¥u kiá»‡n vÃ  táº§ng. |
+| 19 | **Rebar Number** | `cmdRebarNumber` | `JNNTool.RebarSuite.Utilities.Commands.RebarNumberCommand` | Tiá»‡n Ã­ch: Tá»± Ä‘á»™ng Ä‘Ã¡nh sá»‘ hiá»‡u thÃ©p (Auto Mark). |
+| 20 | **View Unobscured** | `cmdRebarUnobscured` | `JNNTool.RebarSuite.Utilities.Commands.RebarUnobscuredCommand` | Tiá»‡n Ã­ch: Báº­t/táº¯t cháº¿ Ä‘á»™ nhÃ¬n xuyÃªn cá»‘t thÃ©p trong 3D View (Unobscured). |
+| 21 | **Isolate Rebar** | `cmdRebarIsolate` | `JNNTool.RebarSuite.Utilities.Commands.IsolateRebarCommand` | Tiá»‡n Ã­ch: CÃ´ láº­p cá»‘t thÃ©p theo cáº¥u kiá»‡n trong view Ä‘ang má»Ÿ. |
+| 22 | **Rebar Type Manager**| `cmdRebarTypeManager`| `JNNTool.RebarSuite.Utilities.Commands.RebarTypeManagerCommand` | Tiá»‡n Ã­ch: Táº¡o vÃ  chuáº©n hÃ³a RebarBarType D6â€“D32, HookType, CoverType theo TCVN. |
 
 ---
 
-## ⚙️ PHẦN 3: CÔNG CỤ QUẢN TRỊ ĐỘC LẬP (NGOÀI RIBBON)
+## âš™ï¸ PHáº¦N 3: CÃ”NG Cá»¤ QUáº¢N TRá»Š Äá»˜C Láº¬P (NGOÃ€I RIBBON)
 
-| STT | Công cụ | Đường dẫn file | Mục đích sử dụng |
+| STT | CÃ´ng cá»¥ | ÄÆ°á»ng dáº«n file | Má»¥c Ä‘Ã­ch sá»­ dá»¥ng |
 |:---:|---|---|---|
-| 1 | **Admin License Portal** | [`Tools/Admin/admin-license-portal.html`](file:///c:/Users/nhann/OneDrive/AI/JNNTool/Tools/Admin/admin-license-portal.html) | Trang web HTML tĩnh chạy offline local bằng Chrome/Edge: cấp Key mới cho khách hàng, xem danh sách user, reset khóa máy khi khách đổi thiết bị, gia hạn key. |
-| 2 | **Create Key CLI Script** | [`scripts/create-key.ps1`](file:///c:/Users/nhann/OneDrive/AI/JNNTool/scripts/create-key.ps1) | Script PowerShell dòng lệnh: Tạo nhanh mã key bản quyền `JNN-XXXX-XXXX-XXXX` tự động copy vào Clipboard chỉ với 1 dòng lệnh. |
+| 1 | **Admin License Portal** | [`Tools/Admin/admin-license-portal.html`](file:///c:/Users/nhann/OneDrive/AI/JNNTool/Tools/Admin/admin-license-portal.html) | Trang web HTML tÄ©nh cháº¡y offline local báº±ng Chrome/Edge: cáº¥p Key má»›i cho khÃ¡ch hÃ ng, xem danh sÃ¡ch user, reset khÃ³a mÃ¡y khi khÃ¡ch Ä‘á»•i thiáº¿t bá»‹, gia háº¡n key. |
+| 2 | **Create Key CLI Script** | [`scripts/create-key.ps1`](file:///c:/Users/nhann/OneDrive/AI/JNNTool/scripts/create-key.ps1) | Script PowerShell dÃ²ng lá»‡nh: Táº¡o nhanh mÃ£ key báº£n quyá»n `JNN-XXXX-XXXX-XXXX` tá»± Ä‘á»™ng copy vÃ o Clipboard chá»‰ vá»›i 1 dÃ²ng lá»‡nh. |
 
 ---
 
-## 🛠️ Hướng Dẫn Kích Hoạt / Ẩn Một Công Cụ
+## ðŸ› ï¸ HÆ°á»›ng Dáº«n KÃ­ch Hoáº¡t / áº¨n Má»™t CÃ´ng Cá»¥
 
-Để bật hoặc tắt bất kỳ công cụ nào giữa trạng thái **HIỆN** và **ẨN**, bạn chỉ cần thao tác tại 2 file duy nhất:
+Äá»ƒ báº­t hoáº·c táº¯t báº¥t ká»³ cÃ´ng cá»¥ nÃ o giá»¯a tráº¡ng thÃ¡i **HIá»†N** vÃ  **áº¨N**, báº¡n chá»‰ cáº§n thao tÃ¡c táº¡i 2 file duy nháº¥t:
 
 1. **File Ribbon ([`Core/App.cs`](file:///c:/Users/nhann/OneDrive/AI/JNNTool/Core/App.cs)):**
-   - Đưa đoạn tạo `PushButtonData` ra ngoài hoặc vào trong khối `#if false ... #endif`.
+   - ÄÆ°a Ä‘oáº¡n táº¡o `PushButtonData` ra ngoÃ i hoáº·c vÃ o trong khá»‘i `#if false ... #endif`.
 2. **File Palette ([`Core/Palette/CommandRegistry.cs`](file:///c:/Users/nhann/OneDrive/AI/JNNTool/Core/Palette/CommandRegistry.cs)):**
-   - Di chuyển khối `new ToolCommandInfo(...)` tương ứng ra ngoài hoặc vào trong `#if false ... #endif`.
-3. **Build lại dự án:**
+   - Di chuyá»ƒn khá»‘i `new ToolCommandInfo(...)` tÆ°Æ¡ng á»©ng ra ngoÃ i hoáº·c vÃ o trong `#if false ... #endif`.
+3. **Build láº¡i dá»± Ã¡n:**
    ```powershell
    dotnet build -c Release.R26
    ```
-   Command Palette và Ribbon sẽ tự động cập nhật số lượng khớp nhau ngay lập tức!
+   Command Palette vÃ  Ribbon sáº½ tá»± Ä‘á»™ng cáº­p nháº­t sá»‘ lÆ°á»£ng khá»›p nhau ngay láº­p tá»©c!
+

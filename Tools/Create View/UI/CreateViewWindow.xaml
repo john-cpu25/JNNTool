@@ -1,0 +1,618 @@
+<Window x:Class="JNNTool.Tools.CreateView.UI.CreateViewWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:models="clr-namespace:JNNTool.Tools.CreateView.Models"
+        Title="Batch Create Views" Height="700" Width="1100" MinHeight="560" MinWidth="940"
+        WindowStartupLocation="CenterScreen"
+        Topmost="True" ShowInTaskbar="False" ResizeMode="CanResizeWithGrip"
+        Background="#F5F7F9"
+        FontFamily="Segoe UI" FontSize="12"
+        Foreground="#2C3E50"
+        UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="Accent" Color="#2E5C9A"/>
+        <SolidColorBrush x:Key="AccentHover" Color="#244B7E"/>
+        <SolidColorBrush x:Key="Border" Color="#DCDDE1"/>
+        <SolidColorBrush x:Key="Muted" Color="#7F8C8D"/>
+        <SolidColorBrush x:Key="Ink" Color="#2C3E50"/>
+        <SolidColorBrush x:Key="CardBg" Color="#FFFFFF"/>
+
+        <!-- Standard Button Style with CornerRadius 5 -->
+        <Style TargetType="Button">
+            <Setter Property="Height" Value="26"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Foreground" Value="{StaticResource Ink}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Border}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="5">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#F0F4F8"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Accent}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#E2E8F0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="{StaticResource Accent}"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="5">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="{StaticResource AccentHover}"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource AccentHover}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Standard TextBox with CornerRadius 5 -->
+        <Style TargetType="TextBox">
+            <Setter Property="Height" Value="26"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="6,0"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Border}"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="{StaticResource Ink}"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="border" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="1" CornerRadius="5">
+                            <ScrollViewer x:Name="PART_ContentHost" Focusable="False"
+                                          HorizontalScrollBarVisibility="Hidden"
+                                          VerticalScrollBarVisibility="Hidden"
+                                          VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Accent}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Standard ComboBox with CornerRadius 5 -->
+        <ControlTemplate x:Key="ComboBoxToggleButton" TargetType="ToggleButton">
+            <Border x:Name="border" Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="1" CornerRadius="5">
+                <Path x:Name="arrow" HorizontalAlignment="Right" VerticalAlignment="Center"
+                      Margin="0,0,8,0" Fill="#7F8C8D" Data="M 0 0 L 4 4 L 8 0 Z"/>
+            </Border>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Accent}"/>
+                </Trigger>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource Accent}"/>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
+        <Style TargetType="ComboBox">
+            <Setter Property="Height" Value="26"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Border}"/>
+            <Setter Property="Foreground" Value="{StaticResource Ink}"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="Padding" Value="6,0,22,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton Name="ToggleButton"
+                                          Template="{StaticResource ComboBoxToggleButton}"
+                                          Focusable="False"
+                                          IsChecked="{Binding Path=IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                          ClickMode="Press"
+                                          Background="{TemplateBinding Background}"
+                                          BorderBrush="{TemplateBinding BorderBrush}"/>
+                            <ContentPresenter Name="ContentSite"
+                                              IsHitTestVisible="False"
+                                              Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                              ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                              Margin="{TemplateBinding Padding}"
+                                              VerticalAlignment="Center"
+                                              HorizontalAlignment="Left"/>
+                            <Popup Name="Popup"
+                                   Placement="Bottom"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   PopupAnimation="Slide">
+                                <Grid Name="DropDown"
+                                      SnapsToDevicePixels="True"
+                                      MinWidth="{TemplateBinding ActualWidth}"
+                                      MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                    <Border x:Name="DropDownBorder"
+                                            Background="White"
+                                            BorderThickness="1"
+                                            BorderBrush="{StaticResource Border}"
+                                            CornerRadius="5"
+                                            Margin="0,2,0,4">
+                                        <Border.Effect>
+                                            <DropShadowEffect BlurRadius="6" ShadowDepth="2" Direction="270" Color="#000000" Opacity="0.12"/>
+                                        </Border.Effect>
+                                        <ScrollViewer Margin="2" SnapsToDevicePixels="True">
+                                            <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained" />
+                                        </ScrollViewer>
+                                    </Border>
+                                </Grid>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="Foreground" Value="{StaticResource Ink}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border x:Name="Border" Padding="{TemplateBinding Padding}" Background="Transparent" CornerRadius="3">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#F0F4F8"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#E2ECF7"/>
+                                <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Clean TabItem with CornerRadius 5,5,0,0 & Normal font weight -->
+        <Style TargetType="TabItem">
+            <Setter Property="Padding" Value="14,6"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="Foreground" Value="{StaticResource Muted}"/>
+            <Setter Property="Background" Value="#EAECEF"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Border}"/>
+            <Setter Property="Margin" Value="0,0,4,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="1,1,1,0"
+                                CornerRadius="5,5,0,0"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter x:Name="cp" ContentSource="Header"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="White"/>
+                                <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+                                <Setter TargetName="bd" Property="Margin" Value="0,0,4,-1"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="{StaticResource Ink}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Clean TabControl with CornerRadius 0,5,5,5 -->
+        <Style TargetType="TabControl">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Border}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabControl">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TabPanel Grid.Row="0" IsItemsHost="True" Panel.ZIndex="1" Margin="2,0,0,0"/>
+                            <Border Grid.Row="1" Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="1" CornerRadius="0,5,5,5">
+                                <ContentPresenter ContentSource="SelectedContent"/>
+                            </Border>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Standard CheckBox -->
+        <Style TargetType="CheckBox">
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="{StaticResource Ink}"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <!-- Modern Card Border -->
+        <Style x:Key="Card" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource CardBg}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Border}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="5"/>
+            <Setter Property="Padding" Value="12"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Main Content Area: Left Levels, Right 5 Tabs -->
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="260"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- LEFT: Level Selection Card -->
+            <Border Grid.Column="0" Style="{StaticResource Card}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="Levels" FontSize="13" Foreground="{StaticResource Accent}" Margin="0,0,0,8"/>
+
+                    <!-- Search Box -->
+                    <TextBox Grid.Row="1" Text="{Binding LevelSearchText, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,8" ToolTip="Tìm kiếm Level theo tên..."/>
+
+                    <!-- Select / Unselect All -->
+                    <Grid Grid.Row="2" Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="6"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" Content="Select All" Command="{Binding SelectAllLevelsCommand}"/>
+                        <Button Grid.Column="2" Content="Unselect All" Command="{Binding UnselectAllLevelsCommand}"/>
+                    </Grid>
+
+                    <!-- Levels ListBox -->
+                    <Border Grid.Row="3" BorderBrush="{StaticResource Border}" BorderThickness="1" CornerRadius="5" Background="#FAFAFA">
+                        <ListBox ItemsSource="{Binding FilteredLevels}"
+                                 SelectedItem="{Binding SelectedLevelForPreview}"
+                                 BorderThickness="0" Background="Transparent"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,3">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding ElevationDisplay}" Foreground="{StaticResource Muted}" FontSize="11" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Border>
+
+                    <!-- Preview Level selection -->
+                    <StackPanel Grid.Row="4" Margin="0,8,0,0">
+                        <TextBlock Text="Preview Level Reference:" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,0,0,3"/>
+                        <ComboBox ItemsSource="{Binding Levels}"
+                                  SelectedItem="{Binding SelectedLevelForPreview}"
+                                  DisplayMemberPath="Name"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Grid Splitter -->
+            <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Center" Background="Transparent" Cursor="SizeWE"/>
+
+            <!-- RIGHT: 5 View Types TabControl -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Top Global Action Bar -->
+                <Grid Grid.Row="0" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0" Text="View Types (5 Tabs)" FontSize="13" Foreground="{StaticResource Accent}" VerticalAlignment="Center"/>
+
+                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                        <Button Content="Reset Defaults" Command="{Binding ResetDefaultTabsCommand}" Margin="0,0,6,0" ToolTip="Khôi phục 5 Tab chuẩn ATHENA"/>
+                        <Button Content="Save Preset" Command="{Binding SavePresetCommand}" Margin="0,0,6,0"/>
+                        <Button Content="Load Preset" Command="{Binding LoadPresetCommand}"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- 5 Tabs Control -->
+                <TabControl Grid.Row="1" ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}">
+                    <TabControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <CheckBox IsChecked="{Binding IsEnabled}" Margin="0,0,6,0" VerticalAlignment="Center" ToolTip="Bật/tắt type view này khi tạo hàng loạt"/>
+                                <TextBlock Text="{Binding Title}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </TabControl.ItemTemplate>
+
+                    <TabControl.ContentTemplate>
+                        <DataTemplate>
+                            <Grid Margin="12">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- Type View Setup Box -->
+                                <Border Grid.Row="0" BorderBrush="{StaticResource Border}" BorderThickness="1" CornerRadius="5" Background="#FAFAFA" Padding="10,8" Margin="0,0,0,10">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="15"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Row 0: View Family Type & View Template -->
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="View Type:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <ComboBox Grid.Row="0" Grid.Column="1"
+                                                  ItemsSource="{Binding DataContext.ViewTypes, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                  SelectedItem="{Binding SelectedViewType, UpdateSourceTrigger=PropertyChanged}"
+                                                  DisplayMemberPath="Name"
+                                                  ToolTip="Chọn ViewFamilyType trong Revit hoặc để Auto tự động tạo"/>
+
+                                        <TextBlock Grid.Row="0" Grid.Column="3" Text="View Template:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <ComboBox Grid.Row="0" Grid.Column="4"
+                                                  ItemsSource="{Binding DataContext.ViewTemplates, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                  SelectedItem="{Binding SelectedViewTemplate, UpdateSourceTrigger=PropertyChanged}"
+                                                  DisplayMemberPath="Name"/>
+
+                                        <!-- Row 1: Browser Folder & Scope Box -->
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Browser Folder:" VerticalAlignment="Center" Margin="0,8,8,0"/>
+                                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding BrowserSubDiscipline, UpdateSourceTrigger=PropertyChanged}" Margin="0,8,0,0"
+                                                 ToolTip="Giá trị gán vào Sub-Discipline / View Group để phân loại cây Project Browser"/>
+
+                                        <TextBlock Grid.Row="1" Grid.Column="3" Text="Scope Box:" VerticalAlignment="Center" Margin="0,8,8,0"/>
+                                        <ComboBox Grid.Row="1" Grid.Column="4"
+                                                  ItemsSource="{Binding DataContext.ScopeBoxes, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                  SelectedItem="{Binding SelectedScopeBox, UpdateSourceTrigger=PropertyChanged}"
+                                                  DisplayMemberPath="Name" Margin="0,8,0,0"/>
+
+                                        <!-- Row 2: Level Scope (Tự lấy 1 view Móng vs Có đủ các tầng) -->
+                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Phạm vi tầng:" VerticalAlignment="Center" Margin="0,8,8,0"/>
+                                        <ComboBox Grid.Row="2" Grid.Column="1" SelectedValue="{Binding LevelScope, UpdateSourceTrigger=PropertyChanged}" SelectedValuePath="Tag" Margin="0,8,0,0">
+                                            <ComboBoxItem Content="1 view Móng / Cụ thể" Tag="{x:Static models:LevelScopeMode.SingleLevel}"/>
+                                            <ComboBoxItem Content="Có đủ các tầng" Tag="{x:Static models:LevelScopeMode.AllSelectedLevels}"/>
+                                        </ComboBox>
+
+                                        <TextBlock Grid.Row="2" Grid.Column="3" Text="Tầng áp dụng:" VerticalAlignment="Center" Margin="0,8,8,0"
+                                                   IsEnabled="{Binding IsSingleLevel}"/>
+                                        <ComboBox Grid.Row="2" Grid.Column="4"
+                                                  ItemsSource="{Binding DataContext.Levels, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                  SelectedItem="{Binding TargetLevel, UpdateSourceTrigger=PropertyChanged}"
+                                                  DisplayMemberPath="Name"
+                                                  IsEnabled="{Binding IsSingleLevel}"
+                                                  Margin="0,8,0,0"
+                                                  ToolTip="Chọn tầng áp dụng khi tạo 1 view đơn lẻ (Mặc định tự động nhận diện tầng Móng)"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Tab Action Bar -->
+                                <Grid Grid.Row="1" Margin="0,0,0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Text="Views to duplicate in this type:" Foreground="{StaticResource Ink}" VerticalAlignment="Center"/>
+
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                        <Button Content="+ Add View" Command="{Binding DataContext.AddViewCommand, RelativeSource={RelativeSource AncestorType=Window}}" Style="{StaticResource PrimaryButton}" Margin="0,0,6,0"/>
+                                        <Button Content="Duplicate View" Command="{Binding DataContext.DuplicateViewCommand, RelativeSource={RelativeSource AncestorType=Window}}" Margin="0,0,6,0"/>
+                                        <Button Content="Remove View" Command="{Binding DataContext.RemoveViewCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- Views DataGrid inside this Tab -->
+                                <Border Grid.Row="2" BorderBrush="{StaticResource Border}" BorderThickness="1" CornerRadius="5">
+                                    <DataGrid ItemsSource="{Binding Views}"
+                                              SelectedItem="{Binding SelectedView}"
+                                              AutoGenerateColumns="False"
+                                              CanUserAddRows="False"
+                                              CanUserDeleteRows="False"
+                                              GridLinesVisibility="Horizontal"
+                                              HorizontalGridLinesBrush="#E8E9EC"
+                                              BorderThickness="0"
+                                              Background="White"
+                                              RowHeight="32"
+                                              HeadersVisibility="Column">
+                                        <DataGrid.ColumnHeaderStyle>
+                                            <Style TargetType="DataGridColumnHeader">
+                                                <Setter Property="Height" Value="30"/>
+                                                <Setter Property="Background" Value="#F5F7F9"/>
+                                                <Setter Property="Foreground" Value="{StaticResource Ink}"/>
+                                                <Setter Property="FontWeight" Value="Normal"/>
+                                                <Setter Property="Padding" Value="8,0"/>
+                                                <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                                <Setter Property="BorderBrush" Value="{StaticResource Border}"/>
+                                            </Style>
+                                        </DataGrid.ColumnHeaderStyle>
+
+                                        <DataGrid.Columns>
+                                            <!-- Checkbox -->
+                                            <DataGridCheckBoxColumn Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" Width="38">
+                                                <DataGridCheckBoxColumn.ElementStyle>
+                                                    <Style TargetType="CheckBox">
+                                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                                    </Style>
+                                                </DataGridCheckBoxColumn.ElementStyle>
+                                            </DataGridCheckBoxColumn>
+
+                                            <!-- View Name Formula -->
+                                            <DataGridTemplateColumn Header="View Name Formula ({Level})" Width="230">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <TextBox Text="{Binding ViewNamePattern, UpdateSourceTrigger=PropertyChanged}"
+                                                                 VerticalAlignment="Center" Height="24" Padding="4,0" Margin="2,0"/>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+
+                                            <!-- Specific Template Override -->
+                                            <DataGridTemplateColumn Header="View Template Override" Width="230">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <ComboBox ItemsSource="{Binding DataContext.ViewTemplates, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                  SelectedItem="{Binding SelectedViewTemplate, UpdateSourceTrigger=PropertyChanged}"
+                                                                  DisplayMemberPath="Name"
+                                                                  Height="24" Margin="2,0"/>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+
+                                            <!-- Preview Result -->
+                                            <DataGridTemplateColumn Header="Sample View Name (Preview)" Width="*">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding PreviewName}" Foreground="{StaticResource Accent}"
+                                                                   VerticalAlignment="Center" Margin="6,0" TextTrimming="CharacterEllipsis"/>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </Border>
+
+                                <!-- Hint at bottom of tab -->
+                                <TextBlock Grid.Row="3" Text="* Gợi ý: Dùng {Level} trong tên view để tự động lấy tên Level. Ví dụ: XR-COLUMN {Level} -> XR-COLUMN TANG 1."
+                                           Foreground="{StaticResource Muted}" FontSize="11" Margin="0,6,0,0"/>
+                            </Grid>
+                        </DataTemplate>
+                    </TabControl.ContentTemplate>
+                </TabControl>
+            </Grid>
+        </Grid>
+
+        <!-- Bottom Controls & Execution Bar -->
+        <Border Grid.Row="1" Margin="0,10,0,0" Padding="12,10" Style="{StaticResource Card}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Duplicate Option -->
+                <TextBlock Grid.Column="0" Text="Duplicate Handling:" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{StaticResource Ink}"/>
+                <ComboBox Grid.Column="1" Width="150" SelectedValue="{Binding DuplicateHandling}" SelectedValuePath="Tag" Margin="0,0,15,0">
+                    <ComboBoxItem Content="Add Suffix (.1, .2)" Tag="{x:Static models:DuplicateHandling.AddSuffixNumber}"/>
+                    <ComboBoxItem Content="Skip If Exists" Tag="{x:Static models:DuplicateHandling.SkipIfExists}"/>
+                    <ComboBoxItem Content="Update Existing View" Tag="{x:Static models:DuplicateHandling.UpdateExisting}"/>
+                </ComboBox>
+
+                <!-- Grouping Parameter Selection -->
+                <TextBlock Grid.Column="2" Text="Browser Param:" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{StaticResource Ink}"/>
+                <ComboBox Grid.Column="3" Width="130"
+                          ItemsSource="{Binding GroupingParameterNames}"
+                          SelectedItem="{Binding SelectedGroupingParameterName}"
+                          Margin="0,0,15,0"
+                          ToolTip="Tên tham số Project/Shared Parameter dùng để phân loại nhánh cây Project Browser"/>
+
+                <!-- Status Message -->
+                <TextBlock Grid.Column="4" Text="{Binding StatusMessage}"
+                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                           Foreground="{StaticResource Muted}" Margin="0,0,12,0"/>
+
+                <!-- Execute Selected Tab Button -->
+                <Button Grid.Column="5" Content="Create Current Tab"
+                        Command="{Binding CreateCurrentTabCommand}"
+                        Height="32" Padding="12,0" FontSize="12"
+                        ToolTip="Chỉ tạo các view nằm trong Tab Type View đang mở"/>
+
+                <!-- Execute All Tabs Button -->
+                <Button Grid.Column="7" Content="Create All Tabs"
+                        Command="{Binding CreateAllTabsCommand}"
+                        Style="{StaticResource PrimaryButton}"
+                        Height="32" Padding="16,0" FontSize="12"
+                        ToolTip="Tạo toàn bộ các view của cả 5 Type View Tabs đang được bật"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

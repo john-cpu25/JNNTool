@@ -49,7 +49,7 @@ public class InstallerService
 
             using var http = new HttpClient();
             http.Timeout = TimeSpan.FromMinutes(10);
-            http.DefaultRequestHeaders.Add("User-Agent", "JNNToolInstaller");
+            http.DefaultRequestHeaders.Add("User-Agent", "JNNToolUpdater");
 
             using var response = await http.GetAsync(
                 manifest.DownloadUrl, HttpCompletionOption.ResponseHeadersRead, ct);

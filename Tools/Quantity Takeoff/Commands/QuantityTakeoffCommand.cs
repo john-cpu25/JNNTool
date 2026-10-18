@@ -1,9 +1,9 @@
 using System;
+using System.Windows.Interop;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
-using JNNTool.Core.Logging;
-using JNNTool.Core.UI;
+using JNNTool.Tools.QuantityTakeoff.Helpers;
 using JNNTool.Tools.QuantityTakeoff.ViewModels;
 using JNNTool.Tools.QuantityTakeoff.Views;
 
@@ -13,15 +13,14 @@ namespace JNNTool.Tools.QuantityTakeoff.Commands
     [Regeneration(RegenerationOption.Manual)]
     public class QuantityTakeoffCommand : IExternalCommand
     {
-        private static QuantityTakeoffWindow? _window;
+        private static QuantityTakeoffWindow _window;
+        private static QuantityTakeoffHandler _handler;
+        private static ExternalEvent _externalEvent;
 
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
             try
             {
-                if (!JNNTool.Tools.Login.Services.LicenseGuard.EnsureLicensed(commandData.Application))
-                    return Result.Cancelled;
-
                 if (_window != null && _window.IsLoaded)
                 {
                     _window.Activate();
@@ -29,24 +28,30 @@ namespace JNNTool.Tools.QuantityTakeoff.Commands
                 }
 
                 UIApplication uiApp = commandData.Application;
-                UIDocument? uidoc = uiApp.ActiveUIDocument;
+                UIDocument uidoc = uiApp.ActiveUIDocument;
                 if (uidoc == null)
                 {
-                    TaskDialog.Show("JNN — Quantity Takeoff", "Vui lòng mở một dự án Revit trước khi chạy lệnh.");
+                    TaskDialog.Show("JNNTool — Quantity Takeoff", "Vui lòng mở một dự án Revit trước khi chạy lệnh.");
                     return Result.Cancelled;
                 }
 
-                var handler = new QuantityTakeoffHandler();
-                var exEvent = ExternalEvent.Create(handler);
+                if (_handler == null)
+                {
+                    _handler = new QuantityTakeoffHandler();
+                    _externalEvent = ExternalEvent.Create(_handler);
+                }
 
                 var vm = new QuantityTakeoffViewModel();
-                vm.Initialize(uiApp, handler, exEvent);
+                vm.Initialize(uiApp, _handler, _externalEvent);
+
+                // Trích xuất khối lượng trực tiếp và đồng bộ ngay trên Revit API thread
+                vm.ExecuteExtraction(uiApp);
 
                 var window = new QuantityTakeoffWindow { DataContext = vm };
 
                 window.Dispatcher.UnhandledException += (s, e) =>
                 {
-                    Logger.Error("Quantity Takeoff: unhandled UI exception", e.Exception);
+                    QtoLogger.Error("Quantity Takeoff: unhandled UI exception", e.Exception);
                     e.Handled = true;
                 };
 
@@ -57,15 +62,24 @@ namespace JNNTool.Tools.QuantityTakeoff.Commands
 
                 _window = window;
 
-                // Mở Modeless Window an toàn với WpfWindowHelper (ngăn chặn triệt để WPF Shutdown error)
-                WpfWindowHelper.ShowModeless(window, uiApp);
+                // Modeless Window an toàn bám theo Revit MainWindow
+                try
+                {
+                    var interop = new WindowInteropHelper(window);
+                    interop.Owner = uiApp.MainWindowHandle;
+                }
+                catch { }
+
+                window.Show();
 
                 return Result.Succeeded;
             }
             catch (Exception ex)
             {
-                Logger.Error("Quantity Takeoff: Execute failed", ex);
+                QtoLogger.Error("Quantity Takeoff: Execute failed", ex);
                 message = ex.Message;
+                string innerDetail = ex.InnerException != null ? $"\n\nChi tiết nguyên nhân:\n{ex.InnerException.Message}" : "";
+                TaskDialog.Show("JNNTool — Quantity Takeoff", $"Đã xảy ra lỗi khi khởi động công cụ:\n\n{ex.Message}{innerDetail}\n\nChi tiết:\n{ex.StackTrace}");
                 return Result.Failed;
             }
         }

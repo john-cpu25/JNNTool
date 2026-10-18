@@ -79,7 +79,9 @@ namespace JNNTool.Tools.CSIxRevit.Commands
                         {
                             var available = new List<ElementType>();
                             available.AddRange(mapper.BeamSymbols);
-                            items.Add(new JNNTool.Tools.CSIxRevit.UI.SectionMappingItem { EtabsSectionName = g.Section, ElementType = JNNTool.Tools.CSIxRevit.Models.ElementKinds.Beam, ObjectCount = g.Count, AvailableTypes = available, SectionDetails = sectionProps.ContainsKey(g.Section) ? sectionProps[g.Section] : "" });
+                            sectionDefs.TryGetValue(g.Section ?? "", out var def);
+                            bool isSteelOrVoid = JNNTool.Tools.CSIxRevit.UI.ImportWindow.IsSteelOrVoidSection(g.Section, def, null);
+                            items.Add(new JNNTool.Tools.CSIxRevit.UI.SectionMappingItem { EtabsSectionName = g.Section, ElementType = JNNTool.Tools.CSIxRevit.Models.ElementKinds.Beam, ObjectCount = g.Count, AvailableTypes = available, SectionDetails = sectionProps.ContainsKey(g.Section) ? sectionProps[g.Section] : "", IsSteelOrVoid = isSteelOrVoid });
                         }
 
                         var colGroups = columns.GroupBy(c => c.Section).Select(g => new { Section = g.Key, Count = g.Count() });
@@ -87,7 +89,9 @@ namespace JNNTool.Tools.CSIxRevit.Commands
                         {
                             var available = new List<ElementType>();
                             available.AddRange(mapper.ColumnSymbols);
-                            items.Add(new JNNTool.Tools.CSIxRevit.UI.SectionMappingItem { EtabsSectionName = g.Section, ElementType = JNNTool.Tools.CSIxRevit.Models.ElementKinds.Column, ObjectCount = g.Count, AvailableTypes = available, SectionDetails = sectionProps.ContainsKey(g.Section) ? sectionProps[g.Section] : "" });
+                            sectionDefs.TryGetValue(g.Section ?? "", out var def);
+                            bool isSteelOrVoid = JNNTool.Tools.CSIxRevit.UI.ImportWindow.IsSteelOrVoidSection(g.Section, def, null);
+                            items.Add(new JNNTool.Tools.CSIxRevit.UI.SectionMappingItem { EtabsSectionName = g.Section, ElementType = JNNTool.Tools.CSIxRevit.Models.ElementKinds.Column, ObjectCount = g.Count, AvailableTypes = available, SectionDetails = sectionProps.ContainsKey(g.Section) ? sectionProps[g.Section] : "", IsSteelOrVoid = isSteelOrVoid });
                         }
 
                         var wallGroups = walls.GroupBy(w => w.Section).Select(g => new { Section = g.Key, Count = g.Count() });
@@ -118,14 +122,23 @@ namespace JNNTool.Tools.CSIxRevit.Commands
                             mapper.Levels,
                             mapper,
                             sectionDefs,
-                            eventHandler
+                            eventHandler,
+                            stories
                         );
 
                         bool hasImported = false;
                         GridBuildResult gridResult = new GridBuildResult();
                         int slabBuilt = 0, foundationBuilt = 0, virtualSkipped = 0, foundationRejected = 0;
+                        int beamBuilt = 0, colBuilt = 0, wallBuilt = 0;
                         ScopeBoxBuildResult scopeResult = null;
                         bool fitScopeBox = false;
+                        bool importGrids = true;
+                        bool importLevels = true;
+                        bool importColumns = true;
+                        bool importBeams = true;
+                        bool importWalls = true;
+                        bool importFloors = true;
+                        List<JNNTool.Tools.CSIxRevit.Models.LevelMappingItem> levelItems = null;
 
                         bool RunImport()
                         {
@@ -136,6 +149,15 @@ namespace JNNTool.Tools.CSIxRevit.Commands
                             bool applyCardinalPoint = window.ApplyCardinalPoint;
                             bool applyEdgeAlignment = window.ApplyEdgeAlignment;
                             fitScopeBox = window.FitScopeBox;
+
+                            importGrids = window.ImportGrids;
+                            importLevels = window.ImportLevels;
+                            importColumns = window.ImportColumns;
+                            importBeams = window.ImportBeams;
+                            importWalls = window.ImportWalls;
+                            importFloors = window.ImportFloors;
+
+                            levelItems = window.GetLevelItems();
 
                             Dictionary<string, XYZ> nodeOffsets = null;
                             if (applyEdgeAlignment)
@@ -154,130 +176,154 @@ namespace JNNTool.Tools.CSIxRevit.Commands
 
                                 tx.Start();
 
-                                LevelBuilder.Build(doc, stories);
-
-                                // Regenerate to register new levels before creating grids
-                                doc.Regenerate();
+                                if (importLevels)
+                                {
+                                    LevelBuilder.Build(doc, levelItems);
+                                    // Regenerate to register new levels before creating grids and hosts
+                                    doc.Regenerate();
+                                }
 
                                 var allLevels = new FilteredElementCollector(doc).OfClass(typeof(Level)).Cast<Level>().ToList();
                                 var gridIdsBefore = new HashSet<ElementId>(new FilteredElementCollector(doc).OfClass(typeof(Grid)).ToElementIds());
-                                gridResult = GridBuilder.Build(doc, grids);
 
-                                if (doc.ActiveView is View3D view3D && !view3D.IsTemplate)
+                                if (importGrids)
                                 {
-                                    try
+                                    gridResult = GridBuilder.Build(doc, grids);
+
+                                    if (doc.ActiveView is View3D view3D && !view3D.IsTemplate)
                                     {
-                                        var targetLevelId = (levelId != null && levelId != ElementId.InvalidElementId) ? levelId : allLevels.FirstOrDefault()?.Id;
-                                        if (targetLevelId != null && targetLevelId != ElementId.InvalidElementId)
+                                        try
                                         {
-                                            view3D.ShowGridsOnLevel(targetLevelId);
+                                            var targetLevelId = (levelId != null && levelId != ElementId.InvalidElementId) ? levelId : allLevels.FirstOrDefault()?.Id;
+                                            if (targetLevelId != null && targetLevelId != ElementId.InvalidElementId)
+                                            {
+                                                view3D.ShowGridsOnLevel(targetLevelId);
+                                            }
                                         }
+                                        catch { }
                                     }
-                                    catch { }
                                 }
 
-                                foreach (var b in beams)
+                                beamBuilt = 0;
+                                if (importBeams)
                                 {
-                                    if (beamMap.TryGetValue(b.Section, out var elemType) && elemType is FamilySymbol sym)
+                                    foreach (var b in beams)
                                     {
-                                        var p1 = points.FirstOrDefault(p => p.Name == b.PointI);
-                                        var p2 = points.FirstOrDefault(p => p.Name == b.PointJ);
-                                        if (p1?.Position != null && p2?.Position != null)
+                                        if (beamMap.TryGetValue(b.Section, out var elemType) && elemType is FamilySymbol sym)
                                         {
-                                            XYZ offset1 = null;
-                                            XYZ offset2 = null;
-                                            if (nodeOffsets != null)
+                                            var p1 = points.FirstOrDefault(p => p.Name == b.PointI);
+                                            var p2 = points.FirstOrDefault(p => p.Name == b.PointJ);
+                                            if (p1?.Position != null && p2?.Position != null)
                                             {
-                                                nodeOffsets.TryGetValue(b.PointI, out offset1);
-                                                nodeOffsets.TryGetValue(b.PointJ, out offset2);
-
-                                                if (offset1 != null || offset2 != null)
+                                                XYZ offset1 = null;
+                                                XYZ offset2 = null;
+                                                if (nodeOffsets != null)
                                                 {
-                                                    double off1X = offset1?.X ?? 0;
-                                                    double off1Y = offset1?.Y ?? 0;
-                                                    double off2X = offset2?.X ?? 0;
-                                                    double off2Y = offset2?.Y ?? 0;
+                                                    nodeOffsets.TryGetValue(b.PointI, out offset1);
+                                                    nodeOffsets.TryGetValue(b.PointJ, out offset2);
 
-                                                    // Anti-skew guarantee:
-                                                    // 1. If beam was parallel to X in E2K (abs(dy) < 0.01), ensure Y offsets match!
-                                                    if (Math.Abs(p1.Position.Y - p2.Position.Y) < 0.01)
+                                                    if (offset1 != null || offset2 != null)
                                                     {
-                                                        double commonY = (Math.Abs(off1Y) > 0.001 && Math.Abs(off2Y) > 0.001)
-                                                            ? (off1Y + off2Y) / 2.0
-                                                            : (Math.Abs(off1Y) > 0.001 ? off1Y : off2Y);
-                                                        off1Y = commonY;
-                                                        off2Y = commonY;
-                                                    }
+                                                        double off1X = offset1?.X ?? 0;
+                                                        double off1Y = offset1?.Y ?? 0;
+                                                        double off2X = offset2?.X ?? 0;
+                                                        double off2Y = offset2?.Y ?? 0;
 
-                                                    // 2. If beam was parallel to Y in E2K (abs(dx) < 0.01), ensure X offsets match!
-                                                    if (Math.Abs(p1.Position.X - p2.Position.X) < 0.01)
-                                                    {
-                                                        double commonX = (Math.Abs(off1X) > 0.001 && Math.Abs(off2X) > 0.001)
-                                                            ? (off1X + off2X) / 2.0
-                                                            : (Math.Abs(off1X) > 0.001 ? off1X : off2X);
-                                                        off1X = commonX;
-                                                        off2X = commonX;
-                                                    }
+                                                        // Anti-skew guarantee:
+                                                        if (Math.Abs(p1.Position.Y - p2.Position.Y) < 0.01)
+                                                        {
+                                                            double commonY = (Math.Abs(off1Y) > 0.001 && Math.Abs(off2Y) > 0.001)
+                                                                ? (off1Y + off2Y) / 2.0
+                                                                : (Math.Abs(off1Y) > 0.001 ? off1Y : off2Y);
+                                                            off1Y = commonY;
+                                                            off2Y = commonY;
+                                                        }
 
-                                                    offset1 = new XYZ(off1X, off1Y, 0);
-                                                    offset2 = new XYZ(off2X, off2Y, 0);
+                                                        if (Math.Abs(p1.Position.X - p2.Position.X) < 0.01)
+                                                        {
+                                                            double commonX = (Math.Abs(off1X) > 0.001 && Math.Abs(off2X) > 0.001)
+                                                                ? (off1X + off2X) / 2.0
+                                                                : (Math.Abs(off1X) > 0.001 ? off1X : off2X);
+                                                            off1X = commonX;
+                                                            off2X = commonX;
+                                                        }
+
+                                                        offset1 = new XYZ(off1X, off1Y, 0);
+                                                        offset2 = new XYZ(off2X, off2Y, 0);
+                                                    }
                                                 }
+                                                BeamBuilder.Build(doc, b, p1, p2, sym, allLevels, offset1, offset2, applyCardinalPoint);
+                                                beamBuilt++;
                                             }
-                                            BeamBuilder.Build(doc, b, p1, p2, sym, allLevels, offset1, offset2, applyCardinalPoint);
                                         }
                                     }
                                 }
 
-                                foreach (var c in columns)
+                                colBuilt = 0;
+                                if (importColumns)
                                 {
-                                    if (colMap.TryGetValue(c.Section, out var elemType) && elemType is FamilySymbol sym)
+                                    foreach (var c in columns)
                                     {
-                                        var p1 = points.FirstOrDefault(p => p.Name == c.PointI);
-                                        var p2 = points.FirstOrDefault(p => p.Name == c.PointJ);
-                                        if (p1?.Position != null && p2?.Position != null)
+                                        if (colMap.TryGetValue(c.Section, out var elemType) && elemType is FamilySymbol sym)
                                         {
-                                            XYZ offset = null;
-                                            if (nodeOffsets != null)
+                                            var p1 = points.FirstOrDefault(p => p.Name == c.PointI);
+                                            var p2 = points.FirstOrDefault(p => p.Name == c.PointJ);
+                                            if (p1?.Position != null && p2?.Position != null)
                                             {
-                                                nodeOffsets.TryGetValue(c.PointI, out offset);
+                                                XYZ offset = null;
+                                                if (nodeOffsets != null)
+                                                {
+                                                    nodeOffsets.TryGetValue(c.PointI, out offset);
+                                                }
+                                                ColumnBuilder.Build(doc, c, p1, p2, sym, allLevels, offset);
+                                                colBuilt++;
                                             }
-                                            ColumnBuilder.Build(doc, c, p1, p2, sym, allLevels, offset);
                                         }
                                     }
                                 }
 
-                                foreach (var w in walls)
+                                wallBuilt = 0;
+                                if (importWalls)
                                 {
-                                    if (wallMap.TryGetValue(w.Section, out var elemType) && elemType is WallType wt)
+                                    foreach (var w in walls)
                                     {
-                                        var coords = w.PointNames.Select(pn => points.FirstOrDefault(p => p.Name == pn)?.Position).Where(pos => pos != null).ToList();
-                                        if (coords.Count >= 2)
-                                            WallBuilder.Build(doc, w, coords, wt, allLevels);
+                                        if (wallMap.TryGetValue(w.Section, out var elemType) && elemType is WallType wt)
+                                        {
+                                            var coords = w.PointNames.Select(pn => points.FirstOrDefault(p => p.Name == pn)?.Position).Where(pos => pos != null).ToList();
+                                            if (coords.Count >= 2)
+                                            {
+                                                WallBuilder.Build(doc, w, coords, wt, allLevels);
+                                                wallBuilt++;
+                                            }
+                                        }
                                     }
                                 }
 
-                                var foundationSections = new HashSet<string>(
-                                    items.Where(i => i.ElementType == JNNTool.Tools.CSIxRevit.Models.ElementKinds.FoundationSlab).Select(i => i.EtabsSectionName ?? ""),
-                                    StringComparer.OrdinalIgnoreCase);
-                                var virtualSections = new HashSet<string>(
-                                    items.Where(i => i.ElementType == JNNTool.Tools.CSIxRevit.Models.ElementKinds.VirtualSlab).Select(i => i.EtabsSectionName ?? ""),
-                                    StringComparer.OrdinalIgnoreCase);
                                 slabBuilt = 0; foundationBuilt = 0; virtualSkipped = 0; foundationRejected = 0;
-
-                                foreach (var f in floors)
+                                if (importFloors)
                                 {
-                                    if (virtualSections.Contains(f.Section ?? "")) { virtualSkipped++; continue; }
+                                    var foundationSections = new HashSet<string>(
+                                        items.Where(i => i.ElementType == JNNTool.Tools.CSIxRevit.Models.ElementKinds.FoundationSlab).Select(i => i.EtabsSectionName ?? ""),
+                                        StringComparer.OrdinalIgnoreCase);
+                                    var virtualSections = new HashSet<string>(
+                                        items.Where(i => i.ElementType == JNNTool.Tools.CSIxRevit.Models.ElementKinds.VirtualSlab).Select(i => i.EtabsSectionName ?? ""),
+                                        StringComparer.OrdinalIgnoreCase);
 
-                                    if (floorMap.TryGetValue(f.Section, out var elemType) && elemType is FloorType ft)
+                                    foreach (var f in floors)
                                     {
-                                        bool isFoundation = foundationSections.Contains(f.Section ?? "");
-                                        // Sàn móng F tuyệt đối không được dựng thành Floor thường (sai category khi thống kê).
-                                        if (isFoundation && !ft.IsFoundationSlab) { foundationRejected++; continue; }
+                                        if (virtualSections.Contains(f.Section ?? "")) { virtualSkipped++; continue; }
 
-                                        var coords = f.PointNames.Select(pn => points.FirstOrDefault(p => p.Name == pn)?.Position).Where(pos => pos != null).ToList();
-                                        if (coords.Count >= 3 && FloorBuilder.Build(doc, f, coords, ft, allLevels))
+                                        if (floorMap.TryGetValue(f.Section, out var elemType) && elemType is FloorType ft)
                                         {
-                                            if (isFoundation) foundationBuilt++; else slabBuilt++;
+                                            bool isFoundation = foundationSections.Contains(f.Section ?? "");
+                                            // Sàn móng F tuyệt đối không được dựng thành Floor thường (sai category khi thống kê).
+                                            if (isFoundation && !ft.IsFoundationSlab) { foundationRejected++; continue; }
+
+                                            var coords = f.PointNames.Select(pn => points.FirstOrDefault(p => p.Name == pn)?.Position).Where(pos => pos != null).ToList();
+                                            if (coords.Count >= 3 && FloorBuilder.Build(doc, f, coords, ft, allLevels))
+                                            {
+                                                if (isFoundation) foundationBuilt++; else slabBuilt++;
+                                            }
                                         }
                                     }
                                 }
@@ -313,20 +359,69 @@ namespace JNNTool.Tools.CSIxRevit.Commands
                             var sb = new System.Text.StringBuilder();
                             sb.AppendLine("ETABS MODEL IMPORTED SUCCESSFULLY!");
                             sb.AppendLine();
-                            sb.AppendLine($"• Grids: created {gridResult.CreatedCount}/{grids.Count} (skipped/duplicate: {gridResult.SkippedCount})");
-                            if (gridResult.Errors.Count > 0)
+                            if (importGrids)
                             {
-                                sb.AppendLine($"  Note: {gridResult.ErrorSummary}");
+                                sb.AppendLine($"• Grids: created {gridResult.CreatedCount}/{grids.Count} (skipped/duplicate: {gridResult.SkippedCount})");
+                                if (gridResult.Errors.Count > 0)
+                                {
+                                    sb.AppendLine($"  Note: {gridResult.ErrorSummary}");
+                                }
                             }
-                            sb.AppendLine($"• Levels: created/matched {stories.Count}");
-                            sb.AppendLine($"• Beams: processed {beams.Count}");
-                            sb.AppendLine($"• Columns: processed {columns.Count}");
-                            sb.AppendLine($"• Walls: processed {walls.Count}");
-                            sb.AppendLine($"• Floors: processed {floors.Count} → Slab (S): {slabBuilt}, Foundation Slab (F): {foundationBuilt}, Virtual skipped: {virtualSkipped}");
-                            if (foundationRejected > 0)
+                            else
                             {
-                                sb.AppendLine($"  ⚠️ {foundationRejected} foundation slab(s) skipped because the selected type is not a Foundation Slab.");
+                                sb.AppendLine("• Grids: Skipped (deselected)");
                             }
+
+                            if (importLevels)
+                            {
+                                int selectedLvlCount = levelItems?.Count(l => l.IsSelected) ?? stories.Count;
+                                sb.AppendLine($"• Levels: processed {selectedLvlCount}/{stories.Count}");
+                            }
+                            else
+                            {
+                                sb.AppendLine("• Levels: Skipped (deselected)");
+                            }
+
+                            if (importBeams)
+                            {
+                                sb.AppendLine($"• Beams: built {beamBuilt}/{beams.Count}");
+                            }
+                            else
+                            {
+                                sb.AppendLine("• Beams: Skipped (deselected)");
+                            }
+
+                            if (importColumns)
+                            {
+                                sb.AppendLine($"• Columns: built {colBuilt}/{columns.Count}");
+                            }
+                            else
+                            {
+                                sb.AppendLine("• Columns: Skipped (deselected)");
+                            }
+
+                            if (importWalls)
+                            {
+                                sb.AppendLine($"• Walls: built {wallBuilt}/{walls.Count}");
+                            }
+                            else
+                            {
+                                sb.AppendLine("• Walls: Skipped (deselected)");
+                            }
+
+                            if (importFloors)
+                            {
+                                sb.AppendLine($"• Floors: built {slabBuilt + foundationBuilt}/{floors.Count} → Slab (S): {slabBuilt}, Foundation Slab (F): {foundationBuilt}, Virtual skipped: {virtualSkipped}");
+                                if (foundationRejected > 0)
+                                {
+                                    sb.AppendLine($"  ⚠️ {foundationRejected} foundation slab(s) skipped because the selected type is not a Foundation Slab.");
+                                }
+                            }
+                            else
+                            {
+                                sb.AppendLine("• Floors: Skipped (deselected)");
+                            }
+
                             sb.AppendLine();
                             AppendScopeBoxSummary(sb, fitScopeBox, scopeResult);
                             sb.AppendLine();

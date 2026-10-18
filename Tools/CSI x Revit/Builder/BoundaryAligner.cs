@@ -88,6 +88,7 @@ namespace JNNTool.Tools.CSIxRevit.Builder
 
                 var movedElements = new HashSet<ElementId>();
                 var beamMoveVectors = new Dictionary<ElementId, XYZ>();
+                var colMoveVectors = new Dictionary<ElementId, XYZ>();
 
                 // 1. Process Beams
                 foreach (var beam in beams)
@@ -95,7 +96,8 @@ namespace JNNTool.Tools.CSIxRevit.Builder
                     if (movedElements.Contains(beam.Id)) continue;
                     if (!(beam.Location is LocationCurve locCurve) || !(locCurve.Curve is Line beamLine)) continue;
 
-                    double beamWidthFeet = GetBeamWidthFeet(beam);
+                    // Sử dụng BeamDimensionHelper hỗ trợ nhận diện bề rộng dầm lớn (400, 550, 600, 800 mm)
+                    double beamWidthFeet = BeamDimensionHelper.GetBeamWidthFeet(beam);
                     double shiftDist = customOffsetFeet > 0 ? customOffsetFeet : (beamWidthFeet / 2.0);
                     if (shiftDist <= 0.001) shiftDist = UnitUtils.ConvertToInternalUnits(100.0, UnitTypeId.Millimeters);
 
@@ -120,13 +122,24 @@ namespace JNNTool.Tools.CSIxRevit.Builder
                     // Lấy kích thước phủ bì thực tế của cột theo trục World X và Y (tự động xử lý b, h và góc xoay)
                     ColumnDimensionHelper.GetColumnExtentsFeet(col, out double colExtentXFeet, out double colExtentYFeet);
 
-                    // Kiểm tra dầm biên nối vào cột
+                    // Kiểm tra dầm biên nối vào cột (đo khoảng cách tới đường tim dầm BAN ĐẦU để không bị tuột với dầm rộng 400, 550, 600, 800 mm)
                     var nearbyBeamVec = beamMoveVectors.FirstOrDefault(kvp =>
                     {
                         var b = doc.GetElement(kvp.Key) as FamilyInstance;
                         if (b?.Location is LocationCurve lc && lc.Curve is Line bl)
                         {
-                            return bl.Distance(colPt) < 1.0; // Gần đầu dầm hoặc nằm trên trục dầm
+                            // Lấy lại vị trí tim dầm ban đầu trước khi dời
+                            XYZ origP0 = bl.GetEndPoint(0) - kvp.Value;
+                            XYZ origP1 = bl.GetEndPoint(1) - kvp.Value;
+                            Line origLine = Line.CreateBound(origP0, origP1);
+
+                            double distLine = origLine.Distance(colPt);
+                            double distP0 = origP0.DistanceTo(colPt);
+                            double distP1 = origP1.DistanceTo(colPt);
+                            double minDist = Math.Min(distLine, Math.Min(distP0, distP1));
+
+                            // Dung sai an toàn 2.5 ft (~762 mm), bao trọn vẹn cả dầm 600-800 mm và cột
+                            return minDist < 2.5;
                         }
                         return false;
                     });
@@ -169,14 +182,15 @@ namespace JNNTool.Tools.CSIxRevit.Builder
                     {
                         ElementTransformUtils.MoveElement(doc, col.Id, moveVec);
                         movedElements.Add(col.Id);
+                        colMoveVectors[col.Id] = moveVec;
                         result.MovedColumns++;
                     }
                 }
 
                 // 3. Auto-extend/trim intersecting perpendicular beams (avoid disconnected joints)
-                if (autoExtendIntersecting && beamMoveVectors.Count > 0)
+                if (autoExtendIntersecting && (beamMoveVectors.Count > 0 || colMoveVectors.Count > 0))
                 {
-                    result.AdjustedIntersectingBeams = AdjustIntersectingBeams(doc, beamMoveVectors, movedElements);
+                    result.AdjustedIntersectingBeams = AdjustIntersectingBeams(doc, beamMoveVectors, colMoveVectors, movedElements);
                 }
 
                 tx.Commit();
@@ -281,6 +295,7 @@ namespace JNNTool.Tools.CSIxRevit.Builder
         private static int AdjustIntersectingBeams(
             Document doc,
             Dictionary<ElementId, XYZ> movedBeams,
+            Dictionary<ElementId, XYZ> movedColumns,
             HashSet<ElementId> movedElements)
         {
             int adjustedCount = 0;
@@ -297,25 +312,61 @@ namespace JNNTool.Tools.CSIxRevit.Builder
 
                 XYZ startPt = bl.GetEndPoint(0);
                 XYZ endPt = bl.GetEndPoint(1);
+                XYZ bDir = (endPt - startPt).Normalize();
                 bool modified = false;
 
+                // 1. Kiểm tra kết nối với các Dầm biên bị dời
                 foreach (var kvp in movedBeams)
                 {
                     var movedBeam = doc.GetElement(kvp.Key) as FamilyInstance;
                     if (movedBeam?.Location is LocationCurve mlc && mlc.Curve is Line mLine)
                     {
-                        XYZ originalLinePt0 = mLine.GetEndPoint(0) - kvp.Value;
-                        XYZ originalLinePt1 = mLine.GetEndPoint(1) - kvp.Value;
-                        Line originalLine = Line.CreateBound(originalLinePt0, originalLinePt1);
+                        XYZ origP0 = mLine.GetEndPoint(0) - kvp.Value;
+                        XYZ origP1 = mLine.GetEndPoint(1) - kvp.Value;
+                        Line origLine = Line.CreateBound(origP0, origP1);
+                        XYZ mDir = (origP1 - origP0).Normalize();
+
+                        // Bỏ qua các dầm chạy song song với dầm biên (tránh làm xiên dầm nối tiếp cùng trục)
+                        if (Math.Abs(bDir.DotProduct(mDir)) > 0.85) continue;
+
+                        // Dung sai kết nối động theo bề rộng thực tế của dầm biên:
+                        // Dầm 400mm -> tol ~ 340mm (1.11 ft), Dầm 600mm -> tol ~ 510mm (1.67 ft)
+                        double movedWidthFt = BeamDimensionHelper.GetBeamWidthFeet(movedBeam);
+                        double connectTol = Math.Max(0.8, movedWidthFt * 0.85);
 
                         // Check if start point was connected to the moved beam
-                        if (originalLine.Distance(startPt) < 0.2)
+                        double distStart = origLine.Distance(startPt);
+                        if (distStart < connectTol && Math.Min(origP0.DistanceTo(startPt), origP1.DistanceTo(startPt)) < (origP0.DistanceTo(origP1) + connectTol))
                         {
                             startPt = startPt + kvp.Value;
                             modified = true;
                         }
                         // Check if end point was connected to the moved beam
-                        if (originalLine.Distance(endPt) < 0.2)
+                        double distEnd = origLine.Distance(endPt);
+                        if (distEnd < connectTol && Math.Min(origP0.DistanceTo(endPt), origP1.DistanceTo(endPt)) < (origP0.DistanceTo(origP1) + connectTol))
+                        {
+                            endPt = endPt + kvp.Value;
+                            modified = true;
+                        }
+                    }
+                }
+
+                // 2. Kiểm tra kết nối với các Cột biên bị dời (chống hở nút giữa dầm ngang và cột biên)
+                foreach (var kvp in movedColumns)
+                {
+                    var movedCol = doc.GetElement(kvp.Key) as FamilyInstance;
+                    if (movedCol?.Location is LocationPoint lp)
+                    {
+                        XYZ origColPt = lp.Point - kvp.Value;
+
+                        // Nếu đầu start ban đầu cắm vào cột này
+                        if (origColPt.DistanceTo(startPt) < 1.5)
+                        {
+                            startPt = startPt + kvp.Value;
+                            modified = true;
+                        }
+                        // Nếu đầu end ban đầu cắm vào cột này
+                        if (origColPt.DistanceTo(endPt) < 1.5)
                         {
                             endPt = endPt + kvp.Value;
                             modified = true;
@@ -335,19 +386,6 @@ namespace JNNTool.Tools.CSIxRevit.Builder
             }
 
             return adjustedCount;
-        }
-
-        private static double GetBeamWidthFeet(FamilyInstance beam)
-        {
-            var symbol = beam.Symbol;
-            var pB = beam.LookupParameter("b") ?? symbol?.LookupParameter("b")
-                  ?? beam.LookupParameter("Width") ?? symbol?.LookupParameter("Width")
-                  ?? beam.LookupParameter("B") ?? symbol?.LookupParameter("B")
-                  ?? beam.LookupParameter("Chiều rộng") ?? symbol?.LookupParameter("Chiều rộng")
-                  ?? beam.LookupParameter("b (Width)") ?? symbol?.LookupParameter("b (Width)");
-
-            if (pB != null && pB.AsDouble() > 0) return pB.AsDouble();
-            return UnitUtils.ConvertToInternalUnits(200.0, UnitTypeId.Millimeters);
         }
 
 

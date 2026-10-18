@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
-using JNNTool.Core.Compat;
+using JNNTool.Tools.QuantityTakeoff.Helpers;
 using JNNTool.Tools.QuantityTakeoff.Models;
 
 namespace JNNTool.Tools.QuantityTakeoff.Engine
@@ -16,9 +16,9 @@ namespace JNNTool.Tools.QuantityTakeoff.Engine
         private const double SteelDensityKgPerM3 = 7850.0;
 
         /// <summary>
-        /// Danh sách các BuiltInCategory mặc định được hỗ trợ trích xuất khối lượng.
+        /// Tạo danh sách các Category mặc định mới để tránh chia sẻ trạng thái qua các phiên chạy.
         /// </summary>
-        public static readonly List<CategoryFilterItem> DefaultCategories = new List<CategoryFilterItem>
+        public static List<CategoryFilterItem> CreateDefaultCategories() => new List<CategoryFilterItem>
         {
             new CategoryFilterItem { Name = "Structural Framing", VietnameseName = "Dầm kết cấu", BuiltInCategory = BuiltInCategory.OST_StructuralFraming, IsStructural = true, IsSelected = true },
             new CategoryFilterItem { Name = "Structural Columns", VietnameseName = "Cột kết cấu", BuiltInCategory = BuiltInCategory.OST_StructuralColumns, IsStructural = true, IsSelected = true },
@@ -36,14 +36,19 @@ namespace JNNTool.Tools.QuantityTakeoff.Engine
         };
 
         /// <summary>
+        /// Danh sách các BuiltInCategory mặc định được hỗ trợ trích xuất khối lượng.
+        /// </summary>
+        public static readonly List<CategoryFilterItem> DefaultCategories = CreateDefaultCategories();
+
+        /// <summary>
         /// Thu thập và trích xuất khối lượng chi tiết cho toàn bộ cấu kiện thỏa mãn bộ lọc.
         /// </summary>
         public static List<TakeoffElementItem> ExtractElements(
             Document doc,
             TakeoffScope scope,
             IEnumerable<BuiltInCategory> selectedCategories,
-            View? activeView = null,
-            ICollection<ElementId>? selectedElementIds = null)
+            View activeView = null,
+            ICollection<ElementId> selectedElementIds = null)
         {
             var result = new List<TakeoffElementItem>();
             if (doc == null) return result;
@@ -60,13 +65,25 @@ namespace JNNTool.Tools.QuantityTakeoff.Engine
 
             var levelMap = levels.ToDictionary(l => l.Id.GetIdValue(), l => l);
 
-            // Xây dựng danh sách Elements theo Scope cực nhanh
+            // Tạo ElementFilter an toàn cho nhiều category
+            ElementFilter catFilter;
+            try
+            {
+                catFilter = new ElementMulticategoryFilter(targetCats.ToList());
+            }
+            catch
+            {
+                var filters = targetCats.Select(c => (ElementFilter)new ElementCategoryFilter(c)).ToList();
+                catFilter = filters.Count == 1 ? filters[0] : new LogicalOrFilter(filters);
+            }
+
+            // Xây dựng danh sách Elements theo Scope
             IList<Element> elements;
             if (scope == TakeoffScope.Selection)
             {
                 if (selectedElementIds == null || selectedElementIds.Count == 0)
                 {
-                    return result; // Không có đối tượng nào được chọn trong Selection
+                    return result;
                 }
 
                 var targetIds = new HashSet<long>(targetCats.Select(c => (long)c));
@@ -87,14 +104,14 @@ namespace JNNTool.Tools.QuantityTakeoff.Engine
             else if (scope == TakeoffScope.ActiveView && activeView != null)
             {
                 elements = new FilteredElementCollector(doc, activeView.Id)
-                    .WherePasses(new ElementMulticategoryFilter(targetCats.ToList()))
+                    .WherePasses(catFilter)
                     .WhereElementIsNotElementType()
                     .ToElements();
             }
             else
             {
                 elements = new FilteredElementCollector(doc)
-                    .WherePasses(new ElementMulticategoryFilter(targetCats.ToList()))
+                    .WherePasses(catFilter)
                     .WhereElementIsNotElementType()
                     .ToElements();
             }
@@ -119,7 +136,7 @@ namespace JNNTool.Tools.QuantityTakeoff.Engine
             return result;
         }
 
-        private static TakeoffElementItem? ExtractSingleElement(
+        private static TakeoffElementItem ExtractSingleElement(
             Document doc,
             Element elem,
             BuiltInCategory bic,
@@ -228,7 +245,7 @@ namespace JNNTool.Tools.QuantityTakeoff.Engine
             Dictionary<long, Level> levelMap,
             List<Level> allLevels)
         {
-            Level? foundLevel = null;
+            Level foundLevel = null;
 
             // A. Kiểm tra LevelId trực tiếp
             if (elem.LevelId != null && elem.LevelId != ElementId.InvalidElementId)
@@ -264,12 +281,7 @@ namespace JNNTool.Tools.QuantityTakeoff.Engine
                 if (bbox != null)
                 {
                     double elemZ = (bbox.Min.Z + bbox.Max.Z) / 2.0;
-                    // Tìm Level cao nhất mà Elevation <= elemZ
-                    foundLevel = allLevels.LastOrDefault(l => l.Elevation <= elemZ + 0.1);
-                    if (foundLevel == null)
-                    {
-                        foundLevel = allLevels.FirstOrDefault();
-                    }
+                    foundLevel = allLevels.LastOrDefault(l => l.Elevation <= elemZ + 0.1) ?? allLevels.FirstOrDefault();
                 }
             }
 
@@ -291,7 +303,7 @@ namespace JNNTool.Tools.QuantityTakeoff.Engine
             BuiltInCategory bic,
             TakeoffElementItem item)
         {
-            // --- 1. Xử lý riêng cho Cốt Thép (Rebar & RebarInSystem) ---
+            // 1. Cốt Thép (Rebar & RebarInSystem)
             if (elem is Rebar rebar)
             {
                 ExtractRebarQuantities(rebar, item);
@@ -303,7 +315,7 @@ namespace JNNTool.Tools.QuantityTakeoff.Engine
                 return;
             }
 
-            // --- 2. Thể tích (Volume) qua Parameters ---
+            // 2. Thể tích (Volume)
             double volCuFt = 0.0;
             var pVol = elem.get_Parameter(BuiltInParameter.HOST_VOLUME_COMPUTED)
                     ?? elem.LookupParameter("Volume")
@@ -314,7 +326,7 @@ namespace JNNTool.Tools.QuantityTakeoff.Engine
                 volCuFt = pVol.AsDouble();
             }
 
-            // --- 3. Diện tích (Area / Cốp pha) qua Parameters ---
+            // 3. Diện tích (Area / Cốp pha)
             double areaSqFt = 0.0;
             var pArea = elem.get_Parameter(BuiltInParameter.HOST_AREA_COMPUTED)
                      ?? elem.get_Parameter(BuiltInParameter.SURFACE_AREA)
@@ -326,7 +338,7 @@ namespace JNNTool.Tools.QuantityTakeoff.Engine
                 areaSqFt = pArea.AsDouble();
             }
 
-            // --- 4. Nếu chưa có Volume hoặc Area: tính từ Solid hình học 1 LẦN DUY NHẤT (DetailLevel.Coarse) ---
+            // 4. Fallback Solid Geometry (DetailLevel.Coarse)
             if (volCuFt <= 1e-6 || areaSqFt <= 1e-6)
             {
                 ComputeSolidsVolumeAndArea(elem, out double solidVol, out double solidArea);
@@ -334,7 +346,7 @@ namespace JNNTool.Tools.QuantityTakeoff.Engine
                 if (areaSqFt <= 1e-6)
                 {
                     areaSqFt = solidArea;
-                    // Với ván khuôn dầm/sàn, chia 2 để ước tính 1 mặt tiếp xúc
+                    // Ván khuôn dầm/sàn sơ bộ chia 2 mặt tiếp xúc
                     if (bic == BuiltInCategory.OST_Floors || bic == BuiltInCategory.OST_Walls)
                     {
                         areaSqFt /= 2.0;
@@ -345,7 +357,7 @@ namespace JNNTool.Tools.QuantityTakeoff.Engine
             item.Volume = volCuFt * CuFeetToCuMeters;
             item.Area = areaSqFt * SqFeetToSqMeters;
 
-            // --- 5. Chiều dài (Length) ---
+            // 5. Chiều dài (Length)
             double lengthFt = 0.0;
             var pLen = elem.get_Parameter(BuiltInParameter.INSTANCE_LENGTH_PARAM)
                     ?? elem.get_Parameter(BuiltInParameter.CURVE_ELEM_LENGTH)
@@ -363,7 +375,7 @@ namespace JNNTool.Tools.QuantityTakeoff.Engine
 
             item.Length = lengthFt * FeetToMeters;
 
-            // --- 6. Khối lượng (Weight) nếu là Thép hình (Steel Framing / Column) ---
+            // 6. Trọng lượng Thép hình (Steel Framing / Column)
             if (item.MaterialName.IndexOf("Steel", StringComparison.OrdinalIgnoreCase) >= 0 ||
                 item.MaterialName.IndexOf("Thép", StringComparison.OrdinalIgnoreCase) >= 0)
             {
@@ -394,8 +406,7 @@ namespace JNNTool.Tools.QuantityTakeoff.Engine
             item.Length = totalLenM;
 
             double barDiamMm = 10.0;
-            var barType = rebar.Document.GetElement(rebar.GetTypeId()) as RebarBarType;
-            if (barType != null)
+            if (rebar.Document.GetElement(rebar.GetTypeId()) is RebarBarType barType)
             {
                 barDiamMm = barType.BarModelDiameter * FeetToMeters * 1000.0;
             }
@@ -440,8 +451,7 @@ namespace JNNTool.Tools.QuantityTakeoff.Engine
             var typeId = elem.GetTypeId();
             if (typeId != null && typeId != ElementId.InvalidElementId)
             {
-                var barType = elem.Document.GetElement(typeId) as RebarBarType;
-                if (barType != null)
+                if (elem.Document.GetElement(typeId) is RebarBarType barType)
                 {
                     barDiamMm = barType.BarModelDiameter * FeetToMeters * 1000.0;
                 }
@@ -462,7 +472,7 @@ namespace JNNTool.Tools.QuantityTakeoff.Engine
             {
                 var opt = new Options
                 {
-                    DetailLevel = ViewDetailLevel.Coarse, // Coarse giúp tính hình học siêu nhanh, tránh giật lag
+                    DetailLevel = ViewDetailLevel.Coarse,
                     ComputeReferences = false,
                     IncludeNonVisibleObjects = false
                 };
@@ -498,7 +508,7 @@ namespace JNNTool.Tools.QuantityTakeoff.Engine
         }
 
         /// <summary>
-        /// Tạo danh sách tổng hợp theo Tầng (LevelSummaryItem) kèm phân tách cấu kiện trong từng tầng.
+        /// Tạo danh sách tổng hợp theo Tầng kèm phân tách cấu kiện trong từng tầng.
         /// </summary>
         public static List<LevelSummaryItem> BuildLevelSummaries(IEnumerable<TakeoffElementItem> items)
         {
@@ -517,7 +527,6 @@ namespace JNNTool.Tools.QuantityTakeoff.Engine
                     ElementIds = grp.Select(i => i.ElementId).Where(id => id != null).ToList()
                 };
 
-                // Tính tổng Volume, Formwork, Steel
                 foreach (var i in grp)
                 {
                     lvlItem.TotalVolume += i.Volume;
@@ -535,7 +544,6 @@ namespace JNNTool.Tools.QuantityTakeoff.Engine
                     }
                 }
 
-                // Chi tiết theo từng category trong tầng này
                 lvlItem.CategoryBreakdowns = grp.GroupBy(i => i.CategoryName)
                     .Select(catGrp => new CategorySummaryItem
                     {
@@ -558,7 +566,7 @@ namespace JNNTool.Tools.QuantityTakeoff.Engine
         }
 
         /// <summary>
-        /// Tạo danh sách tổng hợp theo Category (CategorySummaryItem).
+        /// Tạo danh sách tổng hợp theo Category.
         /// </summary>
         public static List<CategorySummaryItem> BuildCategorySummaries(IEnumerable<TakeoffElementItem> items)
         {

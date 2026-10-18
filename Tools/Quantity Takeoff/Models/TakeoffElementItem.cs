@@ -1,13 +1,13 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Autodesk.Revit.DB;
-using JNNTool.Core.Compat;
+using JNNTool.Tools.QuantityTakeoff.Helpers;
 
 namespace JNNTool.Tools.QuantityTakeoff.Models
 {
     public class TakeoffElementItem : INotifyPropertyChanged
     {
-        public event PropertyChangedEventHandler? PropertyChanged;
+        public event PropertyChangedEventHandler PropertyChanged;
 
         public ElementId ElementId { get; set; }
         public long IdValue => ElementId != null ? ElementId.GetIdValue() : 0;
@@ -49,7 +49,7 @@ namespace JNNTool.Tools.QuantityTakeoff.Models
         public string LengthDisplay => Length > 0.0001 ? Length.ToString("N2") : "-";
         public string WeightDisplay => Weight > 0.0001 ? Weight.ToString("N3") : "-";
 
-        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }

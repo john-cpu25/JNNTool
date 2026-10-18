@@ -16,6 +16,8 @@ namespace JNNTool.Tools.CSIxRevit.Builder
         public int GridsAssigned { get; set; }
         public int GridsDetached { get; set; }
         public int Grids3DFitted { get; set; }
+        public int GridsVerticalFitted { get; set; }
+        public int Views3DFitted { get; set; }
         public int LevelsAssigned { get; set; }
         public GridTrimStats Trim { get; set; } = new GridTrimStats();
         public string Error { get; set; } = "";
@@ -118,7 +120,7 @@ namespace JNNTool.Tools.CSIxRevit.Builder
         /// Khóa toàn bộ Lưới trục (Grid) và Cao độ (Level) trong dự án khớp khít theo ranh giới của Scope Box "JNN_SB".
         /// Gọi độc lập từ nút Ribbon sau khi người dùng đã kéo bao quanh nhà.
         /// </summary>
-        public static ScopeBoxBuildResult FitGridsAndLevels(Document doc, string name = DefaultName)
+        public static ScopeBoxBuildResult FitGridsAndLevels(Document doc, View activeView = null, string name = DefaultName)
         {
             var result = new ScopeBoxBuildResult { Name = name };
             if (doc == null) return result;
@@ -141,10 +143,39 @@ namespace JNNTool.Tools.CSIxRevit.Builder
                 doc.Regenerate();
 
                 var bb = sb.get_BoundingBox(null);
-                if (bb != null) result.Grids3DFitted = FitModelExtentsToBox(doc, bb);
+                if (bb != null)
+                {
+                    result.Grids3DFitted = FitModelExtentsToBox(doc, bb);
+                    result.GridsVerticalFitted = FitVerticalModelExtentsToBox(doc, bb);
+                }
                 doc.Regenerate();
 
                 result.Trim = TrimGridEndsToScopeBox(doc, sb);
+
+                // Gán Scope Box cho View 3D / Mặt đứng để crop gọn gàng, tránh trục và level phóng tự do
+                int v3dCount = 0;
+                if (activeView is View3D active3D && !active3D.IsPerspective)
+                {
+                    if (AssignViewScopeBox(active3D, sb.Id)) v3dCount++;
+                }
+                else if (activeView != null && !activeView.IsTemplate && activeView is ViewSection secView)
+                {
+                    if (AssignViewScopeBox(secView, sb.Id)) v3dCount++;
+                }
+
+                var default3DViews = new FilteredElementCollector(doc)
+                    .OfClass(typeof(View3D)).Cast<View3D>()
+                    .Where(v => !v.IsTemplate && !v.IsPerspective)
+                    .ToList();
+
+                foreach (var v in default3DViews)
+                {
+                    if (v.Id != activeView?.Id && (v.Name.IndexOf("{3D}", StringComparison.OrdinalIgnoreCase) >= 0 || v.Name.IndexOf("3D", StringComparison.OrdinalIgnoreCase) >= 0))
+                    {
+                        if (AssignViewScopeBox(v, sb.Id)) v3dCount++;
+                    }
+                }
+                result.Views3DFitted = v3dCount;
             }
             catch (Exception ex)
             {
@@ -181,6 +212,59 @@ namespace JNNTool.Tools.CSIxRevit.Builder
                         grid.SetCurveInView(DatumExtentType.Model, view, newLine);
                         count++;
                         break; // 3D extents dùng chung mọi view, chỉ cần đặt một lần
+                    }
+                    catch { }
+                }
+            }
+            return count;
+        }
+
+        /// <summary>
+        /// Đặt chiều cao Z (Vertical Model Extents) của mỗi Grid trùng với đỉnh và đáy của Scope Box,
+        /// để trục không phóng vút lên trời hoặc đâm sâu xuống đất ở View 3D và các Mặt đứng.
+        /// </summary>
+        private static int FitVerticalModelExtentsToBox(Document doc, BoundingBoxXYZ bb)
+        {
+            var sectionViews = new FilteredElementCollector(doc)
+                .OfClass(typeof(ViewSection)).Cast<ViewSection>()
+                .Where(v => !v.IsTemplate && (v.ViewType == ViewType.Elevation || v.ViewType == ViewType.Section))
+                .ToList();
+
+            if (sectionViews.Count == 0) return 0;
+
+            double zLow = Math.Min(bb.Min.Z, bb.Max.Z);
+            double zHigh = Math.Max(bb.Min.Z, bb.Max.Z);
+            if (Math.Abs(zHigh - zLow) < 0.1) return 0;
+
+            int count = 0;
+            var grids = new FilteredElementCollector(doc).OfClass(typeof(Grid)).Cast<Grid>().ToList();
+
+            foreach (var grid in grids)
+            {
+                foreach (var view in sectionViews)
+                {
+                    try
+                    {
+                        var curves = grid.GetCurvesInView(DatumExtentType.Model, view);
+                        if (curves == null || curves.Count == 0 || !(curves[0] is Line line)) continue;
+
+                        XYZ dir = line.Direction;
+                        if (Math.Abs(dir.Z) < 0.8) continue; // Phải là đường thẳng đứng trong view này
+
+                        XYZ p0 = line.GetEndPoint(0);
+                        XYZ p1 = line.GetEndPoint(1);
+
+                        XYZ newP0 = new XYZ(p0.X, p0.Y, p0.Z < p1.Z ? zLow : zHigh);
+                        XYZ newP1 = new XYZ(p1.X, p1.Y, p0.Z < p1.Z ? zHigh : zLow);
+
+                        if (newP0.DistanceTo(newP1) < 0.1) continue;
+
+                        var newLine = Line.CreateBound(newP0, newP1);
+                        if (!grid.IsCurveValidInView(DatumExtentType.Model, view, newLine)) continue;
+
+                        grid.SetCurveInView(DatumExtentType.Model, view, newLine);
+                        count++;
+                        break; // Thuộc tính 3D Model extents dùng chung, chỉ cần đặt thành công ở 1 view là đủ
                     }
                     catch { }
                 }
@@ -379,7 +463,25 @@ namespace JNNTool.Tools.CSIxRevit.Builder
                 .ToElements();
 
             return boxes.FirstOrDefault(e => string.Equals((e.Name ?? "").Trim(), name, StringComparison.OrdinalIgnoreCase))
-                ?? boxes.FirstOrDefault(e => (e.Name ?? "").IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0);
+                ?? boxes.FirstOrDefault(e => (e.Name ?? "").IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0)
+                ?? (boxes.Count == 1 ? boxes[0] : null);
+        }
+
+        private static bool AssignViewScopeBox(View view, ElementId sbId)
+        {
+            if (view == null || sbId == null || sbId == ElementId.InvalidElementId) return false;
+            try
+            {
+                var p = view.get_Parameter(BuiltInParameter.VIEWER_VOLUME_OF_INTEREST_CROP);
+                if (p != null && !p.IsReadOnly)
+                {
+                    p.Set(sbId);
+                    try { view.CropBoxActive = true; } catch { }
+                    return true;
+                }
+            }
+            catch { }
+            return false;
         }
 
         private static int Assign(Document doc, ICollection<ElementId> ids, ElementId scopeBoxId)

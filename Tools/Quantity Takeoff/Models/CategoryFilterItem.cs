@@ -6,7 +6,7 @@ namespace JNNTool.Tools.QuantityTakeoff.Models
 {
     public class CategoryFilterItem : INotifyPropertyChanged
     {
-        public event PropertyChangedEventHandler? PropertyChanged;
+        public event PropertyChangedEventHandler PropertyChanged;
 
         public string Name { get; set; } = string.Empty;
         public string VietnameseName { get; set; } = string.Empty;
@@ -45,7 +45,7 @@ namespace JNNTool.Tools.QuantityTakeoff.Models
             ? Name 
             : $"{Name} ({VietnameseName})";
 
-        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }

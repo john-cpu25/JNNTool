@@ -34,6 +34,16 @@ namespace JNNTool.Tools.CSIxRevit.UI
 
         public ObservableCollection<CreateSectionItem> CreateSectionItems { get; set; }
         public ObservableCollection<SectionMappingItem> MappingItems { get; set; }
+        public ObservableCollection<LevelMappingItem> LevelItems { get; set; }
+        public List<string> ExistingLevelNames { get; set; } = new List<string>();
+
+        // Scope options: cho phép người dùng chọn cấu kiện nào cần/không cần dựng
+        public bool ImportGrids => ChkScopeGrids?.IsChecked == true;
+        public bool ImportLevels => ChkScopeLevels?.IsChecked == true;
+        public bool ImportColumns => ChkScopeColumns?.IsChecked == true;
+        public bool ImportBeams => ChkScopeBeams?.IsChecked == true;
+        public bool ImportWalls => ChkScopeWalls?.IsChecked == true;
+        public bool ImportFloors => ChkScopeFloors?.IsChecked == true;
 
         public bool ApplyCardinalPoint => ChkApplyCardinalPoint.IsChecked == true;
         // Đã bỏ tùy chọn căn lề biên khỏi UI: luôn giữ nguyên tim cột/dầm theo E2K.
@@ -42,13 +52,16 @@ namespace JNNTool.Tools.CSIxRevit.UI
 
         public void SetImportAction(Func<bool> action) => _importAction = action;
 
+        public List<LevelMappingItem> GetLevelItems() => LevelItems?.ToList() ?? new List<LevelMappingItem>();
+
         public ImportWindow(
             Document doc,
             List<SectionMappingItem> items,
             List<Level> levels,
             FamilyMapper mapper = null,
             Dictionary<string, SectionDefinition> sectionDefs = null,
-            ActionEventHandler eventHandler = null)
+            ActionEventHandler eventHandler = null,
+            List<StoryData> stories = null)
         {
             InitializeComponent();
 
@@ -70,6 +83,51 @@ namespace JNNTool.Tools.CSIxRevit.UI
 
             MappingItems = new ObservableCollection<SectionMappingItem>(items);
             DgMapping.ItemsSource = MappingItems;
+
+            // Nạp danh sách tên Level hiện có trong Revit để người dùng chọn map
+            ExistingLevelNames = new List<string> { "" };
+            if (levels != null)
+            {
+                ExistingLevelNames.AddRange(levels.Select(l => l.Name).OrderBy(n => n));
+            }
+
+            // Nạp danh sách Story từ ETABS để cấu hình Level trong Tab 3
+            var lvlList = new List<LevelMappingItem>();
+            if (stories != null)
+            {
+                foreach (var s in stories)
+                {
+                    string targetName = s.Name;
+                    if (Regex.IsMatch(s.Name, @"^[Tt](\d+)$"))
+                    {
+                        var m = Regex.Match(s.Name, @"^[Tt](\d+)$");
+                        targetName = "Tầng " + m.Groups[1].Value;
+                    }
+                    else if (s.Name.Equals("M", StringComparison.OrdinalIgnoreCase) || s.Name.Equals("ROOF", StringComparison.OrdinalIgnoreCase))
+                    {
+                        targetName = "Tầng Mái";
+                    }
+
+                    string matchedName = "";
+                    if (levels != null)
+                    {
+                        var existing = levels.FirstOrDefault(l => Math.Abs(l.Elevation - s.Elevation) < 0.05);
+                        if (existing != null) matchedName = existing.Name;
+                    }
+
+                    lvlList.Add(new LevelMappingItem
+                    {
+                        IsSelected = s.IsSelected,
+                        EtabsStoryName = s.Name,
+                        ElevationFeet = s.Elevation,
+                        HeightFeet = s.Height,
+                        TargetLevelName = !string.IsNullOrEmpty(s.TargetName) ? s.TargetName : targetName,
+                        MappedLevelName = matchedName
+                    });
+                }
+            }
+            LevelItems = new ObservableCollection<LevelMappingItem>(lvlList);
+            DgLevels.ItemsSource = LevelItems;
 
             InitCreateSectionsTab();
             AutoMatch();
@@ -228,6 +286,69 @@ namespace JNNTool.Tools.CSIxRevit.UI
         /// "Đã có" = có type trùng tên HOẶC trùng kích thước thực (đọc từ type, không đoán theo tên);
         /// khi đó chọn sẵn type đó cho người dùng và ghim cho Tab 2.
         /// </summary>
+        public static bool IsSteelOrVoidSection(string sectionName, SectionDefinition def, string elementType = null, string selectedFamilyOrTypeName = null)
+        {
+            // Chỉ áp dụng cho Beam và Column. Wall, Slab, FoundationSlab tuyệt đối không phải steel beam/void!
+            if (!string.IsNullOrEmpty(elementType) &&
+                elementType != ElementKinds.Beam && elementType != ElementKinds.Column)
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(selectedFamilyOrTypeName))
+            {
+                string s = selectedFamilyOrTypeName.ToLowerInvariant();
+                if (s.Contains("void") || s.Contains("dummy") || s.Contains("null"))
+                    return true;
+            }
+
+            if (def != null)
+            {
+                if (!string.IsNullOrEmpty(def.Shape))
+                {
+                    string sh = def.Shape.ToLowerInvariant();
+                    if (sh.Contains("steel") || sh.Contains("channel") || sh.Contains("i/wide") ||
+                        sh.Contains("angle") || sh.Contains("tube") || sh.Contains("pipe") || sh.Contains("tee"))
+                        return true;
+                }
+                if (!string.IsNullOrEmpty(def.Material))
+                {
+                    string mat = def.Material.ToUpperInvariant();
+                    if (mat.Contains("Q235") || mat.Contains("Q345") || mat.Contains("SS400") ||
+                        mat.Contains("A36") || mat.Contains("STEEL") || mat.Contains("THEP"))
+                        return true;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(sectionName))
+            {
+                string sn = sectionName.Trim();
+                // Dầm thép chữ I: i-250x125, I-250, UB, UC, HE, IPE... (Wide Flange Mỹ là W14x90 chứ KHÔNG phải W20)
+                if (Regex.IsMatch(sn, @"^(i|I)[-_]", RegexOptions.IgnoreCase) ||
+                    Regex.IsMatch(sn, @"^(UB|UC|HE|IPE|IPN)\d+", RegexOptions.IgnoreCase) ||
+                    Regex.IsMatch(sn, @"^W\d+[xX]\d+", RegexOptions.IgnoreCase))
+                    return true;
+
+                // Xà gồ: XG-C, C250x75, Purlin, Z...
+                if (Regex.IsMatch(sn, @"^(XG|PURLIN)[-_]", RegexOptions.IgnoreCase) ||
+                    Regex.IsMatch(sn, @"^C\d+x\d+", RegexOptions.IgnoreCase) ||
+                    Regex.IsMatch(sn, @"^Z\d+x\d+", RegexOptions.IgnoreCase))
+                    return true;
+
+                if (sn.IndexOf("void", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    sn.IndexOf("dummy", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    sn.IndexOf("null", StringComparison.OrdinalIgnoreCase) >= 0)
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Nạp lại danh sách Family / Type mẫu cho 1 dòng và xác định trạng thái "đã có / chưa có".
+        /// "Đã có" = có type trùng tên HOẶC trùng kích thước thực (đọc từ type, không đoán theo tên);
+        /// khi đó chọn sẵn type đó cho người dùng và ghim cho Tab 2.
+        /// </summary>
         private void ApplyRowTemplates(CreateSectionItem row, ElementId preferredId, bool keepSelection)
         {
             if (row.ElementType == ElementKinds.VirtualSlab)
@@ -255,6 +376,11 @@ namespace JNNTool.Tools.CSIxRevit.UI
 
             row.CanEdit = true;
 
+            _sectionDefs.TryGetValue(row.SectionName ?? "", out var def);
+            bool isSteelOrVoid = IsSteelOrVoidSection(row.SectionName, def, row.ElementType, null);
+            row.IsSteelOrVoid = isSteelOrVoid;
+
+            // Kiểm tra type đã có trong Revit chưa
             var existing = FindExistingType(row, types);
             if (existing != null)
             {
@@ -267,10 +393,59 @@ namespace JNNTool.Tools.CSIxRevit.UI
                 return;
             }
 
-            ElementType preferred = preferredId != null ? types.FirstOrDefault(t => t.Id == preferredId) : null;
-            row.SetTemplates(types, preferred ?? GetDefaultTemplate(row.ElementType, types) ?? types[0]);
+            // Nếu CHƯA CÓ: VẪN TẠO! (row.IsSelected = true)
+            ElementType preferred = null;
+            if (preferredId != null)
+            {
+                preferred = types.FirstOrDefault(t => t.Id == preferredId);
+            }
+
+            if (preferred == null)
+            {
+                if (isSteelOrVoid)
+                {
+                    // Ưu tiên family thép phù hợp nếu có trong dự án:
+                    string sn = (row.SectionName ?? "").ToLowerInvariant();
+                    bool isChannel = sn.StartsWith("c") || sn.Contains("xg") || sn.Contains("channel");
+
+                    if (isChannel)
+                    {
+                        preferred = types.FirstOrDefault(t =>
+                        {
+                            string fn = (t.FamilyName ?? "").ToLowerInvariant();
+                            return fn.Contains("pfc") || fn.Contains("channel") || fn.Contains("c-");
+                        });
+                    }
+                    else
+                    {
+                        preferred = types.FirstOrDefault(t =>
+                        {
+                            string fn = (t.FamilyName ?? "").ToLowerInvariant();
+                            return fn.Contains("ub") || fn.Contains("universal") || fn.Contains("i-") || fn.Contains("wide");
+                        });
+                    }
+
+                    // Nếu không có family thép thì mới tìm Void_Beam
+                    if (preferred == null)
+                    {
+                        preferred = types.FirstOrDefault(t =>
+                        {
+                            string fn = (t.FamilyName ?? "").ToLowerInvariant();
+                            string tn = (t.Name ?? "").ToLowerInvariant();
+                            return fn.Contains("void") || tn.Contains("void");
+                        });
+                    }
+                }
+
+                if (preferred == null)
+                {
+                    preferred = GetDefaultTemplate(row.ElementType, types) ?? types[0];
+                }
+            }
+
+            row.SetTemplates(types, preferred);
             row.IsMissing = true;
-            if (!keepSelection) row.IsSelected = true;
+            if (!keepSelection) row.IsSelected = true; // VẪN TẠO!
             row.Status = "⚠️ No type with matching size";
         }
 
@@ -279,15 +454,26 @@ namespace JNNTool.Tools.CSIxRevit.UI
         /// </summary>
         private ElementType FindExistingType(CreateSectionItem row, List<ElementType> types)
         {
+            // Nếu dòng không phải steel/void, loại trừ các type Void_Beam để không nhận nhầm dầm bê tông thành Void!
+            var candidateTypes = row.IsSteelOrVoid
+                ? types
+                : types.Where(t =>
+                {
+                    string fName = (t.FamilyName ?? "").ToLowerInvariant();
+                    string tName = (t.Name ?? "").ToLowerInvariant();
+                    return !(fName.Contains("void") || fName.Contains("dummy") || fName.Contains("null")
+                          || tName.Contains("void") || tName.Contains("dummy") || tName.Contains("null"));
+                }).ToList();
+
             string target = string.IsNullOrWhiteSpace(row.TargetTypeName) ? row.SectionName : row.TargetTypeName.Trim();
             string cleanTarget = CleanName(target);
-            var byName = types.FirstOrDefault(t => CleanName(t.Name) == cleanTarget);
+            var byName = candidateTypes.FirstOrDefault(t => CleanName(t.Name) == cleanTarget);
             if (byName != null && SizeMatches(row, byName, allowUnknown: true)) return byName;
 
-            var bySize = types.Where(t => SizeMatches(row, t, allowUnknown: false)).ToList();
+            var bySize = candidateTypes.Where(t => SizeMatches(row, t, allowUnknown: false)).ToList();
             if (bySize.Count == 0) return null;
 
-            var defaultFamily = GetDefaultTemplate(row.ElementType, types)?.FamilyName;
+            var defaultFamily = GetDefaultTemplate(row.ElementType, candidateTypes)?.FamilyName;
             return bySize.FirstOrDefault(t => defaultFamily != null && t.FamilyName == defaultFamily)
                 ?? bySize.OrderBy(t => t.Name).First();
         }
@@ -321,22 +507,70 @@ namespace JNNTool.Tools.CSIxRevit.UI
 
         private void BindDefaultTemplateCombos()
         {
-            BindCombo(CmbDefaultBeamTemplate, _mapper.BeamSymbols.Cast<ElementType>().ToList());
-            BindCombo(CmbDefaultColTemplate, _mapper.ColumnSymbols.Cast<ElementType>().ToList());
-            BindCombo(CmbDefaultSlabTemplate, _mapper.SlabTypes.Cast<ElementType>().ToList());
-            BindCombo(CmbDefaultFoundationTemplate, _mapper.FoundationSlabTypes.Cast<ElementType>().ToList());
-            BindCombo(CmbDefaultWallTemplate, _mapper.WallTypes.Cast<ElementType>().ToList());
+            BindCombo(CmbDefaultBeamTemplate, _mapper.BeamSymbols.Cast<ElementType>().ToList(), ElementKinds.Beam);
+            BindCombo(CmbDefaultColTemplate, _mapper.ColumnSymbols.Cast<ElementType>().ToList(), ElementKinds.Column);
+            BindCombo(CmbDefaultSlabTemplate, _mapper.SlabTypes.Cast<ElementType>().ToList(), ElementKinds.Slab);
+            BindCombo(CmbDefaultFoundationTemplate, _mapper.FoundationSlabTypes.Cast<ElementType>().ToList(), ElementKinds.FoundationSlab);
+            BindCombo(CmbDefaultWallTemplate, _mapper.WallTypes.Cast<ElementType>().ToList(), ElementKinds.Wall);
         }
 
-        private static void BindCombo(System.Windows.Controls.ComboBox cmb, List<ElementType> types)
+        private static void BindCombo(System.Windows.Controls.ComboBox cmb, List<ElementType> types, string kind = null)
         {
             // Giữ lựa chọn theo Id: sau Reload các instance ElementType là object mới.
             ElementId prevId = (cmb.SelectedItem as ElementType)?.Id;
             cmb.ItemsSource = types;
             ElementType keep = prevId != null ? types.FirstOrDefault(t => t.Id == prevId) : null;
-            if (keep != null) cmb.SelectedItem = keep;
-            else if (types.Count > 0) cmb.SelectedIndex = 0;
-            else cmb.SelectedItem = null;
+            if (keep != null)
+            {
+                cmb.SelectedItem = keep;
+                return;
+            }
+
+            if (types.Count == 0)
+            {
+                cmb.SelectedItem = null;
+                return;
+            }
+
+            // Với Beam và Column: ưu tiên dầm/cột bê tông chữ nhật thật, TRÁNH xa các family Void / Dummy / Null / Steel
+            if (kind == ElementKinds.Beam || kind == ElementKinds.Column)
+            {
+                // Ưu tiên 1: Family chứa "Concrete", "Bê tông", "Rectangular" và KHÔNG chứa "Void", "Dummy", "Null", "Steel"
+                var concrete = types.FirstOrDefault(t =>
+                {
+                    string fName = (t.FamilyName ?? "").ToLowerInvariant();
+                    string tName = (t.Name ?? "").ToLowerInvariant();
+                    bool isVoidOrSteel = fName.Contains("void") || fName.Contains("dummy") || fName.Contains("null") || fName.Contains("steel")
+                                      || tName.Contains("void") || tName.Contains("dummy") || tName.Contains("null") || tName.Contains("steel");
+                    if (isVoidOrSteel) return false;
+
+                    return fName.Contains("concrete") || fName.Contains("bê tông") || fName.Contains("rectangular")
+                        || tName.Contains("concrete") || tName.Contains("bê tông") || tName.Contains("rectangular");
+                });
+
+                if (concrete != null)
+                {
+                    cmb.SelectedItem = concrete;
+                    return;
+                }
+
+                // Ưu tiên 2: Bất kỳ type nào KHÔNG chứa "Void", "Dummy", "Null", "Steel"
+                var nonVoid = types.FirstOrDefault(t =>
+                {
+                    string fName = (t.FamilyName ?? "").ToLowerInvariant();
+                    string tName = (t.Name ?? "").ToLowerInvariant();
+                    return !(fName.Contains("void") || fName.Contains("dummy") || fName.Contains("null") || fName.Contains("steel")
+                          || tName.Contains("void") || tName.Contains("dummy") || tName.Contains("null") || tName.Contains("steel"));
+                });
+
+                if (nonVoid != null)
+                {
+                    cmb.SelectedItem = nonVoid;
+                    return;
+                }
+            }
+
+            cmb.SelectedIndex = 0;
         }
 
         private System.Windows.Controls.ComboBox GetDefaultCombo(string kind)
@@ -685,6 +919,10 @@ namespace JNNTool.Tools.CSIxRevit.UI
             {
                 if (item.AvailableTypes == null || item.AvailableTypes.Count == 0) continue;
 
+                _sectionDefs.TryGetValue(item.EtabsSectionName ?? "", out var def);
+                bool isSteelOrVoid = IsSteelOrVoidSection(item.EtabsSectionName, def, item.ElementType, null);
+                item.IsSteelOrVoid = isSteelOrVoid;
+
                 // 0. Type vừa tạo ở Tab 1 cho chính tiết diện này
                 if (_pinnedTypes.TryGetValue(PinKey(item.ElementType, item.EtabsSectionName), out var pinId))
                 {
@@ -696,21 +934,53 @@ namespace JNNTool.Tools.CSIxRevit.UI
                     }
                 }
 
+                // 0.5. Nếu là thép I hoặc xà gồ hoặc void, người dùng muốn mặc định là Void_Beam
+                if (isSteelOrVoid)
+                {
+                    var voidMatch = item.AvailableTypes.FirstOrDefault(s =>
+                    {
+                        string sName = (s.Name ?? "").ToLowerInvariant();
+                        string fName = (s.FamilyName ?? "").ToLowerInvariant();
+                        return sName.Contains("void") || fName.Contains("void") || sName.Contains("dummy") || fName.Contains("dummy");
+                    });
+
+                    if (voidMatch != null)
+                    {
+                        item.SelectedType = voidMatch;
+                        continue;
+                    }
+                }
+
                 string etabsName = CleanName(item.EtabsSectionName);
 
-                // 1. Exact match
-                var exactMatch = item.AvailableTypes.FirstOrDefault(s => CleanName(s.Name) == etabsName);
+                // 1. Exact match (loại trừ Void nếu không phải steel/void)
+                var exactMatch = item.AvailableTypes.FirstOrDefault(s =>
+                {
+                    if (!isSteelOrVoid)
+                    {
+                        string sName = (s.Name ?? "").ToLowerInvariant();
+                        string fName = (s.FamilyName ?? "").ToLowerInvariant();
+                        if (sName.Contains("void") || fName.Contains("void")) return false;
+                    }
+                    return CleanName(s.Name) == etabsName;
+                });
                 if (exactMatch != null)
                 {
                     item.SelectedType = exactMatch;
                     continue;
                 }
 
-                // 2. Partial match
+                // 2. Partial match (loại trừ Void nếu không phải steel/void)
                 var partialMatch = item.AvailableTypes.FirstOrDefault(s =>
                 {
-                    string sName = CleanName(s.Name);
-                    return sName.Contains(etabsName) || etabsName.Contains(sName);
+                    if (!isSteelOrVoid)
+                    {
+                        string sName = (s.Name ?? "").ToLowerInvariant();
+                        string fName = (s.FamilyName ?? "").ToLowerInvariant();
+                        if (sName.Contains("void") || fName.Contains("void")) return false;
+                    }
+                    string sNameClean = CleanName(s.Name);
+                    return sNameClean.Contains(etabsName) || etabsName.Contains(sNameClean);
                 });
 
                 if (partialMatch != null)
@@ -723,7 +993,7 @@ namespace JNNTool.Tools.CSIxRevit.UI
                 if (ElementKinds.IsFloorLike(item.ElementType) || item.ElementType == ElementKinds.Wall)
                 {
                     double targetThickMm = 0;
-                    if (_sectionDefs.TryGetValue(item.EtabsSectionName ?? "", out var def) && def.DepthMm > 0)
+                    if (def != null && def.DepthMm > 0)
                     {
                         targetThickMm = def.DepthMm;
                     }
@@ -755,15 +1025,21 @@ namespace JNNTool.Tools.CSIxRevit.UI
                 // 4. Smart dimension match for Cột (Column) & Dầm (Beam)
                 else if (item.ElementType == ElementKinds.Column || item.ElementType == ElementKinds.Beam)
                 {
-                    if (_sectionDefs.TryGetValue(item.EtabsSectionName ?? "", out var def) && def.WidthMm > 0 && def.DepthMm > 0)
+                    if (def != null && def.WidthMm > 0 && def.DepthMm > 0)
                     {
                         string wStr = Math.Round(def.WidthMm, 0).ToString();
                         string dStr = Math.Round(def.DepthMm, 0).ToString();
 
                         var dimMatch = item.AvailableTypes.FirstOrDefault(s =>
                         {
-                            string sName = CleanName(s.Name);
-                            return sName.Contains(wStr) && sName.Contains(dStr);
+                            if (!isSteelOrVoid)
+                            {
+                                string sName = (s.Name ?? "").ToLowerInvariant();
+                                string fName = (s.FamilyName ?? "").ToLowerInvariant();
+                                if (sName.Contains("void") || fName.Contains("void")) return false;
+                            }
+                            string sNameClean = CleanName(s.Name);
+                            return sNameClean.Contains(wStr) && sNameClean.Contains(dStr);
                         });
 
                         if (dimMatch != null)
@@ -781,8 +1057,14 @@ namespace JNNTool.Tools.CSIxRevit.UI
                             string g2 = match.Groups[2].Value;
                             var dimMatch = item.AvailableTypes.FirstOrDefault(s =>
                             {
-                                string sName = CleanName(s.Name);
-                                return sName.Contains(g1) && sName.Contains(g2);
+                                if (!isSteelOrVoid)
+                                {
+                                    string sName = (s.Name ?? "").ToLowerInvariant();
+                                    string fName = (s.FamilyName ?? "").ToLowerInvariant();
+                                    if (sName.Contains("void") || fName.Contains("void")) return false;
+                                }
+                                string sNameClean = CleanName(s.Name);
+                                return sNameClean.Contains(g1) && sNameClean.Contains(g2);
                             });
                             if (dimMatch != null)
                             {
@@ -814,8 +1096,75 @@ namespace JNNTool.Tools.CSIxRevit.UI
         {
             CommitGridEdits(DgCreateSections);
             CommitGridEdits(DgMapping);
+            if (DgLevels != null) CommitGridEdits(DgLevels);
             // Đọc lại document cũng đi qua API context cho an toàn (modeless).
             RunInRevit(() => RefreshAfterTypeChange(null));
+        }
+
+        private void BtnSelectAllMapping_Click(object sender, RoutedEventArgs e)
+        {
+            CommitGridEdits(DgMapping);
+            bool anyUnchecked = MappingItems.Any(x => !x.IsSelected);
+            foreach (var item in MappingItems) item.IsSelected = anyUnchecked;
+        }
+
+        private void BtnDeselectAllMapping_Click(object sender, RoutedEventArgs e)
+        {
+            CommitGridEdits(DgMapping);
+            foreach (var item in MappingItems) item.IsSelected = false;
+        }
+
+        private void BtnAddLevelPrefix_Click(object sender, RoutedEventArgs e)
+        {
+            if (DgLevels != null) CommitGridEdits(DgLevels);
+            foreach (var item in LevelItems)
+            {
+                if (Regex.IsMatch(item.EtabsStoryName, @"^[Tt]?(\d+)$"))
+                {
+                    var m = Regex.Match(item.EtabsStoryName, @"^[Tt]?(\d+)$");
+                    item.TargetLevelName = "Tầng " + m.Groups[1].Value;
+                }
+                else if (item.EtabsStoryName.Equals("M", StringComparison.OrdinalIgnoreCase) || item.EtabsStoryName.Equals("ROOF", StringComparison.OrdinalIgnoreCase))
+                {
+                    item.TargetLevelName = "Tầng Mái";
+                }
+                else if (!item.TargetLevelName.StartsWith("Tầng ", StringComparison.OrdinalIgnoreCase))
+                {
+                    item.TargetLevelName = "Tầng " + item.TargetLevelName;
+                }
+            }
+        }
+
+        private void BtnResetLevelNames_Click(object sender, RoutedEventArgs e)
+        {
+            if (DgLevels != null) CommitGridEdits(DgLevels);
+            foreach (var item in LevelItems)
+            {
+                item.TargetLevelName = item.EtabsStoryName;
+                item.MappedLevelName = "";
+            }
+        }
+
+        private void BtnSelectAllLevels_Click(object sender, RoutedEventArgs e)
+        {
+            if (DgLevels != null) CommitGridEdits(DgLevels);
+            bool anyUnchecked = LevelItems.Any(x => !x.IsSelected);
+            foreach (var item in LevelItems) item.IsSelected = anyUnchecked;
+        }
+
+        private void BtnDeselectAllLevels_Click(object sender, RoutedEventArgs e)
+        {
+            if (DgLevels != null) CommitGridEdits(DgLevels);
+            foreach (var item in LevelItems) item.IsSelected = false;
+        }
+
+        private bool IsCategoryEnabled(string kind)
+        {
+            if (kind == ElementKinds.Column) return ImportColumns;
+            if (kind == ElementKinds.Beam) return ImportBeams;
+            if (kind == ElementKinds.Wall) return ImportWalls;
+            if (kind == ElementKinds.Slab || kind == ElementKinds.FoundationSlab) return ImportFloors;
+            return true;
         }
 
         private void BtnImport_Click(object sender, RoutedEventArgs e)
@@ -827,16 +1176,23 @@ namespace JNNTool.Tools.CSIxRevit.UI
             }
 
             CommitGridEdits(DgMapping);
+            if (DgLevels != null) CommitGridEdits(DgLevels);
 
-            // Verify if any active section is unmapped (sàn ảo cố ý bỏ qua nên không cảnh báo)
-            var unmapped = MappingItems.Where(x => x.SelectedType == null && x.ElementType != ElementKinds.VirtualSlab).ToList();
+            // Verify if any active section marked for modeling is unmapped (sàn ảo cố ý bỏ qua nên không cảnh báo)
+            var unmapped = MappingItems.Where(x =>
+                x.IsSelected &&
+                x.SelectedType == null &&
+                x.ElementType != ElementKinds.VirtualSlab &&
+                IsCategoryEnabled(x.ElementType)
+            ).ToList();
+
             if (unmapped.Count > 0)
             {
-                string unmappedNames = string.Join(", ", unmapped.Take(5).Select(x => x.EtabsSectionName));
+                string unmappedNames = string.Join(", ", unmapped.Take(5).Select(x => $"{x.EtabsSectionName} ({x.ElementType})"));
                 if (unmapped.Count > 5) unmappedNames += $", ... (+{unmapped.Count - 5})";
 
                 var res = MessageBox.Show(this,
-                    $"{unmapped.Count} section(s) are not mapped to a Revit family:\n{unmappedNames}\n\nThese elements will be skipped when building the model. Do you want to continue?",
+                    $"{unmapped.Count} cấu kiện / tiết diện đã chọn chưa được gán loại Family trong Revit:\n{unmappedNames}\n\nCác cấu kiện này sẽ bị BỎ QUA khi dựng mô hình.\n\n• Bấm 'No' để quay lại gán Family (hoặc sang Tab 1 để tạo tiết diện thiếu).\n• Bỏ tick cột 'Model' nếu bạn không muốn dựng các tiết diện này.\n• Bấm 'Yes' nếu bạn đồng ý tiếp tục và bỏ qua chúng.",
                     "JNN - CSI x Revit", MessageBoxButton.YesNo, MessageBoxImage.Warning);
 
                 if (res != MessageBoxResult.Yes) return;
@@ -879,7 +1235,7 @@ namespace JNNTool.Tools.CSIxRevit.UI
         {
             // GroupBy để không vỡ ToDictionary nếu một tên tiết diện xuất hiện 2 lần.
             return MappingItems
-                .Where(x => predicate(x) && x.SelectedType != null && !string.IsNullOrEmpty(x.EtabsSectionName))
+                .Where(x => x.IsSelected && predicate(x) && x.SelectedType != null && !string.IsNullOrEmpty(x.EtabsSectionName))
                 .GroupBy(x => x.EtabsSectionName)
                 .ToDictionary(g => g.Key, g => g.First().SelectedType);
         }
@@ -918,6 +1274,7 @@ namespace JNNTool.Tools.CSIxRevit.UI
 
         private bool _isSelected = true;
         private bool _canEdit = true;
+        private bool _isSteelOrVoid;
         private string _status = "Not in Revit yet";
         private string _targetTypeName = "";
         private List<ElementType> _allTemplates = new List<ElementType>();
@@ -941,13 +1298,63 @@ namespace JNNTool.Tools.CSIxRevit.UI
             set { _canEdit = value; OnPropertyChanged(nameof(CanEdit)); }
         }
 
-        public bool IsMissing { get; set; } = true;
+        private bool _isMissing = true;
+        public bool IsMissing
+        {
+            get => _isMissing;
+            set
+            {
+                _isMissing = value;
+                OnPropertyChanged(nameof(IsMissing));
+                OnPropertyChanged(nameof(TextColor));
+            }
+        }
         public string SectionName { get; set; } = "";
         public string ElementType { get; set; } = "";
         public string DimensionSummary { get; set; } = "";
         public double WidthMm { get; set; }
         public double DepthMm { get; set; }
         public bool IsCircular { get; set; }
+
+        public bool IsSteelOrVoid
+        {
+            get
+            {
+                // Chỉ áp dụng cho Beam và Column. Wall, Slab, FoundationSlab tuyệt đối không phải steel/void!
+                if (ElementType != ElementKinds.Beam && ElementType != ElementKinds.Column)
+                    return false;
+
+                if (!string.IsNullOrEmpty(_selectedFamily) &&
+                    (_selectedFamily.IndexOf("void", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                     _selectedFamily.IndexOf("dummy", StringComparison.OrdinalIgnoreCase) >= 0))
+                    return true;
+
+                if (_selectedTemplate != null)
+                {
+                    string tName = (_selectedTemplate.Name ?? "").ToLowerInvariant();
+                    string fName = (_selectedTemplate.FamilyName ?? "").ToLowerInvariant();
+                    if (tName.Contains("void") || fName.Contains("void") || tName.Contains("dummy") || fName.Contains("dummy"))
+                        return true;
+                }
+                return _isSteelOrVoid;
+            }
+            set
+            {
+                _isSteelOrVoid = value;
+                OnPropertyChanged(nameof(IsSteelOrVoid));
+                OnPropertyChanged(nameof(TextColor));
+            }
+        }
+
+        public string TextColor
+        {
+            get
+            {
+                if (IsSteelOrVoid) return "#DC2626"; // Thép / Void: ĐỎ
+                if (IsMissing) return "#0284C7";     // Tạo mới tiết diện: XANH DƯƠNG
+                return "#0F172A";                   // Đã có sẵn: ĐEN
+            }
+        }
 
         public string Status
         {
@@ -1016,6 +1423,8 @@ namespace JNNTool.Tools.CSIxRevit.UI
 
                 _selectedFamily = value;
                 OnPropertyChanged(nameof(SelectedFamily));
+                OnPropertyChanged(nameof(IsSteelOrVoid));
+                OnPropertyChanged(nameof(TextColor));
 
                 var filtered = FilterByFamily(value);
                 var keep = _selectedTemplate != null && filtered.Contains(_selectedTemplate) ? _selectedTemplate : filtered.FirstOrDefault();
@@ -1039,6 +1448,8 @@ namespace JNNTool.Tools.CSIxRevit.UI
                         // Type thuộc family khác (vd. Áp dụng Template) → đổi luôn family và lọc lại danh sách.
                         _selectedFamily = fam;
                         OnPropertyChanged(nameof(SelectedFamily));
+                        OnPropertyChanged(nameof(IsSteelOrVoid));
+                        OnPropertyChanged(nameof(TextColor));
                         UpdateTemplateList(FilterByFamily(fam), value);
                         return;
                     }
@@ -1046,6 +1457,8 @@ namespace JNNTool.Tools.CSIxRevit.UI
 
                 _selectedTemplate = value;
                 OnPropertyChanged(nameof(SelectedTemplate));
+                OnPropertyChanged(nameof(IsSteelOrVoid));
+                OnPropertyChanged(nameof(TextColor));
             }
         }
 
@@ -1062,6 +1475,8 @@ namespace JNNTool.Tools.CSIxRevit.UI
                 _selectedFamily = family;
                 AvailableFamilies = families;
                 OnPropertyChanged(nameof(SelectedFamily));
+                OnPropertyChanged(nameof(IsSteelOrVoid));
+                OnPropertyChanged(nameof(TextColor));
             }
             finally
             {
@@ -1087,6 +1502,8 @@ namespace JNNTool.Tools.CSIxRevit.UI
                 _selectedTemplate = selected;
                 AvailableTemplates = list;
                 OnPropertyChanged(nameof(SelectedTemplate));
+                OnPropertyChanged(nameof(IsSteelOrVoid));
+                OnPropertyChanged(nameof(TextColor));
             }
             finally
             {
@@ -1122,8 +1539,16 @@ namespace JNNTool.Tools.CSIxRevit.UI
 
     public class SectionMappingItem : INotifyPropertyChanged
     {
+        private bool _isSelected = true;
         private ElementType _selectedType;
         private List<ElementType> _availableTypes;
+        private bool _isSteelOrVoid;
+
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set { _isSelected = value; OnPropertyChanged(nameof(IsSelected)); }
+        }
 
         public string EtabsSectionName { get; set; }
         public string SectionDetails { get; set; }
@@ -1133,13 +1558,54 @@ namespace JNNTool.Tools.CSIxRevit.UI
         public ElementType SelectedType
         {
             get => _selectedType;
-            set { _selectedType = value; OnPropertyChanged(nameof(SelectedType)); }
+            set
+            {
+                _selectedType = value;
+                OnPropertyChanged(nameof(SelectedType));
+                OnPropertyChanged(nameof(IsSteelOrVoid));
+                OnPropertyChanged(nameof(TextColor));
+            }
         }
 
         public List<ElementType> AvailableTypes
         {
             get => _availableTypes;
             set { _availableTypes = value; OnPropertyChanged(nameof(AvailableTypes)); }
+        }
+
+        public bool IsSteelOrVoid
+        {
+            get
+            {
+                // Chỉ áp dụng cho Beam và Column. Wall, Slab, FoundationSlab tuyệt đối không phải steel/void!
+                if (ElementType != ElementKinds.Beam && ElementType != ElementKinds.Column)
+                    return false;
+
+                if (_selectedType != null)
+                {
+                    string name = (_selectedType.Name ?? "").ToLowerInvariant();
+                    string fam = (_selectedType.FamilyName ?? "").ToLowerInvariant();
+                    if (name.Contains("void") || fam.Contains("void") || name.Contains("dummy") || fam.Contains("dummy"))
+                        return true;
+                }
+                return _isSteelOrVoid;
+            }
+            set
+            {
+                _isSteelOrVoid = value;
+                OnPropertyChanged(nameof(IsSteelOrVoid));
+                OnPropertyChanged(nameof(TextColor));
+            }
+        }
+
+        public string TextColor
+        {
+            get
+            {
+                if (IsSteelOrVoid) return "#DC2626";       // Thép / Void: ĐỎ
+                if (SelectedType == null) return "#0284C7"; // Chưa khớp: XANH DƯƠNG
+                return "#0F172A";                          // Đã khớp: ĐEN
+            }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

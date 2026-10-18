@@ -36,6 +36,8 @@ namespace JNNTool.Tools.UIManager.Services
             Register(JNNIcon.Pile, @"<path d=""M7 3h10v10l-5 8-5-8z""/><path d=""M7 7h10M7 11h10M9 15h6""/>");
             Register(JNNIcon.Stair, @"<path d=""M3 20h5v-4h4v-4h4V8h5""/><path d=""M3 20V4h5v4h4v4h4v4h5""/>");
             Register(JNNIcon.Floor, @"<path d=""m12 3 9 5-9 5-9-5z""/><path d=""m4 12 8 4 8-4M4 16l8 5 8-5""/>");
+            Register(JNNIcon.MergeFloor, @"<rect x=""2.5"" y=""4"" width=""8"" height=""16"" rx=""1.5""/><rect x=""13.5"" y=""4"" width=""8"" height=""16"" rx=""1.5""/><path d=""M6 12h4m-1.8-2 2 2-2 2M18 12h-4m1.8-2-2 2 2 2""/>");
+            Register(JNNIcon.CutFloor, @"<rect x=""2.5"" y=""2.5"" width=""19"" height=""19"" rx=""2""/><rect x=""8"" y=""8"" width=""8"" height=""8"" rx=""1.2""/><path d=""M8 8l8 8M16 8l-8 8""/>");
             Register(JNNIcon.Section, @"<circle cx=""12"" cy=""12"" r=""9""/><path d=""M4 12h16M12 4v16""/>");
             Register(JNNIcon.Cad, @"<path d=""M5 2.5h9l5 5V21H5z""/><path d=""M14 2.5V8h5M8 12h8M8 16h5""/>");
             Register(JNNIcon.ScopeBox, @"<path d=""M8 3H4v5M16 3h4v5M4 16v5h4M20 16v5h-4""/><rect x=""7"" y=""7"" width=""10"" height=""10"" rx=""1""/>");
@@ -48,6 +50,7 @@ namespace JNNTool.Tools.UIManager.Services
             Register(JNNIcon.Dim, @"<path d=""M4 4v16M20 4v16M4 12h16""/><path d=""m7 9-3 3 3 3M17 9l3 3-3 3""/>");
             Register(JNNIcon.Extend, @"<path d=""M3 9h12v6H3zM15 5l6 7-6 7z""/>");
             Register(JNNIcon.ViewSheet, @"<rect x=""3"" y=""3"" width=""18"" height=""18"" rx=""1.5""/><path d=""M6 6h7v6H6zM15 6h3M15 9h3M6 15h12M6 18h8""/>");
+            Register(JNNIcon.CreateView, @"<rect x=""2.5"" y=""3"" width=""14"" height=""14"" rx=""1.5""/><path d=""M2.5 8.5h14M8 3v14""/><path d=""M18 17.5h5M20.5 15v5""/>");
             Register(JNNIcon.Mark, @"<path d=""m4 12 8-8h8v8l-8 8z""/><circle cx=""16"" cy=""8"" r=""1.2""/>");
             Register(JNNIcon.Quantity, @"<rect x=""3"" y=""13"" width=""4"" height=""8"" rx=""1""/><rect x=""10"" y=""8"" width=""4"" height=""13"" rx=""1""/><rect x=""17"" y=""3"" width=""4"" height=""18"" rx=""1""/>");
             Register(JNNIcon.Check, @"<path d=""m4 12 5 5L20 5""/>");

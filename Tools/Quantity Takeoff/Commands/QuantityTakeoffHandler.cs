@@ -1,12 +1,12 @@
 using System;
 using Autodesk.Revit.UI;
-using JNNTool.Core.Logging;
+using JNNTool.Tools.QuantityTakeoff.Helpers;
 
 namespace JNNTool.Tools.QuantityTakeoff.Commands
 {
     public class QuantityTakeoffHandler : IExternalEventHandler
     {
-        private Action<UIApplication>? _pendingAction;
+        private Action<UIApplication> _pendingAction;
         private readonly object _lock = new object();
 
         public void SetAction(Action<UIApplication> action)
@@ -19,7 +19,7 @@ namespace JNNTool.Tools.QuantityTakeoff.Commands
 
         public void Execute(UIApplication app)
         {
-            Action<UIApplication>? actionToRun = null;
+            Action<UIApplication> actionToRun = null;
             lock (_lock)
             {
                 actionToRun = _pendingAction;
@@ -34,7 +34,7 @@ namespace JNNTool.Tools.QuantityTakeoff.Commands
             }
             catch (Exception ex)
             {
-                Logger.Error("Lỗi thực thi trong QuantityTakeoffHandler", ex);
+                QtoLogger.Error("Lỗi thực thi trong QuantityTakeoffHandler", ex);
             }
         }
 

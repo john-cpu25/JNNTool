@@ -8,7 +8,7 @@ namespace JNNTool.Tools.QuantityTakeoff.Models
 {
     public class LevelChartItem : INotifyPropertyChanged
     {
-        public event PropertyChangedEventHandler? PropertyChanged;
+        public event PropertyChangedEventHandler PropertyChanged;
 
         public string LevelName { get; set; } = string.Empty;
         public double Elevation { get; set; }
@@ -37,10 +37,14 @@ namespace JNNTool.Tools.QuantityTakeoff.Models
         public string ElevationDisplay => $"{Elevation:N2} m";
         public string VolumeDisplay => $"{Volume:N2} m³";
         public string PercentageDisplay => $"{Percentage:N1}%";
-        public double RelativePercentage => Math.Max(5.0, Math.Min(100.0, BarWidthRatio * 100.0));
+        public double RelativePercentage
+        {
+            get => Math.Max(5.0, Math.Min(100.0, BarWidthRatio * 100.0));
+            set { }
+        }
         public string TooltipText => $"{LevelName} ({Elevation:N2} m)\n• Bê tông: {Volume:N2} m³ ({Percentage:N1}%)\n• Cốp pha: {Formwork:N2} m²\n• Thép: {Rebar:N3} Tấn";
 
-        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
