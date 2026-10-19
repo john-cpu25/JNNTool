@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 using JNNToolInstaller.Models;
 using JNNToolInstaller.Services;
@@ -12,12 +13,16 @@ public partial class MainWindow : Window
     private readonly VersionChecker _checker = new();
     private readonly InstallerService _svc = new();
     private readonly ObservableCollection<RevitVersionModel> _revitVersions = new();
+    private readonly ObservableCollection<GitHubReleaseItem> _releasesList = new();
+    private GitHubReleaseItem? _selectedRelease;
     private CancellationTokenSource? _cts;
 
     public MainWindow()
     {
         InitializeComponent();
         RevitVersionCards.ItemsSource = _revitVersions;
+        CmbReleaseSelect.ItemsSource = _releasesList;
+
         _svc.StatusChanged += s => Dispatcher.Invoke(() => TxtStatus.Text = s);
         _svc.ProgressChanged += p => Dispatcher.Invoke(() =>
         {
@@ -25,7 +30,7 @@ public partial class MainWindow : Window
             TxtProgressPercent.Text = p >= 100 ? "100%" : $"{p}%";
             if (p >= 100)
             {
-                TxtStatus.Text = "Hoàn tất!";
+                TxtStatus.Text = LocalizationService.Completed;
             }
         });
         Loaded += async (_, _) => await InitAsync();
@@ -38,12 +43,14 @@ public partial class MainWindow : Window
         SetBusy(true);
         await _checker.LoadAsync();
         RefreshUI();
+        ApplyLanguage();
         SetBusy(false);
     }
 
     private void RefreshUI()
     {
-        string installedVer = "Chưa rõ";
+        // 1. Installed Version
+        string installedVer;
         if (_checker.IsInstalled && _checker.InstalledManifest != null)
         {
             installedVer = $"v{_checker.InstalledManifest.Version}";
@@ -54,60 +61,53 @@ public partial class MainWindow : Window
         }
         else
         {
-            installedVer = "Chưa cài";
+            installedVer = LocalizationService.NotInstalled;
             TxtInstalledVerVal.Text = installedVer;
             TxtHeaderInstalledVer.Text = installedVer;
             TxtHeaderInstalledVer.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F59E0B"));
             BtnUninstall.IsEnabled = false;
         }
 
+        // 2. Online Version
         string onlineVer = "v2.1.3";
         if (_checker.LatestManifest != null)
         {
-            var m = _checker.LatestManifest;
-            onlineVer = $"v{m.Version}";
-            TxtOnlineVerVal.Text = onlineVer;
-            TxtHeaderOnlineVer.Text = onlineVer;
-            TxtChangelogVersion.Text = $"Version {m.Version}";
+            onlineVer = $"v{_checker.LatestManifest.Version}";
+        }
+        TxtOnlineVerVal.Text = onlineVer;
+        TxtHeaderOnlineVer.Text = onlineVer;
 
-            if (m.Changelog.Count > 0)
+        // 3. Status Headline & Badge Card
+        UpdateStatusBadge();
+
+        // 4. Releases Dropdown (Versions List)
+        _releasesList.Clear();
+        foreach (var rel in _checker.AvailableReleases)
+        {
+            _releasesList.Add(rel);
+        }
+
+        if (_releasesList.Count > 0)
+        {
+            CmbReleaseSelect.SelectedIndex = 0;
+            _selectedRelease = _releasesList[0];
+            UpdateChangelogView(_selectedRelease);
+        }
+        else if (_checker.LatestManifest != null)
+        {
+            var fallback = new GitHubReleaseItem
             {
-                ChangelogList.ItemsSource = m.Changelog;
-            }
-        }
-        else
-        {
-            TxtOnlineVerVal.Text = onlineVer;
-            TxtHeaderOnlineVer.Text = onlineVer;
-        }
-
-        // Status Headline & Badge Card
-        if (_checker.UpdateAvailable)
-        {
-            TxtStatusHeadline.Text = "Sẵn sàng cập nhật";
-            TxtStatusHeadline.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#34D399"));
-            StatusDot.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#10B981"));
-            StatusBadgeBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1510B981"));
-            StatusBadgeBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3310B981"));
-        }
-        else if (_checker.IsInstalled)
-        {
-            TxtStatusHeadline.Text = "Đã là phiên bản mới nhất";
-            TxtStatusHeadline.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#60A5FA"));
-            StatusDot.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3B82F6"));
-            StatusBadgeBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#153B82F6"));
-            StatusBadgeBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#333B82F6"));
-        }
-        else
-        {
-            TxtStatusHeadline.Text = "Sẵn sàng cài đặt";
-            TxtStatusHeadline.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FCD34D"));
-            StatusDot.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F59E0B"));
-            StatusBadgeBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#15F59E0B"));
-            StatusBadgeBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#33F59E0B"));
+                TagName = $"v{_checker.LatestManifest.Version}",
+                IsLatest = true,
+                Changelog = _checker.LatestManifest.Changelog
+            };
+            _releasesList.Add(fallback);
+            CmbReleaseSelect.SelectedIndex = 0;
+            _selectedRelease = fallback;
+            UpdateChangelogView(fallback);
         }
 
-        // Revit Versions List (Full Ver 2022 - 2027)
+        // 5. Revit Versions List (Full Ver 2022 - 2027)
         var detected = _svc.GetInstalledRevitVersions();
         _revitVersions.Clear();
         foreach (var year in new[] { "2022", "2023", "2024", "2025", "2026", "2027" })
@@ -124,6 +124,54 @@ public partial class MainWindow : Window
         }
 
         UpdateSelectedCount();
+        UpdateInstallActionButton();
+    }
+
+    private void UpdateStatusBadge()
+    {
+        if (_checker.UpdateAvailable)
+        {
+            TxtStatusHeadline.Text = LocalizationService.StatusReadyUpdate;
+            TxtStatusHeadline.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#34D399"));
+            StatusDot.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#10B981"));
+            StatusBadgeBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1510B981"));
+            StatusBadgeBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3310B981"));
+        }
+        else if (_checker.IsInstalled)
+        {
+            TxtStatusHeadline.Text = LocalizationService.StatusUpToDate;
+            TxtStatusHeadline.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#60A5FA"));
+            StatusDot.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3B82F6"));
+            StatusBadgeBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#153B82F6"));
+            StatusBadgeBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#333B82F6"));
+        }
+        else
+        {
+            TxtStatusHeadline.Text = LocalizationService.StatusReadyInstall;
+            TxtStatusHeadline.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FCD34D"));
+            StatusDot.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F59E0B"));
+            StatusBadgeBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#15F59E0B"));
+            StatusBadgeBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#33F59E0B"));
+        }
+    }
+
+    private void UpdateChangelogView(GitHubReleaseItem item)
+    {
+        TxtChangelogVersion.Text = $"Version {item.Version}";
+        ChangelogList.ItemsSource = item.Changelog;
+    }
+
+    private void UpdateInstallActionButton()
+    {
+        if (_checker.IsInstalled && _checker.InstalledManifest != null && _selectedRelease != null)
+        {
+            if (_selectedRelease.AsVersion() < _checker.InstalledManifest.AsVersion())
+            {
+                TxtInstallAction.Text = LocalizationService.DowngradeBtn;
+                return;
+            }
+        }
+        TxtInstallAction.Text = LocalizationService.InstallBtn;
     }
 
     private void UpdateSelectedCount()
@@ -131,6 +179,77 @@ public partial class MainWindow : Window
         int count = _revitVersions.Count(x => x.IsSelectedForInstall);
         TxtSelectedCount.Text = count.ToString();
         BadgeCountBorder.Visibility = count > 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    // ─── Bilingual Live Toggle ───────────────────────────────────────────────
+
+    private void BtnLang_Click(object sender, RoutedEventArgs e)
+    {
+        LocalizationService.ToggleLanguage();
+        ApplyLanguage();
+    }
+
+    private void ApplyLanguage()
+    {
+        BtnLang.Content = LocalizationService.LangBtnText;
+        TxtHeaderOnlineLabel.Text = LocalizationService.OnlineLabel;
+        TxtHeaderMachineLabel.Text = LocalizationService.MachineLabel;
+        TxtHeaderWarning.Text = LocalizationService.HeaderWarning;
+
+        if (!_checker.IsInstalled || _checker.InstalledManifest == null)
+        {
+            TxtHeaderInstalledVer.Text = LocalizationService.NotInstalled;
+            TxtInstalledVerVal.Text = LocalizationService.NotInstalled;
+        }
+
+        TxtOnlineVerLabel.Text = LocalizationService.OnlineVersionLabel;
+        TxtInstalledVerLabel.Text = LocalizationService.CurrentVersionLabel;
+        TxtHint.Text = LocalizationService.HintText;
+
+        TabChangelogTxt.Text = LocalizationService.TabChangelog;
+        TabInfoTxt.Text = LocalizationService.TabInfo;
+        TxtChangelogSubtitle.Text = LocalizationService.ChangelogSubtitle;
+
+        TxtInfoHeader.Text = LocalizationService.InfoHeader;
+        TxtInfoSubHeader.Text = LocalizationService.InfoSubHeader;
+        TxtInfoPlatform.Text = LocalizationService.InfoPlatform;
+        TxtInfoDeveloper.Text = LocalizationService.InfoDeveloper;
+        TxtInfoRepo.Text = LocalizationService.InfoRepo;
+        TxtInfoScope.Text = LocalizationService.InfoScope;
+
+        TxtRevitSectionTitle.Text = LocalizationService.RevitVersionsTitle;
+        TxtRevitSectionSubtitle.Text = LocalizationService.RevitVersionsSubtitle;
+        BtnSelectAll.Content = LocalizationService.SelectAll;
+        BtnDeselectAll.Content = LocalizationService.DeselectAll;
+
+        BtnUninstall.Content = LocalizationService.UninstallBtn;
+        BtnCheckUpdate.Content = LocalizationService.CheckFileBtn;
+
+        UpdateStatusBadge();
+        UpdateInstallActionButton();
+
+        // Refresh Revit Version status texts
+        foreach (var v in _revitVersions)
+        {
+            v.RefreshLanguage();
+        }
+
+        // Refresh dropdown items text
+        int currentIdx = CmbReleaseSelect.SelectedIndex;
+        CmbReleaseSelect.Items.Refresh();
+        CmbReleaseSelect.SelectedIndex = currentIdx;
+    }
+
+    // ─── Release Selection ───────────────────────────────────────────────────
+
+    private void CmbReleaseSelect_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (CmbReleaseSelect.SelectedItem is GitHubReleaseItem selected)
+        {
+            _selectedRelease = selected;
+            UpdateChangelogView(selected);
+            UpdateInstallActionButton();
+        }
     }
 
     // ─── Tabs Switching ──────────────────────────────────────────────────────
@@ -189,12 +308,15 @@ public partial class MainWindow : Window
     {
         SetBusy(true);
         ProgressPanel.Visibility = Visibility.Visible;
-        TxtStatus.Text = "Đang kiểm tra phiên bản mới nhất từ Git (GitHub)...";
+        TxtStatus.Text = LocalizationService.IsEnglish
+            ? "Checking for latest releases from GitHub..."
+            : "Đang kiểm tra phiên bản mới nhất từ Git (GitHub)...";
         TxtProgressPercent.Text = "";
         ProgressBar.IsIndeterminate = true;
 
         await _checker.LoadAsync();
         RefreshUI();
+        ApplyLanguage();
 
         ProgressBar.IsIndeterminate = false;
         ProgressPanel.Visibility = Visibility.Collapsed;
@@ -202,57 +324,69 @@ public partial class MainWindow : Window
 
         if (_checker.UpdateAvailable)
         {
-            MessageBox.Show(
-                $"Đã tìm thấy phiên bản mới trên Git: v{_checker.LatestManifest!.Version}!\n" +
-                $"Ngày phát hành: {_checker.LatestManifest.ReleaseDate}\n\n" +
-                "Bạn có thể nhấn nút 'Cài đặt / Cập nhật' để tự động tải và cài đặt ngay.",
-                "Có bản cập nhật mới",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            string msg = LocalizationService.IsEnglish
+                ? $"New version found on GitHub: v{_checker.LatestManifest!.Version}!\n" +
+                  $"Release date: {_checker.LatestManifest.ReleaseDate}\n\n" +
+                  "Click 'Install / Update' to automatically download and install now."
+                : $"Đã tìm thấy phiên bản mới trên Git: v{_checker.LatestManifest!.Version}!\n" +
+                  $"Ngày phát hành: {_checker.LatestManifest.ReleaseDate}\n\n" +
+                  "Bạn có thể nhấn nút 'Cài đặt / Cập nhật' để tự động tải và cài đặt ngay.";
+
+            string title = LocalizationService.IsEnglish ? "Update Available" : "Có bản cập nhật mới";
+            MessageBox.Show(msg, title, MessageBoxButton.OK, MessageBoxImage.Information);
         }
         else if (_checker.IsInstalled)
         {
-            MessageBox.Show(
-                $"Bạn đang dùng phiên bản mới nhất (v{_checker.InstalledManifest?.Version ?? "2.1.3"}) từ Git!\n\n" +
-                "Nếu cần cài lại, bạn có thể nhấn nút 'Cài đặt / Cập nhật'.",
-                "Đã là phiên bản mới nhất",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            string msg = LocalizationService.IsEnglish
+                ? $"You are using the latest version (v{_checker.InstalledManifest?.Version ?? "2.1.3"})!\n\n" +
+                  "If you need to reinstall, click 'Install / Update'."
+                : $"Bạn đang dùng phiên bản mới nhất (v{_checker.InstalledManifest?.Version ?? "2.1.3"}) từ Git!\n\n" +
+                  "Nếu cần cài lại, bạn có thể nhấn nút 'Cài đặt / Cập nhật'.";
+
+            string title = LocalizationService.IsEnglish ? "Up to Date" : "Đã là phiên bản mới nhất";
+            MessageBox.Show(msg, title, MessageBoxButton.OK, MessageBoxImage.Information);
         }
         else
         {
-            MessageBox.Show(
-                $"Phiên bản mới nhất trên Git: v{_checker.LatestManifest?.Version ?? "2.1.3"}.\n" +
-                "Nhấn 'Cài đặt / Cập nhật' để tiến hành cài đặt vào Revit.",
-                "Thông tin phiên bản",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            string msg = LocalizationService.IsEnglish
+                ? $"Latest version on GitHub: v{_checker.LatestManifest?.Version ?? "2.1.3"}.\n" +
+                  "Click 'Install' to install into Revit."
+                : $"Phiên bản mới nhất trên Git: v{_checker.LatestManifest?.Version ?? "2.1.3"}.\n" +
+                  "Nhấn 'Cài đặt / Cập nhật' để tiến hành cài đặt vào Revit.";
+
+            string title = LocalizationService.IsEnglish ? "Version Info" : "Thông tin phiên bản";
+            MessageBox.Show(msg, title, MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
 
     private async void BtnInstall_Click(object sender, RoutedEventArgs e)
     {
-        if (_checker.LatestManifest == null)
+        var targetManifest = new VersionManifest
         {
-            MessageBox.Show("Không đọc được version manifest.", "Lỗi",
-                MessageBoxButton.OK, MessageBoxImage.Error);
-            return;
-        }
+            Version = _selectedRelease?.Version ?? _checker.LatestManifest?.Version ?? "2.1.3",
+            DownloadUrl = _selectedRelease?.DownloadUrl ?? _checker.LatestManifest?.DownloadUrl ?? "",
+            ReleaseDate = _checker.LatestManifest?.ReleaseDate ?? DateTime.UtcNow.ToString("yyyy-MM-dd"),
+            Changelog = _selectedRelease?.Changelog ?? _checker.LatestManifest?.Changelog ?? new List<string>()
+        };
 
         var selectedVersions = _revitVersions.Where(x => x.IsSelectedForInstall).ToList();
         if (selectedVersions.Count == 0)
         {
-            MessageBox.Show("Vui lòng chọn ít nhất một phiên bản Revit để cài đặt.", "Chưa chọn phiên bản Revit",
+            MessageBox.Show(
+                LocalizationService.MsgSelectRevitPrompt,
+                LocalizationService.MsgSelectRevitTitle,
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
-        var url = _checker.LatestManifest.DownloadUrl;
+        var url = targetManifest.DownloadUrl;
         if (string.IsNullOrWhiteSpace(url) || url.Contains("YOUR_USERNAME"))
         {
-            MessageBox.Show(
-                "Chưa có link tải về trong manifest.\n\n" +
-                "Tác giả cần upload release lên GitHub trước.\n" +
-                "Link: github.com/john-cpu25/JNNTool/releases",
-                "Chưa có bản phát hành",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            string msg = LocalizationService.IsEnglish
+                ? "No download link found for this release.\n\nLink: github.com/john-cpu25/JNNTool/releases"
+                : "Chưa có link tải về trong manifest.\n\nLink: github.com/john-cpu25/JNNTool/releases";
+            string title = LocalizationService.IsEnglish ? "No Release Found" : "Chưa có bản phát hành";
+            MessageBox.Show(msg, title, MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
 
@@ -261,36 +395,38 @@ public partial class MainWindow : Window
         ProgressPanel.Visibility = Visibility.Visible;
         ProgressBar.Value = 0;
         ProgressBar.IsIndeterminate = false;
+        TxtStatus.Text = LocalizationService.Installing;
 
         try
         {
-            await _svc.InstallAsync(_checker.LatestManifest, _cts.Token);
+            await _svc.InstallAsync(targetManifest, _cts.Token);
             await _checker.LoadAsync();
             RefreshUI();
-            TxtStatus.Text = "Hoàn tất!";
+            ApplyLanguage();
+            TxtStatus.Text = LocalizationService.Completed;
             TxtProgressPercent.Text = "100%";
             ProgressBar.Value = 100;
-            MessageBox.Show("Cài đặt / Cập nhật JNNTool thành công!\nVui lòng khởi động lại Revit để sử dụng.", "Thành công",
+            MessageBox.Show(
+                LocalizationService.MsgInstallSuccess,
+                LocalizationService.IsEnglish ? "Success" : "Thành công",
                 MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (OperationCanceledException)
         {
-            TxtStatus.Text = "Đã hủy thao tác.";
+            TxtStatus.Text = LocalizationService.IsEnglish ? "Operation cancelled." : "Đã hủy thao tác.";
         }
         catch (System.Net.Http.HttpRequestException httpEx) when
             (httpEx.Message.Contains("404") || httpEx.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
-            MessageBox.Show(
-                "Không tìm thấy file tải về trên GitHub (404).\n\n" +
-                "Hãy upload file MSI lên GitHub Releases rồi thử lại.\n" +
-                "Link: github.com/john-cpu25/JNNTool/releases",
-                "Không tìm thấy bản phát hành",
+            string notFoundMsg = LocalizationService.IsEnglish
+                ? $"Could not find MSI package for release v{targetManifest.Version} on GitHub (404).\n\nPlease check github.com/john-cpu25/JNNTool/releases"
+                : $"Không tìm thấy file tải về cho bản v{targetManifest.Version} trên GitHub (404).\n\nHãy kiểm tra lại github.com/john-cpu25/JNNTool/releases";
+            MessageBox.Show(notFoundMsg, LocalizationService.IsEnglish ? "Release Not Found" : "Không tìm thấy bản phát hành",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Lỗi cài đặt:\n{ex.Message}", "Lỗi",
-                MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Error:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {
@@ -301,9 +437,8 @@ public partial class MainWindow : Window
     private async void BtnUninstall_Click(object sender, RoutedEventArgs e)
     {
         var result = MessageBox.Show(
-            "Bạn có chắc muốn gỡ cài đặt JNNTool Plugin không?\n" +
-            "Plugin sẽ bị xóa khỏi tất cả các phiên bản Revit.",
-            "Xác nhận gỡ cài đặt",
+            LocalizationService.MsgConfirmUninstall,
+            LocalizationService.MsgUninstallTitle,
             MessageBoxButton.YesNo, MessageBoxImage.Question);
 
         if (result != MessageBoxResult.Yes) return;
@@ -311,21 +446,24 @@ public partial class MainWindow : Window
         SetBusy(true);
         ProgressPanel.Visibility = Visibility.Visible;
         ProgressBar.IsIndeterminate = true;
+        TxtStatus.Text = LocalizationService.IsEnglish ? "Uninstalling JNNTool..." : "Đang gỡ cài đặt JNNTool...";
 
         try
         {
             await _svc.UninstallAsync();
             await _checker.LoadAsync();
             RefreshUI();
+            ApplyLanguage();
             ProgressPanel.Visibility = Visibility.Collapsed;
             ProgressBar.IsIndeterminate = false;
-            MessageBox.Show("Đã gỡ cài đặt JNNTool hoàn tất.", "Gỡ cài đặt",
+            MessageBox.Show(
+                LocalizationService.MsgUninstallSuccess,
+                LocalizationService.IsEnglish ? "Uninstall Completed" : "Gỡ cài đặt",
                 MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Lỗi gỡ cài đặt:\n{ex.Message}", "Lỗi",
-                MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Error:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {
@@ -340,6 +478,8 @@ public partial class MainWindow : Window
         BtnInstall.IsEnabled = !busy;
         BtnUninstall.IsEnabled = !busy && _checker.IsInstalled;
         BtnCheckUpdate.IsEnabled = !busy;
+        CmbReleaseSelect.IsEnabled = !busy;
+        BtnLang.IsEnabled = !busy;
     }
 
     // ─── Window Chrome ───────────────────────────────────────────────────────

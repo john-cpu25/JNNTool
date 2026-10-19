@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Windows;
+using JNNToolInstaller.Services;
 
 namespace JNNToolInstaller.Models;
 
@@ -36,7 +37,10 @@ public class RevitVersionModel : INotifyPropertyChanged
         }
     }
 
-    public string StatusText => IsInstalledInMachine ? "Đã cài đặt" : "Chưa cài đặt";
+    public string StatusText => IsInstalledInMachine
+        ? LocalizationService.Installed
+        : LocalizationService.NotInstalled;
+
     public string StatusColor => IsInstalledInMachine ? "#10B981" : "#475569";
 
     public string YearColor => _isSelectedForInstall
@@ -64,6 +68,11 @@ public class RevitVersionModel : INotifyPropertyChanged
     public Visibility GreenDotVisibility => IsInstalledInMachine ? Visibility.Visible : Visibility.Collapsed;
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    public void RefreshLanguage()
+    {
+        OnPropertyChanged(nameof(StatusText));
+    }
 
     private void NotifyAll()
     {
