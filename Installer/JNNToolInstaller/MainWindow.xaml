@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="JNN-STRUCTURAL"
-        Width="900" Height="610"
+        Width="920" Height="630"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         WindowStyle="None"
@@ -200,22 +200,106 @@
             </Setter>
         </Style>
 
-        <!-- Dark ComboBox Style -->
-        <Style x:Key="DarkComboBoxStyle" TargetType="ComboBox">
-            <Setter Property="Background" Value="#0AFFFFFF"/>
+        <!-- Dark ComboBox Item Style -->
+        <Style x:Key="DarkComboBoxItemStyle" TargetType="ComboBoxItem">
             <Setter Property="Foreground" Value="#94A3B8"/>
-            <Setter Property="BorderBrush" Value="#1FFFFFFF"/>
-            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border x:Name="ItemBd" Background="Transparent" CornerRadius="6" Padding="{TemplateBinding Padding}" Margin="2,1">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ItemBd" Property="Background" Value="#1A3B82F6"/>
+                                <Setter Property="Foreground" Value="#60A5FA"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="ItemBd" Property="Background" Value="#2B3B82F6"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Dark ComboBox Toggle Button Template -->
+        <ControlTemplate x:Key="DarkComboBoxToggleButton" TargetType="ToggleButton">
+            <Border x:Name="BtnBorder" Background="#0DFFFFFF" BorderBrush="#26FFFFFF" BorderThickness="1" CornerRadius="8">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="22"/>
+                    </Grid.ColumnDefinitions>
+                    <!-- Chevron Down Icon -->
+                    <Path Grid.Column="1" Width="7" Height="4" Stretch="Uniform" Fill="#64748B" HorizontalAlignment="Center" VerticalAlignment="Center"
+                          Data="M0,0 L4,4 L8,0 Z"/>
+                </Grid>
+            </Border>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="BtnBorder" Property="Background" Value="#1AFFFFFF"/>
+                    <Setter TargetName="BtnBorder" Property="BorderBrush" Value="#40FFFFFF"/>
+                </Trigger>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter TargetName="BtnBorder" Property="Background" Value="#22FFFFFF"/>
+                    <Setter TargetName="BtnBorder" Property="BorderBrush" Value="#3B82F6"/>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
+        <!-- Dark ComboBox Style (Bo tròn 8px, Dark Mode) -->
+        <Style x:Key="DarkComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="Foreground" Value="#CBD5E1"/>
             <Setter Property="FontSize" Value="11.5"/>
             <Setter Property="Height" Value="32"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="ItemContainerStyle" Value="{StaticResource DarkComboBoxItemStyle}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <!-- Background ToggleButton -->
+                            <ToggleButton Template="{StaticResource DarkComboBoxToggleButton}"
+                                          Focusable="False" ClickMode="Press"
+                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"/>
+
+                            <!-- Selected Content -->
+                            <ContentPresenter IsHitTestVisible="False" Margin="10,0,24,0"
+                                              VerticalAlignment="Center" HorizontalAlignment="Left"
+                                              Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"/>
+
+                            <!-- Dropdown Popup -->
+                            <Popup x:Name="PART_Popup" AllowsTransparency="True" Focusable="False"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   Placement="Bottom" PopupAnimation="Slide">
+                                <Border Background="#161B25" BorderBrush="#25FFFFFF" BorderThickness="1" CornerRadius="8"
+                                        MinWidth="140" MaxHeight="200" Margin="0,4,0,0" Padding="4">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#000000" BlurRadius="16" ShadowDepth="6" Opacity="0.6"/>
+                                    </Border.Effect>
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" Focusable="False">
+                                        <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
     </Window.Resources>
 
-    <!-- Outer Card Container -->
-    <Border CornerRadius="16" Background="#0D1117" BorderBrush="#1FFFFFFF" BorderThickness="1" ClipToBounds="True">
+    <!-- Outer Card Container (Bo tròn 10px 4 góc) -->
+    <Border Margin="10" CornerRadius="10" Background="#0D1117" BorderBrush="#1FFFFFFF" BorderThickness="1">
         <Border.Effect>
-            <DropShadowEffect Color="#000000" BlurRadius="40" ShadowDepth="10" Opacity="0.65"/>
+            <DropShadowEffect Color="#000000" BlurRadius="20" ShadowDepth="4" Opacity="0.55"/>
         </Border.Effect>
 
         <Grid>
@@ -229,7 +313,7 @@
             <!-- ═══════════════════════════════════════════════════════════════
                  ROW 0: HEADER NAVBAR
                  ═══════════════════════════════════════════════════════════════ -->
-            <Border Grid.Row="0" Padding="18,12" MouseDown="TitleBar_MouseDown" Cursor="SizeAll"
+            <Border Grid.Row="0" CornerRadius="10,10,0,0" Padding="18,12" MouseDown="TitleBar_MouseDown" Cursor="SizeAll"
                     BorderBrush="#10FFFFFF" BorderThickness="0,0,0,1">
                 <Border.Background>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
@@ -588,7 +672,7 @@
             <!-- ═══════════════════════════════════════════════════════════════
                  ROW 3: FOOTER ACTION BAR
                  ═══════════════════════════════════════════════════════════════ -->
-            <Border Grid.Row="3" Background="#0D1117" BorderBrush="#14FFFFFF" BorderThickness="0,1,0,0" Padding="18,12" Margin="0,14,0,0">
+            <Border Grid.Row="3" CornerRadius="0,0,10,10" Background="#0D1117" BorderBrush="#14FFFFFF" BorderThickness="0,1,0,0" Padding="18,12" Margin="0,14,0,0">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/> <!-- Left: Uninstall & Lang -->
