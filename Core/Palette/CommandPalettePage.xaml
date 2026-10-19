@@ -3,12 +3,12 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       Title="JNN Command Palette"
       FontFamily="Segoe UI" FontSize="12"
-      MinWidth="220"
+      MinWidth="240"
       SnapsToDevicePixels="True" UseLayoutRounding="True">
 
     <Page.Resources>
         <ResourceDictionary>
-            <!-- COLOR TOKENS -->
+            <!-- COLOR TOKENS (Đồng bộ theo Ribbon Theme của JNNTool) -->
             <SolidColorBrush x:Key="BrushBgCanvas" Color="#F5F7F9" />
             <SolidColorBrush x:Key="BrushBgSurface" Color="#FFFFFF" />
             <SolidColorBrush x:Key="BrushBgHover" Color="#F0F9FF" />
@@ -21,12 +21,11 @@
             <SolidColorBrush x:Key="BrushPrimary" Color="#0284C7" />
             <SolidColorBrush x:Key="BrushPrimaryHover" Color="#0369A1" />
             <SolidColorBrush x:Key="BrushPrimaryLight" Color="#E0F2FE" />
+            <SolidColorBrush x:Key="BrushHighlightBg" Color="#BAE6FD" />
+            <SolidColorBrush x:Key="BrushHighlightBorder" Color="#38BDF8" />
             <SolidColorBrush x:Key="BrushStar" Color="#F59E0B" />
             <SolidColorBrush x:Key="BrushSuccess" Color="#10B981" />
             <SolidColorBrush x:Key="BrushDanger" Color="#EF4444" />
-
-            <DropShadowEffect x:Key="TileShadow" BlurRadius="4" ShadowDepth="1" Direction="270" Color="#0F172A" Opacity="0.04" />
-            <DropShadowEffect x:Key="TileShadowHover" BlurRadius="8" ShadowDepth="2" Direction="270" Color="#0284C7" Opacity="0.18" />
 
             <BooleanToVisibilityConverter x:Key="BoolToVis" />
 
@@ -73,53 +72,19 @@
                 </Setter>
             </Style>
 
-            <!-- Nút toggle lọc lệnh yêu thích -->
-            <Style x:Key="FavToggleStyle" TargetType="ToggleButton">
-                <Setter Property="Width" Value="32" />
-                <Setter Property="Height" Value="32" />
+            <!-- Ngôi sao nhỏ ghim trên mỗi hàng lệnh -->
+            <Style x:Key="RowStarStyle" TargetType="ToggleButton">
+                <Setter Property="Width" Value="24" />
+                <Setter Property="Height" Value="24" />
                 <Setter Property="Cursor" Value="Hand" />
                 <Setter Property="Focusable" Value="False" />
-                <Setter Property="ToolTip" Value="Chỉ hiện các lệnh đã ghim yêu thích (★)" />
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="ToggleButton">
-                            <Border x:Name="bd" Background="{StaticResource BrushBgSurface}" CornerRadius="5"
-                                    BorderBrush="{StaticResource BrushBorderInput}" BorderThickness="1">
-                                <Path x:Name="star" Width="14" Height="14" Stretch="Uniform"
+                            <Border x:Name="bd" Background="Transparent" CornerRadius="4">
+                                <Path x:Name="star" Width="12" Height="12" Stretch="Uniform"
                                       Data="M12,2 L15.09,8.26 L22,9.27 L17,14.14 L18.18,21.02 L12,17.77 L5.82,21.02 L7,14.14 L2,9.27 L8.91,8.26 Z"
                                       Fill="Transparent" Stroke="{StaticResource BrushTextSubtle}" StrokeThickness="1.5"
-                                      StrokeLineJoin="Round" />
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource BrushStar}" />
-                                    <Setter TargetName="star" Property="Stroke" Value="{StaticResource BrushStar}" />
-                                </Trigger>
-                                <Trigger Property="IsChecked" Value="True">
-                                    <Setter TargetName="bd" Property="Background" Value="#FFFBEB" />
-                                    <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource BrushStar}" />
-                                    <Setter TargetName="star" Property="Fill" Value="{StaticResource BrushStar}" />
-                                    <Setter TargetName="star" Property="Stroke" Value="{StaticResource BrushStar}" />
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-
-            <!-- Ngôi sao nhỏ ghim trên mỗi card lệnh -->
-            <Style x:Key="TileStarStyle" TargetType="ToggleButton">
-                <Setter Property="Width" Value="22" />
-                <Setter Property="Height" Value="22" />
-                <Setter Property="Cursor" Value="Hand" />
-                <Setter Property="Focusable" Value="False" />
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="ToggleButton">
-                            <Border x:Name="bd" Background="Transparent" CornerRadius="5">
-                                <Path x:Name="star" Width="11" Height="11" Stretch="Uniform"
-                                      Data="M12,2 L15.09,8.26 L22,9.27 L17,14.14 L18.18,21.02 L12,17.77 L5.82,21.02 L7,14.14 L2,9.27 L8.91,8.26 Z"
-                                      Fill="Transparent" Stroke="{StaticResource BrushTextSubtle}" StrokeThickness="1.8"
                                       StrokeLineJoin="Round" />
                             </Border>
                             <ControlTemplate.Triggers>
@@ -137,15 +102,15 @@
                 </Setter>
             </Style>
 
-            <!-- Nút card lệnh (Tile) -->
-            <Style x:Key="TileButtonStyle" TargetType="Button">
-                <Setter Property="Width" Value="100" />
-                <Setter Property="Height" Value="86" />
-                <Setter Property="Margin" Value="4" />
+            <!-- Nút công cụ hàng ngang (Tool Row Button) -->
+            <Style x:Key="ToolRowButtonStyle" TargetType="Button">
+                <Setter Property="Height" Value="38" />
+                <Setter Property="Margin" Value="0,0,0,5" />
                 <Setter Property="Cursor" Value="Hand" />
                 <Setter Property="Background" Value="{StaticResource BrushBgSurface}" />
                 <Setter Property="BorderBrush" Value="{StaticResource BrushBorderSubtle}" />
                 <Setter Property="Foreground" Value="{StaticResource BrushTextMain}" />
+                <Setter Property="BorderThickness" Value="1" />
                 <Setter Property="FocusVisualStyle" Value="{x:Null}" />
                 <Setter Property="ToolTipService.InitialShowDelay" Value="300" />
                 <Setter Property="ToolTipService.ShowDuration" Value="15000" />
@@ -153,15 +118,14 @@
                     <Setter.Value>
                         <ControlTemplate TargetType="Button">
                             <Border x:Name="bd" Background="{TemplateBinding Background}"
-                                    BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1"
-                                    CornerRadius="5" Effect="{StaticResource TileShadow}">
+                                    BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="5">
                                 <ContentPresenter />
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
                                     <Setter TargetName="bd" Property="Background" Value="{StaticResource BrushBgHover}" />
-                                    <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource BrushPrimary}" />
-                                    <Setter TargetName="bd" Property="Effect" Value="{StaticResource TileShadowHover}" />
+                                    <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource BrushBorderFocus}" />
                                 </Trigger>
                                 <Trigger Property="IsPressed" Value="True">
                                     <Setter TargetName="bd" Property="Background" Value="{StaticResource BrushPrimaryLight}" />
@@ -172,9 +136,9 @@
                 </Setter>
             </Style>
 
-            <!-- Template cho từng ô lệnh -->
-            <DataTemplate x:Key="TileTemplate">
-                <Button Style="{StaticResource TileButtonStyle}" Click="Tile_Click">
+            <!-- Template cho từng hàng công cụ (List item) -->
+            <DataTemplate x:Key="ToolRowTemplate">
+                <Button x:Name="btnRow" Style="{StaticResource ToolRowButtonStyle}" Click="ToolRow_Click">
                     <Button.ToolTip>
                         <ToolTip MaxWidth="320" Padding="10,8">
                             <StackPanel>
@@ -187,31 +151,39 @@
                             </StackPanel>
                         </ToolTip>
                     </Button.ToolTip>
-                    <Grid x:Name="tileRoot" Background="Transparent">
-                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="5,5,5,3">
-                            <Grid Width="32" Height="32" HorizontalAlignment="Center">
-                                <Image Source="{Binding Icon}" Width="28" Height="28"
-                                       RenderOptions.BitmapScalingMode="HighQuality"
-                                       Visibility="{Binding HasIcon, Converter={StaticResource BoolToVis}}" />
-                                <!-- Badge chữ cái đầu nếu không có file icon -->
-                                <Border x:Name="badge" CornerRadius="5" Visibility="Collapsed">
-                                    <Border.Background>
-                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                            <GradientStop Color="#38BDF8" Offset="0" />
-                                            <GradientStop Color="#0284C7" Offset="1" />
-                                        </LinearGradientBrush>
-                                    </Border.Background>
-                                    <TextBlock Text="{Binding Initials}" Foreground="White" FontWeight="Normal" FontSize="11"
-                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                </Border>
-                            </Grid>
-                            <TextBlock Text="{Binding Title}" TextWrapping="Wrap" TextAlignment="Center"
-                                       TextTrimming="CharacterEllipsis" MaxHeight="32"
-                                       FontSize="11" Margin="0,5,0,0" LineHeight="14"
-                                       FontWeight="Normal" Foreground="{StaticResource BrushTextMain}" />
-                        </StackPanel>
-                        <ToggleButton x:Name="star" Style="{StaticResource TileStarStyle}"
-                                      HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,2,2,0"
+                    <Grid x:Name="rowRoot" Background="Transparent">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="38" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="30" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Icon công cụ bên trái -->
+                        <Grid Grid.Column="0" Width="24" Height="24" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Image Source="{Binding Icon}" Width="22" Height="22"
+                                   RenderOptions.BitmapScalingMode="HighQuality"
+                                   Visibility="{Binding HasIcon, Converter={StaticResource BoolToVis}}" />
+                            <!-- Badge chữ cái đầu nếu không có file icon -->
+                            <Border x:Name="badge" CornerRadius="4" Visibility="Collapsed" Width="22" Height="22">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#38BDF8" Offset="0" />
+                                        <GradientStop Color="#0284C7" Offset="1" />
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <TextBlock Text="{Binding Initials}" Foreground="White" FontWeight="Normal" FontSize="10"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                        </Grid>
+
+                        <!-- Tên công cụ ở giữa -->
+                        <TextBlock Grid.Column="1" Text="{Binding Title}" VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis" FontSize="12" FontWeight="Normal"
+                                   Foreground="{StaticResource BrushTextMain}" Margin="2,0,4,0" />
+
+                        <!-- Ngôi sao nhỏ ghim lệnh yêu thích bên phải -->
+                        <ToggleButton Grid.Column="2" x:Name="star" Style="{StaticResource RowStarStyle}"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center"
                                       IsChecked="{Binding IsFavorite, Mode=TwoWay}"
                                       Click="Star_Click" Opacity="0"
                                       ToolTip="Ghim / Bỏ ghim lệnh yêu thích" />
@@ -224,139 +196,291 @@
                     <DataTrigger Binding="{Binding IsFavorite}" Value="True">
                         <Setter TargetName="star" Property="Opacity" Value="1" />
                     </DataTrigger>
-                    <Trigger SourceName="tileRoot" Property="IsMouseOver" Value="True">
+                    <Trigger SourceName="rowRoot" Property="IsMouseOver" Value="True">
                         <Setter TargetName="star" Property="Opacity" Value="1" />
                     </Trigger>
-                </DataTemplate.Triggers>
-            </DataTemplate>
-
-            <!-- Template cho từng nhóm lệnh -->
-            <DataTemplate x:Key="GroupTemplate">
-                <StackPanel Margin="0,0,0,10">
-                    <Grid Margin="6,4,6,4">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock x:Name="groupName" Text="{Binding Name}" FontWeight="Normal" FontSize="12"
-                                   Foreground="{StaticResource BrushPrimary}" VerticalAlignment="Center" />
-                        <Border Grid.Column="1" Background="{StaticResource BrushPrimaryLight}" CornerRadius="5"
-                                Padding="6,1" Margin="6,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding Count}" FontSize="10" FontWeight="Normal"
-                                       Foreground="{StaticResource BrushPrimaryHover}" />
-                        </Border>
-                        <Rectangle Grid.Column="2" Height="1" Fill="{StaticResource BrushBorderSubtle}"
-                                   Margin="8,0,0,0" VerticalAlignment="Center" />
-                    </Grid>
-                    <ItemsControl ItemsSource="{Binding Items}" ItemTemplate="{StaticResource TileTemplate}"
-                                  Focusable="False">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel Orientation="Horizontal" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                    </ItemsControl>
-                </StackPanel>
-                <DataTemplate.Triggers>
-                    <DataTrigger Binding="{Binding IsFavorites}" Value="True">
-                        <Setter TargetName="groupName" Property="Foreground" Value="#D97706" />
+                    <!-- Highlight màu xanh dương nhạt như nút Add Shared Param trong hình 1 -->
+                    <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
+                        <Setter TargetName="btnRow" Property="Background" Value="{StaticResource BrushHighlightBg}" />
+                        <Setter TargetName="btnRow" Property="BorderBrush" Value="{StaticResource BrushHighlightBorder}" />
                     </DataTrigger>
                 </DataTemplate.Triggers>
             </DataTemplate>
+
+            <!-- Style nút Category Tab dọc bên phải -->
+            <Style x:Key="CategoryTabBtnStyle" TargetType="Button">
+                <Setter Property="Width" Value="50" />
+                <Setter Property="Height" Value="46" />
+                <Setter Property="Margin" Value="0,2,0,3" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Background" Value="#F8FAFC" />
+                <Setter Property="BorderBrush" Value="{StaticResource BrushBorderSubtle}" />
+                <Setter Property="Foreground" Value="{StaticResource BrushTextMuted}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="5">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="bd" Property="Background" Value="#F1F5F9" />
+                                    <Setter Property="Foreground" Value="{StaticResource BrushPrimary}" />
+                                    <Setter TargetName="bd" Property="BorderBrush" Value="#CBD5E1" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Template cho từng tab Category dọc -->
+            <DataTemplate x:Key="CategoryTabTemplate">
+                <Button x:Name="btnCat" Style="{StaticResource CategoryTabBtnStyle}" Click="CategoryTab_Click">
+                    <Button.ToolTip>
+                        <ToolTip Content="{Binding FullName}" />
+                    </Button.ToolTip>
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <!-- Icon Category -->
+                        <Path Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Center"
+                              Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                              Data="{Binding IconData}" />
+                        <!-- Tên ngắn Category -->
+                        <TextBlock Text="{Binding Name}" FontSize="9.5" FontWeight="Normal"
+                                   HorizontalAlignment="Center" Margin="0,3,0,0"
+                                   Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                   TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </Button>
+                <DataTemplate.Triggers>
+                    <!-- Active tab: Nền màu Primary, icon & text màu trắng -->
+                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                        <Setter TargetName="btnCat" Property="Background" Value="{StaticResource BrushPrimary}" />
+                        <Setter TargetName="btnCat" Property="Foreground" Value="#FFFFFF" />
+                        <Setter TargetName="btnCat" Property="BorderBrush" Value="{StaticResource BrushPrimary}" />
+                    </DataTrigger>
+                </DataTemplate.Triggers>
+            </DataTemplate>
+
+            <!-- Style nút chức năng Footer (Settings & License) -->
+            <Style x:Key="FooterActionBtnStyle" TargetType="Button">
+                <Setter Property="Height" Value="26" />
+                <Setter Property="Padding" Value="10,0" />
+                <Setter Property="Background" Value="#F1F5F9" />
+                <Setter Property="BorderBrush" Value="{StaticResource BrushBorderInput}" />
+                <Setter Property="Foreground" Value="{StaticResource BrushTextMain}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="FontSize" Value="11.5" />
+                <Setter Property="FontWeight" Value="Normal" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="5">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="bd" Property="Background" Value="#E2E8F0" />
+                                    <Setter Property="Foreground" Value="#0F172A" />
+                                    <Setter TargetName="bd" Property="BorderBrush" Value="#94A3B8" />
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="bd" Property="Background" Value="#CBD5E1" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Style nút Theme Footer -->
+            <Style x:Key="FooterTextBtnStyle" TargetType="Button">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="5" Padding="4,2">
+                                <ContentPresenter VerticalAlignment="Center" />
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Style nút Chấm tròn màu Theme -->
+            <Style x:Key="ThemeDotBtnStyle" TargetType="Button">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center" />
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </Page.Resources>
 
     <Grid Background="{StaticResource BrushBgCanvas}">
         <Grid.RowDefinitions>
-            <!-- Row 0: Search & Filters -->
+            <!-- Row 0: Search tools... Bar -->
             <RowDefinition Height="Auto" />
-            <!-- Row 1: Command List -->
+            <!-- Row 1: 2-Column Body (Left: Tool Rows, Right: Category Tabs) -->
             <RowDefinition Height="*" />
-            <!-- Row 2: Status Footer -->
-            <RowDefinition Height="Auto" />
+            <!-- Row 2: Footer (Theme + Settings + License) -->
+            <RowDefinition Height="40" />
         </Grid.RowDefinitions>
 
-        <!-- TOP BAR: Ô TÌM KIẾM & NÚT LỌC FAVORITES -->
+        <!-- TOP BAR: Ô TÌM KIẾM (Search tools...) -->
         <Border Grid.Row="0" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorderSubtle}"
                 BorderThickness="0,0,0,1" Padding="8,8,8,8">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <!-- Ô tìm kiếm -->
-                <Border x:Name="SearchBorder" Height="32" CornerRadius="5" Background="{StaticResource BrushBgSurface}"
-                        BorderBrush="{StaticResource BrushBorderInput}" BorderThickness="1">
-                    <Grid Margin="8,0,4,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <!-- Kính lúp icon -->
-                        <Path Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center"
-                              Stroke="{StaticResource BrushTextSubtle}" StrokeThickness="1.5"
-                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                              Data="M10,2 A8,8 0 1 1 9.99,2 Z M16,16 L22,22" />
-                        <TextBlock x:Name="SearchPlaceholder" Grid.Column="1" Margin="7,0,0,0" VerticalAlignment="Center"
-                                   Text="Tìm kiếm lệnh JNNTool... (Ctrl+F)" Foreground="{StaticResource BrushTextSubtle}"
-                                   FontWeight="Normal" FontSize="12" IsHitTestVisible="False" />
-                        <TextBox x:Name="SearchBox" Grid.Column="1" Margin="7,0,0,0" Style="{StaticResource SearchBoxStyle}"
-                                 TextChanged="SearchBox_TextChanged" PreviewKeyDown="SearchBox_PreviewKeyDown"
-                                 GotKeyboardFocus="SearchBox_FocusChanged" LostKeyboardFocus="SearchBox_FocusChanged" />
-                        <Button x:Name="ClearSearchButton" Grid.Column="2" Style="{StaticResource ClearButtonStyle}"
-                                Visibility="Collapsed" Click="ClearSearch_Click" ToolTip="Xóa tìm kiếm (Esc)">
-                            <Path Width="8" Height="8" Stretch="Uniform" Data="M0,0 L10,10 M10,0 L0,10"
-                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                  StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                        </Button>
-                    </Grid>
-                </Border>
-
-                <!-- Nút lọc yêu thích ★ -->
-                <ToggleButton x:Name="FavoritesOnlyToggle" Grid.Column="1" Margin="6,0,0,0"
-                              Style="{StaticResource FavToggleStyle}"
-                              Checked="FavoritesOnly_Changed" Unchecked="FavoritesOnly_Changed" />
-            </Grid>
-        </Border>
-
-        <!-- DANH SÁCH LỆNH CHIA THEO NHÓM -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
-                      Padding="6,6,6,6" Focusable="False">
-            <Grid>
-                <ItemsControl x:Name="GroupsList" ItemTemplate="{StaticResource GroupTemplate}" Focusable="False" />
-
-                <!-- Trạng thái trống khi không tìm thấy kết quả -->
-                <StackPanel x:Name="EmptyState" Visibility="Collapsed" Margin="12,40,12,0" HorizontalAlignment="Center">
-                    <Path Width="32" Height="32" Stretch="Uniform" HorizontalAlignment="Center"
+            <Border x:Name="SearchBorder" Height="34" CornerRadius="5" Background="{StaticResource BrushBgSurface}"
+                    BorderBrush="{StaticResource BrushBorderInput}" BorderThickness="1">
+                <Grid Margin="10,0,6,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <!-- Kính lúp icon -->
+                    <Path Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center"
                           Stroke="{StaticResource BrushTextSubtle}" StrokeThickness="1.5"
                           StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                           Data="M10,2 A8,8 0 1 1 9.99,2 Z M16,16 L22,22" />
-                    <TextBlock x:Name="EmptyText" Margin="0,10,0,0" TextAlignment="Center" TextWrapping="Wrap"
-                               FontWeight="Normal" FontSize="12" Foreground="{StaticResource BrushTextMuted}"
-                               Text="Không tìm thấy lệnh phù hợp" />
-                </StackPanel>
-            </Grid>
-        </ScrollViewer>
+                    <TextBlock x:Name="SearchPlaceholder" Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center"
+                               Text="Search tools..." Foreground="{StaticResource BrushTextSubtle}"
+                               FontWeight="Normal" FontSize="12" IsHitTestVisible="False" />
+                    <TextBox x:Name="SearchBox" Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource SearchBoxStyle}"
+                             TextChanged="SearchBox_TextChanged" PreviewKeyDown="SearchBox_PreviewKeyDown"
+                             GotKeyboardFocus="SearchBox_FocusChanged" LostKeyboardFocus="SearchBox_FocusChanged" />
+                    <Button x:Name="ClearSearchButton" Grid.Column="2" Style="{StaticResource ClearButtonStyle}"
+                            Visibility="Collapsed" Click="ClearSearch_Click" ToolTip="Clear search (Esc)">
+                        <Path Width="8" Height="8" Stretch="Uniform" Data="M0,0 L10,10 M10,0 L0,10"
+                              Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                              StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                    </Button>
+                </Grid>
+            </Border>
+        </Border>
 
-        <!-- FOOTER / STATUS -->
+        <!-- BODY: 2 CỘT (Cột trái: Danh sách công cụ, Cột phải: Dải Category dọc) -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <!-- Cột trái: Tool List View -->
+                <ColumnDefinition Width="*" />
+                <!-- Cột phải: Category Sidebar -->
+                <ColumnDefinition Width="58" />
+            </Grid.ColumnDefinitions>
+
+            <!-- CỘT TRÁI: TIÊU ĐỀ NHÓM VÀ DANH SÁCH HÀNG LỆNH -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- Tiêu đề Category hiện hành (Ví dụ: MODELING) -->
+                <Border Grid.Row="0" Padding="10,6,10,0">
+                    <TextBlock x:Name="TxtCategoryTitle" Text="MODELING" FontSize="11"
+                               FontWeight="Normal" Foreground="{StaticResource BrushTextSubtle}" />
+                </Border>
+
+                <!-- Danh sách công cụ dạng list dọc -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                              Padding="8,6,6,8" Focusable="False">
+                    <Grid>
+                        <ItemsControl x:Name="ToolsList" ItemTemplate="{StaticResource ToolRowTemplate}" Focusable="False" />
+
+                        <!-- Trạng thái trống khi không tìm thấy kết quả -->
+                        <StackPanel x:Name="EmptyState" Visibility="Collapsed" Margin="12,50,12,0" HorizontalAlignment="Center">
+                            <Path Width="32" Height="32" Stretch="Uniform" HorizontalAlignment="Center"
+                                  Stroke="{StaticResource BrushTextSubtle}" StrokeThickness="1.5"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                  Data="M10,2 A8,8 0 1 1 9.99,2 Z M16,16 L22,22" />
+                            <TextBlock x:Name="EmptyText" Margin="0,10,0,0" TextAlignment="Center" TextWrapping="Wrap"
+                                       FontWeight="Normal" FontSize="12" Foreground="{StaticResource BrushTextMuted}"
+                                       Text="No tools found" />
+                        </StackPanel>
+                    </Grid>
+                </ScrollViewer>
+            </Grid>
+
+            <!-- CỘT PHẢI: DẢI TAB DỌC CATEGORY -->
+            <Border Grid.Column="1" Background="{StaticResource BrushBgSurface}"
+                    BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="1,0,0,0">
+                <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled"
+                              Padding="4,6,4,6" Focusable="False">
+                    <ItemsControl x:Name="CategoryTabsList" ItemTemplate="{StaticResource CategoryTabTemplate}" Focusable="False">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Vertical" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <!-- FOOTER: THEME + CHẤM TRÒN MÀU + SETTINGS (UI Manager) + LICENSE -->
         <Border Grid.Row="2" Background="{StaticResource BrushBgSurface}" BorderBrush="{StaticResource BrushBorderSubtle}"
-                BorderThickness="0,1,0,0" Padding="10,6">
-            <Grid>
+                BorderThickness="0,1,0,0" Padding="10,0">
+            <Grid VerticalAlignment="Center">
                 <Grid.ColumnDefinitions>
+                    <!-- Bên trái: Theme + Chấm tròn -->
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
+                    <!-- Bên phải: Settings & License -->
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <Ellipse x:Name="StatusDot" Width="7" Height="7" Fill="{StaticResource BrushSuccess}"
-                         VerticalAlignment="Center" />
-                <TextBlock x:Name="StatusText" Grid.Column="1" Margin="7,0,6,0" Text="Sẵn sàng (Nhấn Enter để chạy lệnh đầu tiên)"
-                           FontSize="11" FontWeight="Normal" Foreground="{StaticResource BrushTextMuted}"
-                           TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                <TextBlock x:Name="TotalCommandsText" Grid.Column="2" FontSize="10.5" FontWeight="Normal"
-                           Foreground="{StaticResource BrushTextSubtle}" VerticalAlignment="Center" />
+
+                <!-- Theme Preview & Click -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="BtnTheme" Style="{StaticResource FooterTextBtnStyle}" Click="BtnTheme_Click"
+                            ToolTip="Ribbon &amp; Palette Theme Settings">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <!-- Icon bảng màu -->
+                            <Path Width="14" Height="14" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"
+                                  Fill="{StaticResource BrushPrimary}"
+                                  Data="M12,3 C7.03,3 3,7.03 3,12 C3,16.97 7.03,21 12,21 C12.83,21 13.5,20.33 13.5,19.5 C13.5,19.11 13.35,18.76 13.11,18.49 C12.88,18.23 12.73,17.88 12.73,17.5 C12.73,16.67 13.4,16 14.23,16 L16,16 C18.76,16 21,13.76 21,11 C21,6.58 16.97,3 12,3 Z M6.5,12 C5.67,12 5,11.33 5,10.5 C5,9.67 5.67,9 6.5,9 C7.33,9 8,9.67 8,10.5 C8,11.33 7.33,12 6.5,12 Z M9.5,8 C8.67,8 8,7.33 8,6.5 C8,5.67 8.67,5 9.5,5 C10.33,5 11,5.67 11,6.5 C11,7.33 10.33,8 9.5,8 Z M14.5,8 C13.67,8 13,7.33 13,6.5 C13,5.67 13.67,5 14.5,5 C15.33,5 16,5.67 16,6.5 C16,7.33 15.33,8 14.5,8 Z M17.5,12 C16.67,12 16,11.33 16,10.5 C16,9.67 16.67,9 17.5,9 C18.33,9 19,9.67 19,10.5 C19,11.33 18.33,12 17.5,12 Z" />
+                            <TextBlock Text="Theme" FontSize="11.5" FontWeight="Normal" Foreground="{StaticResource BrushTextMain}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <!-- Chấm tròn màu Theme hiện tại -->
+                    <Button x:Name="BtnThemeDot" Style="{StaticResource ThemeDotBtnStyle}" Margin="8,0,0,0" Click="BtnTheme_Click"
+                            ToolTip="Click to open UI Manager">
+                        <Ellipse x:Name="ThemeColorCircle" Width="18" Height="18"
+                                 Fill="{StaticResource BrushPrimary}" Stroke="#FFFFFF" StrokeThickness="1.5">
+                            <Ellipse.Effect>
+                                <DropShadowEffect BlurRadius="3" ShadowDepth="1" Direction="270" Color="#000000" Opacity="0.15" />
+                            </Ellipse.Effect>
+                        </Ellipse>
+                    </Button>
+                </StackPanel>
+
+                <!-- Nút Settings: Mở UI Manager (Yêu cầu: setting là phần UI manager) -->
+                <Button Grid.Column="2" x:Name="BtnSettings" Style="{StaticResource FooterActionBtnStyle}"
+                        Content="Settings" Margin="0,0,6,0" Click="BtnSettings_Click"
+                        ToolTip="UI Manager (Ribbon &amp; Palette Theme, Icon Style)" />
+
+                <!-- Nút License: Mở Account & License (Yêu cầu: hình 3 hiện license của ng dùng) -->
+                <Button Grid.Column="3" x:Name="BtnLicense" Style="{StaticResource FooterActionBtnStyle}"
+                        Content="License" Click="BtnLicense_Click"
+                        ToolTip="User Account &amp; License Information" />
             </Grid>
         </Border>
     </Grid>

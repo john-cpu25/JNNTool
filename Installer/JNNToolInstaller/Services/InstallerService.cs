@@ -97,6 +97,20 @@ public class InstallerService
             if (proc.ExitCode != 0 && proc.ExitCode != 1641 && proc.ExitCode != 3010)
                 throw new Exception($"Cai dat that bai (exit code {proc.ExitCode}).");
 
+            // Don dep thu muc plugin cu tai ProgramData de Revit khong nap nham ban cu
+            if (Directory.Exists(LegacyMachineInstallRoot))
+            {
+                try
+                {
+                    StatusChanged?.Invoke("Don dep thu muc plugin cu (ProgramData)...");
+                    Directory.Delete(LegacyMachineInstallRoot, recursive: true);
+                }
+                catch
+                {
+                    // Bo qua neu khong co quyen xoa truc tiep
+                }
+            }
+
             ProgressChanged?.Invoke(100);
             StatusChanged?.Invoke("Hoan tat! Vui long khoi dong lai Revit.");
         }

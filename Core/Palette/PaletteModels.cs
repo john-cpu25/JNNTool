@@ -5,14 +5,19 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace JNNTool.Core.Palette
 {
+    /// <summary>
+    /// ViewModel cho từng mục công cụ trong danh sách hàng ngang của Command Palette.
+    /// </summary>
     public sealed class PaletteItemVm : ObservableObject
     {
         private bool _isFavorite;
+        private bool _isHighlighted;
         private ImageSource? _icon;
 
         public PaletteItemVm(ToolCommandInfo info, JNNTool.Tools.UIManager.Models.RibbonThemeSettings? themeSettings = null)
@@ -57,6 +62,12 @@ namespace JNNTool.Core.Palette
             set => SetProperty(ref _isFavorite, value);
         }
 
+        public bool IsHighlighted
+        {
+            get => _isHighlighted;
+            set => SetProperty(ref _isHighlighted, value);
+        }
+
         private static string MakeInitials(string title)
         {
             string[] words = (title ?? "?").Split(new[] { ' ', '-', '_', '(', ')' }, StringSplitOptions.RemoveEmptyEntries);
@@ -66,19 +77,40 @@ namespace JNNTool.Core.Palette
         }
     }
 
-    public sealed class PaletteGroupVm
+    /// <summary>
+    /// ViewModel đại diện cho một thẻ Category trong dải tab dọc bên phải.
+    /// </summary>
+    public sealed class CategoryTabVm : ObservableObject
     {
-        public PaletteGroupVm(string name, IEnumerable<PaletteItemVm> items, bool isFavorites = false)
+        private bool _isSelected;
+        private int _count;
+
+        public CategoryTabVm(string id, string name, string fullName, string iconData, string groupKey)
         {
+            Id = id;
             Name = name;
-            IsFavorites = isFavorites;
-            Items = new ObservableCollection<PaletteItemVm>(items);
+            FullName = fullName;
+            IconData = iconData;
+            GroupKey = groupKey;
         }
 
+        public string Id { get; }
         public string Name { get; }
-        public bool IsFavorites { get; }
-        public ObservableCollection<PaletteItemVm> Items { get; }
-        public int Count => Items.Count;
+        public string FullName { get; }
+        public string IconData { get; }
+        public string GroupKey { get; } // Group tương ứng trong CommandRegistry, hoặc "Recent", "Favorites", "All"
+
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set => SetProperty(ref _isSelected, value);
+        }
+
+        public int Count
+        {
+            get => _count;
+            set => SetProperty(ref _count, value);
+        }
     }
 
     /// <summary>
@@ -144,6 +176,55 @@ namespace JNNTool.Core.Palette
                     Directory.CreateDirectory(dir);
                 }
                 File.WriteAllLines(FilePath, ids.ToArray());
+            }
+            catch { }
+        }
+    }
+
+    /// <summary>
+    /// Lưu danh sách các lệnh vừa kích hoạt gần đây vào %AppData%\JNNTool\palette_recent.json.
+    /// </summary>
+    internal static class RecentStore
+    {
+        private const int MaxRecentItems = 20;
+
+        private static string FilePath => Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "JNNTool", "palette_recent.json");
+
+        public static List<string> Load()
+        {
+            try
+            {
+                if (File.Exists(FilePath))
+                {
+                    string json = File.ReadAllText(FilePath);
+                    var list = JsonSerializer.Deserialize<List<string>>(json);
+                    if (list != null) return list;
+                }
+            }
+            catch { }
+            return new List<string>();
+        }
+
+        public static void Record(string commandId)
+        {
+            if (string.IsNullOrWhiteSpace(commandId)) return;
+            try
+            {
+                var list = Load();
+                list.RemoveAll(x => string.Equals(x, commandId, StringComparison.OrdinalIgnoreCase));
+                list.Insert(0, commandId);
+                if (list.Count > MaxRecentItems)
+                {
+                    list = list.Take(MaxRecentItems).ToList();
+                }
+
+                string? dir = Path.GetDirectoryName(FilePath);
+                if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+
+                string json = JsonSerializer.Serialize(list, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(FilePath, json);
             }
             catch { }
         }
