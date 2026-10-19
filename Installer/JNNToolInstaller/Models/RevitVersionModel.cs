@@ -1,13 +1,27 @@
 using System.ComponentModel;
+using System.Windows;
 
 namespace JNNToolInstaller.Models;
 
 public class RevitVersionModel : INotifyPropertyChanged
 {
     private bool _isSelectedForInstall = true;
+    private bool _isInstalledInMachine;
 
     public string Year { get; set; } = "";
-    public bool IsInstalledInMachine { get; set; }
+
+    public bool IsInstalledInMachine
+    {
+        get => _isInstalledInMachine;
+        set
+        {
+            if (_isInstalledInMachine != value)
+            {
+                _isInstalledInMachine = value;
+                NotifyAll();
+            }
+        }
+    }
 
     public bool IsSelectedForInstall
     {
@@ -17,24 +31,54 @@ public class RevitVersionModel : INotifyPropertyChanged
             if (_isSelectedForInstall != value)
             {
                 _isSelectedForInstall = value;
-                OnPropertyChanged(nameof(IsSelectedForInstall));
-                OnPropertyChanged(nameof(CardBackground));
-                OnPropertyChanged(nameof(CardBorder));
+                NotifyAll();
             }
         }
     }
 
     public string StatusText => IsInstalledInMachine ? "Đã cài đặt" : "Chưa cài đặt";
-    public string StatusColor => IsInstalledInMachine ? "#16A34A" : "#94A3B8";
+    public string StatusColor => IsInstalledInMachine ? "#10B981" : "#475569";
+
+    public string YearColor => _isSelectedForInstall
+        ? (IsInstalledInMachine ? "#34D399" : "#60A5FA")
+        : "#64748B";
 
     public string CardBackground => _isSelectedForInstall
-        ? (IsInstalledInMachine ? "#F0FDF4" : "#F8FAFC")
-        : "#F1F5F9";
+        ? (IsInstalledInMachine ? "#1A10B981" : "#1A3B82F6")
+        : "#08FFFFFF";
 
     public string CardBorder => _isSelectedForInstall
-        ? (IsInstalledInMachine ? "#86EFAC" : "#CBD5E1")
-        : "#E2E8F0";
+        ? (IsInstalledInMachine ? "#5910B981" : "#593B82F6")
+        : "#14FFFFFF";
+
+    public string CheckboxBackground => _isSelectedForInstall
+        ? (IsInstalledInMachine ? "#10B981" : "#3B82F6")
+        : "Transparent";
+
+    public string CheckboxBorder => _isSelectedForInstall
+        ? "Transparent"
+        : "#334155";
+
+    public Visibility CheckmarkVisibility => _isSelectedForInstall ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility GreenDotVisibility => IsInstalledInMachine ? Visibility.Visible : Visibility.Collapsed;
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    private void NotifyAll()
+    {
+        OnPropertyChanged(nameof(IsSelectedForInstall));
+        OnPropertyChanged(nameof(IsInstalledInMachine));
+        OnPropertyChanged(nameof(StatusText));
+        OnPropertyChanged(nameof(StatusColor));
+        OnPropertyChanged(nameof(YearColor));
+        OnPropertyChanged(nameof(CardBackground));
+        OnPropertyChanged(nameof(CardBorder));
+        OnPropertyChanged(nameof(CheckboxBackground));
+        OnPropertyChanged(nameof(CheckboxBorder));
+        OnPropertyChanged(nameof(CheckmarkVisibility));
+        OnPropertyChanged(nameof(GreenDotVisibility));
+    }
+
     protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 }

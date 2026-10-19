@@ -19,7 +19,15 @@ public partial class MainWindow : Window
         InitializeComponent();
         RevitVersionCards.ItemsSource = _revitVersions;
         _svc.StatusChanged += s => Dispatcher.Invoke(() => TxtStatus.Text = s);
-        _svc.ProgressChanged += p => Dispatcher.Invoke(() => ProgressBar.Value = p);
+        _svc.ProgressChanged += p => Dispatcher.Invoke(() =>
+        {
+            ProgressBar.Value = p;
+            TxtProgressPercent.Text = p >= 100 ? "100%" : $"{p}%";
+            if (p >= 100)
+            {
+                TxtStatus.Text = "Hoàn tất!";
+            }
+        });
         Loaded += async (_, _) => await InitAsync();
     }
 
@@ -40,57 +48,63 @@ public partial class MainWindow : Window
         {
             installedVer = $"v{_checker.InstalledManifest.Version}";
             TxtInstalledVerVal.Text = installedVer;
+            TxtHeaderInstalledVer.Text = installedVer;
+            TxtHeaderInstalledVer.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#34D399"));
             BtnUninstall.IsEnabled = true;
         }
         else
         {
             installedVer = "Chưa cài";
             TxtInstalledVerVal.Text = installedVer;
+            TxtHeaderInstalledVer.Text = installedVer;
+            TxtHeaderInstalledVer.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F59E0B"));
             BtnUninstall.IsEnabled = false;
         }
 
-        string onlineVer = "Chưa rõ";
+        string onlineVer = "v2.1.3";
         if (_checker.LatestManifest != null)
         {
             var m = _checker.LatestManifest;
             onlineVer = $"v{m.Version}";
             TxtOnlineVerVal.Text = onlineVer;
-            TxtChangelogVersion.Text = $"Version: {m.Version}";
+            TxtHeaderOnlineVer.Text = onlineVer;
+            TxtChangelogVersion.Text = $"Version {m.Version}";
 
             if (m.Changelog.Count > 0)
             {
                 ChangelogList.ItemsSource = m.Changelog;
             }
         }
+        else
+        {
+            TxtOnlineVerVal.Text = onlineVer;
+            TxtHeaderOnlineVer.Text = onlineVer;
+        }
 
-        // Header Status
-        TxtHeaderOnlineVer.Text = onlineVer;
-        TxtHeaderInstalledVer.Text = installedVer;
-
-        // Status Badge Card
+        // Status Headline & Badge Card
         if (_checker.UpdateAvailable)
         {
-            TxtStatusHeadline.Text = "● Sẵn sàng cập nhật.";
-            TxtStatusHeadline.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#16A34A"));
-            StatusDot.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#16A34A"));
-            StatusBadgeBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F0FDF4"));
-            StatusBadgeBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#86EFAC"));
+            TxtStatusHeadline.Text = "Sẵn sàng cập nhật";
+            TxtStatusHeadline.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#34D399"));
+            StatusDot.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#10B981"));
+            StatusBadgeBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1510B981"));
+            StatusBadgeBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3310B981"));
         }
         else if (_checker.IsInstalled)
         {
-            TxtStatusHeadline.Text = "● Đã là phiên bản mới nhất.";
-            TxtStatusHeadline.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0284C7"));
-            StatusDot.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0284C7"));
-            StatusBadgeBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F0F9FF"));
-            StatusBadgeBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#BAE6FD"));
+            TxtStatusHeadline.Text = "Đã là phiên bản mới nhất";
+            TxtStatusHeadline.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#60A5FA"));
+            StatusDot.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3B82F6"));
+            StatusBadgeBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#153B82F6"));
+            StatusBadgeBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#333B82F6"));
         }
         else
         {
-            TxtStatusHeadline.Text = "● Sẵn sàng cài đặt.";
-            TxtStatusHeadline.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D97706"));
-            StatusDot.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D97706"));
-            StatusBadgeBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFBEB"));
-            StatusBadgeBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FDE68A"));
+            TxtStatusHeadline.Text = "Sẵn sàng cài đặt";
+            TxtStatusHeadline.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FCD34D"));
+            StatusDot.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F59E0B"));
+            StatusBadgeBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#15F59E0B"));
+            StatusBadgeBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#33F59E0B"));
         }
 
         // Revit Versions List (Full Ver 2022 - 2027)
@@ -99,16 +113,61 @@ public partial class MainWindow : Window
         foreach (var year in new[] { "2022", "2023", "2024", "2025", "2026", "2027" })
         {
             bool inMachine = detected.Contains(year);
-            _revitVersions.Add(new RevitVersionModel
+            var model = new RevitVersionModel
             {
                 Year = year,
                 IsInstalledInMachine = inMachine,
-                IsSelectedForInstall = inMachine || (int.Parse(year) >= 2024) // Mặc định chọn các bản có trong máy hoặc từ 2024 trở lên
-            });
+                IsSelectedForInstall = inMachine || (int.Parse(year) >= 2024)
+            };
+            model.PropertyChanged += (_, _) => UpdateSelectedCount();
+            _revitVersions.Add(model);
         }
+
+        UpdateSelectedCount();
+    }
+
+    private void UpdateSelectedCount()
+    {
+        int count = _revitVersions.Count(x => x.IsSelectedForInstall);
+        TxtSelectedCount.Text = count.ToString();
+        BadgeCountBorder.Visibility = count > 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    // ─── Tabs Switching ──────────────────────────────────────────────────────
+
+    private void TabChangelog_Click(object sender, RoutedEventArgs e)
+    {
+        ChangelogView.Visibility = Visibility.Visible;
+        InfoView.Visibility = Visibility.Collapsed;
+
+        TabChangelogBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3B82F6"));
+        TabChangelogTxt.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#60A5FA"));
+
+        TabInfoBorder.BorderBrush = Brushes.Transparent;
+        TabInfoTxt.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#64748B"));
+    }
+
+    private void TabInfo_Click(object sender, RoutedEventArgs e)
+    {
+        ChangelogView.Visibility = Visibility.Collapsed;
+        InfoView.Visibility = Visibility.Visible;
+
+        TabInfoBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3B82F6"));
+        TabInfoTxt.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#60A5FA"));
+
+        TabChangelogBorder.BorderBrush = Brushes.Transparent;
+        TabChangelogTxt.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#64748B"));
     }
 
     // ─── Actions & Event Handlers ────────────────────────────────────────────
+
+    private void RevitCard_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is RevitVersionModel model)
+        {
+            model.IsSelectedForInstall = !model.IsSelectedForInstall;
+        }
+    }
 
     private void BtnSelectAllRevit_Click(object sender, RoutedEventArgs e)
     {
@@ -131,7 +190,7 @@ public partial class MainWindow : Window
         SetBusy(true);
         ProgressPanel.Visibility = Visibility.Visible;
         TxtStatus.Text = "Đang kiểm tra phiên bản mới nhất từ Git (GitHub)...";
-        TxtStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2563EB"));
+        TxtProgressPercent.Text = "";
         ProgressBar.IsIndeterminate = true;
 
         await _checker.LoadAsync();
@@ -153,7 +212,7 @@ public partial class MainWindow : Window
         else if (_checker.IsInstalled)
         {
             MessageBox.Show(
-                $"Bạn đang dùng phiên bản mới nhất (v{_checker.InstalledManifest?.Version ?? "2.0.4"}) từ Git!\n\n" +
+                $"Bạn đang dùng phiên bản mới nhất (v{_checker.InstalledManifest?.Version ?? "2.1.3"}) từ Git!\n\n" +
                 "Nếu cần cài lại, bạn có thể nhấn nút 'Cài đặt / Cập nhật'.",
                 "Đã là phiên bản mới nhất",
                 MessageBoxButton.OK, MessageBoxImage.Information);
@@ -161,7 +220,7 @@ public partial class MainWindow : Window
         else
         {
             MessageBox.Show(
-                $"Phiên bản mới nhất trên Git: v{_checker.LatestManifest?.Version ?? "2.0.4"}.\n" +
+                $"Phiên bản mới nhất trên Git: v{_checker.LatestManifest?.Version ?? "2.1.3"}.\n" +
                 "Nhấn 'Cài đặt / Cập nhật' để tiến hành cài đặt vào Revit.",
                 "Thông tin phiên bản",
                 MessageBoxButton.OK, MessageBoxImage.Information);
@@ -208,7 +267,9 @@ public partial class MainWindow : Window
             await _svc.InstallAsync(_checker.LatestManifest, _cts.Token);
             await _checker.LoadAsync();
             RefreshUI();
-            ShowSuccess("Cài đặt thành công! Khởi động lại Revit để áp dụng.");
+            TxtStatus.Text = "Hoàn tất!";
+            TxtProgressPercent.Text = "100%";
+            ProgressBar.Value = 100;
             MessageBox.Show("Cài đặt / Cập nhật JNNTool thành công!\nVui lòng khởi động lại Revit để sử dụng.", "Thành công",
                 MessageBoxButton.OK, MessageBoxImage.Information);
         }
@@ -258,7 +319,6 @@ public partial class MainWindow : Window
             RefreshUI();
             ProgressPanel.Visibility = Visibility.Collapsed;
             ProgressBar.IsIndeterminate = false;
-            ShowSuccess("Đã gỡ cài đặt thành công. Vui lòng khởi động lại Revit.");
             MessageBox.Show("Đã gỡ cài đặt JNNTool hoàn tất.", "Gỡ cài đặt",
                 MessageBoxButton.OK, MessageBoxImage.Information);
         }
@@ -280,12 +340,6 @@ public partial class MainWindow : Window
         BtnInstall.IsEnabled = !busy;
         BtnUninstall.IsEnabled = !busy && _checker.IsInstalled;
         BtnCheckUpdate.IsEnabled = !busy;
-    }
-
-    private void ShowSuccess(string msg)
-    {
-        TxtStatus.Text = msg;
-        TxtStatus.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#15803D"));
     }
 
     // ─── Window Chrome ───────────────────────────────────────────────────────

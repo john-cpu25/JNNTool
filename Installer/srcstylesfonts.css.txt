@@ -1,0 +1,543 @@
+src/styles/fonts.css
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+src/app/App.tsx
+import { useState } from "react";
+import {
+  Minus, X, AlertTriangle, Check, Download,
+  FileSearch, Trash2, Globe, ChevronDown, RefreshCw,
+  Package, BookOpen, Info,
+} from "lucide-react";
+import { motion } from "motion/react";
+
+// ── Types ──────────────────────────────────────────────────────────────────
+type RevitYear = {
+  year: number;
+  installed: boolean;
+  selected: boolean;
+};
+
+// ── Static data ────────────────────────────────────────────────────────────
+const INITIAL_REVIT: RevitYear[] = [
+  { year: 2022, installed: false, selected: false },
+  { year: 2023, installed: true,  selected: true  },
+  { year: 2024, installed: true,  selected: true  },
+  { year: 2025, installed: false, selected: true  },
+  { year: 2026, installed: true,  selected: true  },
+  { year: 2027, installed: false, selected: false },
+];
+
+const CHANGELOG = [
+  "Nâng cấp toàn diện Command Palette 2 cột trực quan",
+  "Category doc, cập nhật GUID độc quyền JNNTool",
+  "Fix UAC Updater và cải thiện hiệu năng khởi động",
+  "Thêm chế độ tối toàn bộ giao diện công cụ",
+  "Sửa lỗi đồng bộ dữ liệu khi chạy song song nhiều dự án",
+];
+
+// ── Component ──────────────────────────────────────────────────────────────
+export default function App() {
+  const [revit, setRevit] = useState<RevitYear[]>(INITIAL_REVIT);
+  const [installing, setInstalling] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [activeTab, setActiveTab] = useState<"changelog" | "info">("changelog");
+
+  const selectedCount = revit.filter((r) => r.selected).length;
+
+  const toggleRevit = (year: number) =>
+    setRevit((prev) =>
+      prev.map((r) => (r.year === year ? { ...r, selected: !r.selected } : r))
+    );
+
+  const selectAll   = () => setRevit((prev) => prev.map((r) => ({ ...r, selected: true })));
+  const deselectAll = () => setRevit((prev) => prev.map((r) => ({ ...r, selected: false })));
+
+  // Simulates a progress bar install (2% every 60ms → ~3 seconds)
+  const handleInstall = () => {
+    if (installing || selectedCount === 0) return;
+    setInstalling(true);
+    setProgress(0);
+    const iv = setInterval(() => {
+      setProgress((p) => {
+        if (p >= 100) { clearInterval(iv); setInstalling(false); return 100; }
+        return p + 2;
+      });
+    }, 60);
+  };
+
+  return (
+    /* ── Page wrapper: dark outer bg ── */
+    <div className="min-h-screen w-full flex items-center justify-center bg-[#080c12] p-4">
+
+      {/* ── App window (card) with entry animation ── */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.97, y: 16 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        className="w-full max-w-[900px] rounded-2xl overflow-hidden flex flex-col"
+        style={{
+          background: "#0d1117",
+          border: "1px solid rgba(255,255,255,0.08)",
+          boxShadow:
+            "0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)",
+          fontFamily: "'Inter', sans-serif",
+        }}
+      >
+
+        {/* ══════════════════════════════════════════
+            HEADER
+        ══════════════════════════════════════════ */}
+        <div
+          className="flex items-center gap-3 px-5 py-3.5"
+          style={{
+            background: "linear-gradient(180deg, #161b25 0%, #111620 100%)",
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
+          }}
+        >
+          {/* Logo icon */}
+          <div
+            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{
+              background: "linear-gradient(135deg, #1d4ed8, #3b82f6)",
+              boxShadow: "0 0 16px rgba(59,130,246,0.35)",
+            }}
+          >
+            <Package size={18} className="text-white" />
+          </div>
+
+          {/* Brand */}
+          <div className="flex-shrink-0">
+            <div className="text-[13px] font-bold text-white tracking-wide">
+              JNN-STRUCTURAL
+            </div>
+            <div className="text-[10px] text-[#64748b] tracking-widest uppercase">
+              Structural Design
+            </div>
+          </div>
+
+          {/* Online status pill */}
+          <div
+            className="ml-4 flex items-center gap-2 px-3 py-1.5 rounded-full"
+            style={{
+              background: "rgba(16,185,129,0.1)",
+              border: "1px solid rgba(16,185,129,0.2)",
+            }}
+          >
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-[11px] text-emerald-400 font-medium">Online</span>
+            <span className="text-[11px] text-emerald-300 font-bold">v2.1.3</span>
+            <span className="text-[11px] text-[#475569] mx-0.5">→</span>
+            <span className="text-[11px] text-[#94a3b8]">Máy:</span>
+            <span className="text-[11px] text-[#f59e0b] font-medium">Chưa cài</span>
+          </div>
+
+          {/* Warning badge */}
+          <div
+            className="ml-2 flex items-center gap-2 px-3 py-1.5 rounded-full
+                        cursor-pointer hover:opacity-80 transition-opacity"
+            style={{
+              background: "rgba(245,158,11,0.1)",
+              border: "1px solid rgba(245,158,11,0.25)",
+            }}
+          >
+            <AlertTriangle size={12} className="text-amber-400" />
+            <span className="text-[11px] text-amber-300 font-medium">
+              Vui lòng TẮT REVIT trước khi cài
+            </span>
+          </div>
+
+          <div className="flex-1" />
+
+          {/* Window control buttons */}
+          <div className="flex items-center gap-1.5">
+            <button className="w-7 h-7 rounded-lg flex items-center justify-center
+                               text-[#64748b] hover:text-white hover:bg-white/10 transition-all">
+              <Minus size={13} />
+            </button>
+            <button className="w-7 h-7 rounded-lg flex items-center justify-center
+                               text-[#64748b] hover:text-white hover:bg-red-500/80 transition-all">
+              <X size={13} />
+            </button>
+          </div>
+        </div>
+
+
+        {/* ══════════════════════════════════════════
+            MAIN CONTENT  (left panel + right panel)
+        ══════════════════════════════════════════ */}
+        <div className="flex gap-4 p-4 pb-0">
+
+          {/* ── Left panel ── */}
+          <div className="w-[220px] flex-shrink-0 flex flex-col gap-3">
+
+            {/* Status card — amber */}
+            <div
+              className="rounded-xl p-4"
+              style={{
+                background: "rgba(245,158,11,0.06)",
+                border: "1px solid rgba(245,158,11,0.2)",
+              }}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                <span className="text-[12px] font-semibold text-amber-300">
+                  Sẵn sàng cài đặt
+                </span>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-[#64748b]">Phiên bản Online</span>
+                  <span className="text-[11px] font-bold text-blue-400">v2.1.3</span>
+                </div>
+                <div className="w-full h-px bg-white/5" />
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-[#64748b]">Hiện tại</span>
+                  <span className="text-[11px] text-[#94a3b8]">Chưa cài</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Hint card — blue */}
+            <div
+              className="rounded-xl p-3.5"
+              style={{
+                background: "rgba(59,130,246,0.05)",
+                border: "1px solid rgba(59,130,246,0.12)",
+              }}
+            >
+              <div className="flex gap-2">
+                <Info size={13} className="text-blue-400 flex-shrink-0 mt-0.5" />
+                <p className="text-[11px] text-[#64748b] leading-relaxed">
+                  Chọn phiên bản Revit bên dưới rồi bấm{" "}
+                  <span className="text-blue-400 font-medium">"Cài đặt"</span>{" "}
+                  để cập nhật.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Right panel — tabbed changelog ── */}
+          <div
+            className="flex-1 rounded-xl overflow-hidden"
+            style={{ border: "1px solid rgba(255,255,255,0.07)" }}
+          >
+            {/* Tab bar */}
+            <div
+              className="flex items-center px-4 gap-1"
+              style={{
+                background: "#161b25",
+                borderBottom: "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
+              {(["changelog", "info"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`flex items-center gap-1.5 px-3 py-2.5 text-[11px]
+                    font-medium border-b-2 transition-all ${
+                    activeTab === tab
+                      ? "border-blue-500 text-blue-400"
+                      : "border-transparent text-[#64748b] hover:text-[#94a3b8]"
+                  }`}
+                >
+                  {tab === "changelog" ? <BookOpen size={12} /> : <Info size={12} />}
+                  {tab === "changelog" ? "Nhật ký phiên bản" : "Thông tin"}
+                </button>
+              ))}
+            </div>
+
+            {/* Tab content */}
+            <div className="p-4" style={{ background: "#0f141e" }}>
+              {activeTab === "changelog" ? (
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[13px] font-bold text-white">Version 2.1.3</span>
+                    <span
+                      className="px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                      style={{ background: "rgba(59,130,246,0.15)", color: "#60a5fa" }}
+                    >
+                      Latest
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-[#475569] mb-4">
+                    Nhật ký phiên bản JNNTool
+                  </div>
+                  <ul className="space-y-2.5">
+                    {CHANGELOG.map((item, i) => (
+                      <motion.li
+                        key={i}
+                        initial={{ opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.06, duration: 0.3 }}
+                        className="flex items-start gap-2.5"
+                      >
+                        <div className="w-1 h-1 rounded-full bg-blue-500 mt-[6px] flex-shrink-0" />
+                        <span className="text-[12px] text-[#94a3b8] leading-relaxed">
+                          {item}
+                        </span>
+                      </motion.li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                <div className="space-y-2 text-[12px] text-[#94a3b8]">
+                  <div>Plugin: JNN-STRUCTURAL v2.1.3</div>
+                  <div>Developer: JNN Engineering Team</div>
+                  <div>Platform: Autodesk Revit 2022–2027</div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+
+        {/* ══════════════════════════════════════════
+            REVIT VERSION SELECTOR
+        ══════════════════════════════════════════ */}
+        <div className="px-4 pt-4 pb-0">
+
+          {/* Section header + bulk actions */}
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <span className="text-[12px] font-semibold text-white">Phiên bản Revit</span>
+              <span className="text-[11px] text-[#475569] ml-2">
+                (Dòng 1: Chọn cài | Dòng 2: Trong máy)
+              </span>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={selectAll}
+                className="px-3 py-1.5 rounded-lg text-[11px] font-medium
+                           text-[#94a3b8] hover:text-white transition-all"
+                style={{
+                  background: "rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                }}
+              >
+                Chọn tất cả
+              </button>
+              <button
+                onClick={deselectAll}
+                className="px-3 py-1.5 rounded-lg text-[11px] font-medium
+                           text-[#94a3b8] hover:text-white transition-all"
+                style={{
+                  background: "rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                }}
+              >
+                Bỏ chọn
+              </button>
+            </div>
+          </div>
+
+          {/* 6-column version card grid */}
+          <div className="grid grid-cols-6 gap-2.5">
+            {revit.map((r) => (
+              <motion.button
+                key={r.year}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => toggleRevit(r.year)}
+                className="relative rounded-xl py-3 px-2 flex flex-col
+                           items-center gap-1.5 transition-all duration-200"
+                style={{
+                  // green tint if installed+selected, blue tint if not installed+selected
+                  background: r.selected
+                    ? r.installed
+                      ? "rgba(16,185,129,0.1)"
+                      : "rgba(59,130,246,0.1)"
+                    : "rgba(255,255,255,0.03)",
+                  border: r.selected
+                    ? r.installed
+                      ? "1px solid rgba(16,185,129,0.35)"
+                      : "1px solid rgba(59,130,246,0.35)"
+                    : "1px solid rgba(255,255,255,0.07)",
+                }}
+              >
+                {/* Checkbox indicator */}
+                <div
+                  className="w-4 h-4 rounded flex items-center justify-center transition-all"
+                  style={{
+                    background: r.selected
+                      ? r.installed ? "#10b981" : "#3b82f6"
+                      : "transparent",
+                    border: r.selected
+                      ? "none"
+                      : "1.5px solid rgba(255,255,255,0.2)",
+                  }}
+                >
+                  {r.selected && (
+                    <Check size={10} className="text-white" strokeWidth={3} />
+                  )}
+                </div>
+
+                {/* Year label */}
+                <span
+                  className="text-[14px] font-bold"
+                  style={{
+                    color: r.selected
+                      ? r.installed ? "#34d399" : "#60a5fa"
+                      : "#64748b",
+                  }}
+                >
+                  {r.year}
+                </span>
+
+                {/* Installed / not installed label */}
+                <span
+                  className="text-[9px] font-medium"
+                  style={{ color: r.installed ? "#10b981" : "#475569" }}
+                >
+                  {r.installed ? "Đã cài đặt" : "Chưa cài đặt"}
+                </span>
+
+                {/* Green dot — installed indicator */}
+                {r.installed && (
+                  <div className="absolute top-2 right-2 w-1.5 h-1.5
+                                  rounded-full bg-emerald-400" />
+                )}
+              </motion.button>
+            ))}
+          </div>
+        </div>
+
+
+        {/* ══════════════════════════════════════════
+            INSTALL PROGRESS BAR (conditional)
+        ══════════════════════════════════════════ */}
+        {(installing || progress === 100) && (
+          <div className="px-4 pt-3">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[11px] text-[#94a3b8]">
+                {progress < 100 ? "Đang cài đặt..." : "Hoàn tất!"}
+              </span>
+              <span className="text-[11px] font-semibold text-blue-400">
+                {progress}%
+              </span>
+            </div>
+            <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden">
+              <motion.div
+                className="h-full rounded-full"
+                style={{
+                  background:
+                    progress === 100
+                      ? "linear-gradient(90deg, #10b981, #34d399)"
+                      : "linear-gradient(90deg, #1d4ed8, #3b82f6)",
+                  width: `${progress}%`,
+                }}
+                transition={{ duration: 0.1 }}
+              />
+            </div>
+          </div>
+        )}
+
+
+        {/* ══════════════════════════════════════════
+            FOOTER
+        ══════════════════════════════════════════ */}
+        <div
+          className="flex items-center gap-2 px-4 py-3 mt-4"
+          style={{
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+            background: "#0d1117",
+          }}
+        >
+          {/* Uninstall — red */}
+          <button
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[11px]
+                       font-medium text-[#ef4444] hover:bg-red-500/10 transition-all"
+            style={{ border: "1px solid rgba(239,68,68,0.2)" }}
+          >
+            <Trash2 size={12} />
+            Gỡ cài đặt
+          </button>
+
+          {/* Language toggle */}
+          <button
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[11px]
+                       font-medium text-[#94a3b8] hover:text-white transition-all"
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.07)",
+            }}
+          >
+            <Globe size={12} />
+            VI
+          </button>
+
+          <div className="flex-1" />
+
+          {/* Version dropdown */}
+          <button
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-[11px]
+                       font-medium text-[#94a3b8] hover:text-white transition-all"
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.07)",
+            }}
+          >
+            Bản mới nhất
+            <ChevronDown size={12} />
+          </button>
+
+          {/* Check file */}
+          <button
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[11px]
+                       font-medium text-[#94a3b8] hover:text-white transition-all"
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.07)",
+            }}
+          >
+            <FileSearch size={12} />
+            Kiểm tra File
+          </button>
+
+          {/* Primary install button */}
+          <motion.button
+            whileHover={{ scale: selectedCount > 0 ? 1.02 : 1 }}
+            whileTap={{ scale: selectedCount > 0 ? 0.97 : 1 }}
+            onClick={handleInstall}
+            disabled={installing || selectedCount === 0}
+            className="flex items-center gap-2 px-5 py-2 rounded-xl text-[12px]
+                       font-semibold text-white transition-all"
+            style={{
+              background:
+                selectedCount === 0
+                  ? "rgba(59,130,246,0.3)"
+                  : installing
+                  ? "rgba(59,130,246,0.5)"
+                  : "linear-gradient(135deg, #1d4ed8, #3b82f6)",
+              boxShadow:
+                selectedCount > 0 && !installing
+                  ? "0 4px 16px rgba(59,130,246,0.35)"
+                  : "none",
+              cursor: selectedCount === 0 ? "not-allowed" : "pointer",
+            }}
+          >
+            {installing
+              ? <RefreshCw size={13} className="animate-spin" />
+              : <Download size={13} />
+            }
+            {installing ? "Đang cài..." : "Cài đặt / Cập nhật"}
+            {/* Badge: số phiên bản đang chọn */}
+            {selectedCount > 0 && !installing && (
+              <span
+                className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold"
+                style={{ background: "rgba(255,255,255,0.2)" }}
+              >
+                {selectedCount}
+              </span>
+            )}
+          </motion.button>
+        </div>
+
+      </motion.div>
+    </div>
+  );
+}
+State	Kiểu	Mục đích
+revit	RevitYear[]	Danh sách phiên bản + trạng thái chọn/đã cài
+installing	boolean	Đang chạy tiến trình cài đặt
+progress	number	Phần trăm progress bar (0–100)
+activeTab	"changelog" | "info"	Tab panel bên phải
+Logic nút Install: setInterval tăng progress 2% mỗi 60ms → ~3 giây hoàn tất, sau đó reset installing = false.
