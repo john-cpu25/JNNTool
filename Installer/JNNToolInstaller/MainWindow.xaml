@@ -249,21 +249,15 @@
 
                     <!-- Left: Brand Logo & Title -->
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                        <!-- Logo 3D Box -->
-                        <Border Width="36" Height="36" CornerRadius="10" Padding="2"
-                                BorderBrush="#403B82F6" BorderThickness="1">
-                            <Border.Background>
-                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                    <GradientStop Color="#1D4ED8" Offset="0"/>
-                                    <GradientStop Color="#3B82F6" Offset="1"/>
-                                </LinearGradientBrush>
-                            </Border.Background>
+                        <!-- JNN Brand Logo -->
+                        <Border Width="36" Height="36" CornerRadius="10" Padding="3"
+                                Background="#161B26" BorderBrush="#25FFFFFF" BorderThickness="1">
                             <Border.Effect>
-                                <DropShadowEffect Color="#3B82F6" BlurRadius="14" ShadowDepth="0" Opacity="0.4"/>
+                                <DropShadowEffect Color="#000000" BlurRadius="10" ShadowDepth="2" Opacity="0.45"/>
                             </Border.Effect>
-                            <!-- Cube Icon Path -->
-                            <Path Width="18" Height="18" Stretch="Uniform" Fill="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                  Data="M12,2 L21,7 L21,17 L12,22 L3,17 L3,7 Z M12,4.2 L5.5,7.8 L12,11.4 L18.5,7.8 Z M4.5,9.2 L4.5,15.8 L11,19.4 L11,12.8 Z M13,12.8 L13,19.4 L19.5,15.8 L19.5,9.2 Z"/>
+                            <Image Source="pack://application:,,,/Assets/Logo_JNN.png"
+                                   RenderOptions.BitmapScalingMode="HighQuality"
+                                   Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
 
                         <StackPanel VerticalAlignment="Center" Margin="10,0,0,0">
