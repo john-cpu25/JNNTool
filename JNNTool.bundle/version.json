@@ -1,9 +1,9 @@
 {
-    "version":  "2.1.5",
+    "version":  "2.1.6",
     "releaseDate":  "2026-10-20",
     "manifestUrl":  "https://raw.githubusercontent.com/john-cpu25/JNNTool/main/version.json",
-    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.1.5/JNNToolSetup_v2.1.5.msi",
+    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.1.6/JNNToolSetup_v2.1.6.msi",
     "changelog":  [
-                      "Khac phuc triet de loi crash Unrecoverable Error tren Revit 2026: Dong bo target runtime sang .NET 10 (net10.0-windows), loai bo TaskDialog tu dong khi mo file, va bao ve try-catch cho Command Palette Dockable Pane."
+                      "Fix triet de crash Revit 2026 khi mo file: Chuyen Command Palette sang Lazy Loading — chi khoi tao Grid trong luc OnStartup, noi dung thuc (XAML + CommandRegistry + Settings) chi duoc load khi pane Show lan dau."
                   ]
 }
