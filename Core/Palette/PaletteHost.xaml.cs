@@ -17,14 +17,24 @@ namespace JNNTool.Core.Palette
 
         public const string PaneTitle = "JNN Command Palette";
 
+        public static PaletteHost? Instance { get; private set; }
+        public static CommandPalettePage? PageInstance { get; private set; }
+
         private bool _paletteContentLoaded;
 
         public PaletteHost()
         {
+            Instance = this;
             InitializeComponent();
 
             // Khi pane được Revit render lần đầu, inject nội dung thực
             IsVisibleChanged += OnVisibleChanged;
+            Loaded += OnLoaded;
+        }
+
+        private void OnLoaded(object sender, RoutedEventArgs e)
+        {
+            EnsureContentLoaded();
         }
 
         public void SetupDockablePane(DockablePaneProviderData data)
@@ -53,36 +63,42 @@ namespace JNNTool.Core.Palette
             if (_paletteContentLoaded) return;
             if (IsVisible)
             {
-                try
-                {
-                    _paletteContentLoaded = true;
-                    RootContainer.Children.Clear();
-                    RootContainer.Children.Add(new CommandPalettePage());
-                }
-                catch (Exception ex)
-                {
-                    _paletteContentLoaded = false;
-                    JNNTool.Core.Logging.Logger.Error("Lỗi lazy-load CommandPalettePage", ex);
-                }
+                EnsureContentLoaded();
             }
         }
 
         /// <summary>
-        /// Cho phép force-load nội dung (ví dụ từ TogglePaletteCmd).
+        /// Cho phép load nội dung một cách an toàn và lưu static reference để chống GC.
         /// </summary>
         public void EnsureContentLoaded()
         {
-            if (_paletteContentLoaded) return;
+            if (_paletteContentLoaded && RootContainer.Children.Count > 0) return;
+
             try
             {
+                JNNTool.Core.UI.WpfWindowHelper.EnsureApplicationContext();
+
+                if (PageInstance == null)
+                {
+                    PageInstance = new CommandPalettePage();
+                }
+
+                if (!RootContainer.Children.Contains(PageInstance))
+                {
+                    if (PageInstance.Parent is Panel oldParent)
+                    {
+                        oldParent.Children.Remove(PageInstance);
+                    }
+                    RootContainer.Children.Clear();
+                    RootContainer.Children.Add(PageInstance);
+                }
+
                 _paletteContentLoaded = true;
-                RootContainer.Children.Clear();
-                RootContainer.Children.Add(new CommandPalettePage());
             }
             catch (Exception ex)
             {
                 _paletteContentLoaded = false;
-                JNNTool.Core.Logging.Logger.Error("Lỗi force-load CommandPalettePage", ex);
+                JNNTool.Core.Logging.Logger.Error("Lỗi khởi tạo CommandPalettePage trong PaletteHost", ex);
             }
         }
     }

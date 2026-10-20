@@ -46,6 +46,7 @@ namespace JNNTool.Core.Palette
 
                 try
                 {
+                    PaletteHost.Instance?.EnsureContentLoaded();
                     if (pane.IsShown())
                     {
                         pane.Hide();

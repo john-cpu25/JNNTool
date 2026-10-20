@@ -33,6 +33,7 @@ namespace JNNTool.Core.Palette
         public string Title => Info.Title;
         public string Group => Info.Group;
         public string Description => Info.Description;
+        public string ToolTipText => string.IsNullOrWhiteSpace(Description) ? $"{Title} ({Group})" : $"{Title} ({Group})\n{Description}";
 
         public ImageSource? Icon
         {

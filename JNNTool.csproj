@@ -32,7 +32,6 @@
     <Compile Remove="Tools\StairDetail\**" />
 
     <Compile Remove="Tools\**\PreviewApp\**" />
-    <Compile Remove="Core\Palette\**" />
     <Compile Remove="Installer\**" />
     <Compile Remove="Tests\**" />
     <Compile Remove="HtStructural\**" />
@@ -43,7 +42,6 @@
     <Page Remove="Tools\StairDetail\**" />
 
     <Page Remove="Tools\**\PreviewApp\**" />
-    <Page Remove="Core\Palette\**" />
     <Page Remove="Installer\**" />
     <Page Remove="Tests\**" />
     <Page Remove="HtStructural\**" />
@@ -112,10 +110,10 @@
       <VersionFolder Include="2022;2023;2024" />
     </ItemGroup>
     <ItemGroup Condition="'$(TargetFramework)' == 'net8.0-windows'">
-      <VersionFolder Include="2025" />
+      <VersionFolder Include="2025;2026" />
     </ItemGroup>
     <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows'">
-      <VersionFolder Include="2026;2027" />
+      <VersionFolder Include="2027" />
     </ItemGroup>
 
     <MakeDir Directories="$(BundleFolder)\Contents\%(VersionFolder.Identity)" />

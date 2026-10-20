@@ -140,19 +140,8 @@
 
             <!-- Template cho từng hàng công cụ (List item) -->
             <DataTemplate x:Key="ToolRowTemplate">
-                <Button x:Name="btnRow" Style="{StaticResource ToolRowButtonStyle}" Click="ToolRow_Click">
-                    <Button.ToolTip>
-                        <ToolTip MaxWidth="320" Padding="10,8">
-                            <StackPanel>
-                                <TextBlock Text="{Binding Title}" FontWeight="Normal" FontSize="12"
-                                           Foreground="{StaticResource BrushTextMain}" />
-                                <TextBlock Text="{Binding Group}" FontSize="11" Margin="0,2,0,4"
-                                           Foreground="{StaticResource BrushPrimary}" />
-                                <TextBlock Text="{Binding Description}" TextWrapping="Wrap" FontSize="11"
-                                           Foreground="{StaticResource BrushTextMuted}" LineHeight="15" />
-                            </StackPanel>
-                        </ToolTip>
-                    </Button.ToolTip>
+                <Button x:Name="btnRow" Style="{StaticResource ToolRowButtonStyle}" Click="ToolRow_Click"
+                        ToolTip="{Binding ToolTipText}">
                     <Grid x:Name="rowRoot" Background="Transparent">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="38" />
@@ -198,7 +187,7 @@
                     <DataTrigger Binding="{Binding IsFavorite}" Value="True">
                         <Setter TargetName="star" Property="Opacity" Value="1" />
                     </DataTrigger>
-                    <Trigger SourceName="rowRoot" Property="IsMouseOver" Value="True">
+                    <Trigger SourceName="btnRow" Property="IsMouseOver" Value="True">
                         <Setter TargetName="star" Property="Opacity" Value="1" />
                     </Trigger>
                     <!-- Highlight màu xanh dương nhạt như nút Add Shared Param trong hình 1 -->
@@ -242,10 +231,8 @@
 
             <!-- Template cho từng tab Category dọc -->
             <DataTemplate x:Key="CategoryTabTemplate">
-                <Button x:Name="btnCat" Style="{StaticResource CategoryTabBtnStyle}" Click="CategoryTab_Click">
-                    <Button.ToolTip>
-                        <ToolTip Content="{Binding FullName}" />
-                    </Button.ToolTip>
+                <Button x:Name="btnCat" Style="{StaticResource CategoryTabBtnStyle}" Click="CategoryTab_Click"
+                        ToolTip="{Binding FullName}">
                     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                         <!-- Icon Category -->
                         <Path Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Center"
@@ -466,11 +453,7 @@
                     <Button x:Name="BtnThemeDot" Style="{StaticResource ThemeDotBtnStyle}" Margin="8,0,0,0" Click="BtnTheme_Click"
                             ToolTip="Click to open UI Manager">
                         <Ellipse x:Name="ThemeColorCircle" Width="18" Height="18"
-                                 Fill="{StaticResource BrushPrimary}" Stroke="#FFFFFF" StrokeThickness="1.5">
-                            <Ellipse.Effect>
-                                <DropShadowEffect BlurRadius="3" ShadowDepth="1" Direction="270" Color="#000000" Opacity="0.15" />
-                            </Ellipse.Effect>
-                        </Ellipse>
+                                 Fill="{StaticResource BrushPrimary}" Stroke="#DCDDE1" StrokeThickness="1.5" />
                     </Button>
                 </StackPanel>
 
