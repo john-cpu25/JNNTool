@@ -57,7 +57,8 @@ namespace JNNTool
                 JNNTool.Core.Logging.Logger.Error("Lỗi khởi tạo WpfWindowHelper", ex);
             }
 
-            // Đăng ký Dockable Pane cho Command Palette (Lưu instance tĩnh để ngăn GC thu hồi gây crash 0xC0000005)
+            // [Tạm thời ẩn] Đăng ký Dockable Pane cho Command Palette
+            /*
             try
             {
                 PaletteHostInstance = new JNNTool.Core.Palette.PaletteHost();
@@ -71,6 +72,7 @@ namespace JNNTool
             {
                 JNNTool.Core.Logging.Logger.Error("Lỗi đăng ký Dockable Pane Command Palette", ex);
             }
+            */
 
             // Lấy đường dẫn thực thi của tệp DLL
             string assemblyPath = Assembly.GetExecutingAssembly().Location;
@@ -86,7 +88,8 @@ namespace JNNTool
             {
                 RibbonPanel generalPanel = application.CreateRibbonPanel(tabName, "General");
 
-                // ------------------- Command Palette -------------------
+                // [Tạm thời ẩn] Nút Command Palette trên thanh Ribbon
+                /*
                 PushButtonData btnPaletteData = new PushButtonData(
                     "cmdPalette",
                     "Command\nPalette",
@@ -112,6 +115,7 @@ namespace JNNTool
                         btnPalette.Image = img;
                     }
                 }
+                */
 
                 // ------------------- Account / License -------------------
                 PushButtonData btnLicenseData = new PushButtonData(
