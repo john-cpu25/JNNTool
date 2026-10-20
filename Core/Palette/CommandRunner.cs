@@ -78,7 +78,23 @@ namespace JNNTool.Core.Palette
                     return;
                 }
 
-                ExternalCommandData data = CreateCommandData(app);
+                ExternalCommandData data;
+                try
+                {
+                    data = CreateCommandData(app);
+                    if (data?.Application == null)
+                    {
+                        Report($"Vui lòng kích hoạt lệnh '{cmd.Title}' từ thanh Ribbon.", true);
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warning($"Không thể khởi tạo ExternalCommandData cho {cmd.Title}: {ex.Message}");
+                    Report($"Vui lòng bấm nút '{cmd.Title}' trực tiếp trên thanh Ribbon.", true);
+                    return;
+                }
+
                 string message = string.Empty;
                 var elements = new ElementSet();
 

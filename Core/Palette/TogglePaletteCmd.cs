@@ -12,25 +12,55 @@ namespace JNNTool.Core.Palette
     [Transaction(TransactionMode.Manual)]
     public class TogglePaletteCmd : IExternalCommand
     {
+        private static DateTime _lastToggleTime = DateTime.MinValue;
+        private static readonly object _syncLock = new object();
+        private const int DebounceMs = 800;
+
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
+            // Debounce để ngăn người dùng click liên tiếp hoặc double-click làm crash native docking manager của Revit
+            lock (_syncLock)
+            {
+                var elapsed = (DateTime.UtcNow - _lastToggleTime).TotalMilliseconds;
+                if (elapsed < DebounceMs)
+                {
+                    return Result.Succeeded;
+                }
+                _lastToggleTime = DateTime.UtcNow;
+            }
+
             try
             {
-                DockablePane pane = commandData.Application.GetDockablePane(CommandPalettePage.PaneId);
-                if (pane == null)
+                if (!DockablePane.PaneIsRegistered(CommandPalettePage.PaneId))
                 {
-                    message = "Command Palette chưa được đăng ký trong Revit.";
+                    message = "Command Palette chưa được đăng ký trong phiên làm việc hiện tại của Revit.";
                     return Result.Failed;
                 }
 
-                if (pane.IsShown())
+                DockablePane pane = commandData.Application.GetDockablePane(CommandPalettePage.PaneId);
+                if (pane == null)
                 {
-                    pane.Hide();
+                    message = "Không tìm thấy Dockable Pane Command Palette.";
+                    return Result.Failed;
                 }
-                else
+
+                try
                 {
-                    pane.Show();
+                    if (pane.IsShown())
+                    {
+                        pane.Hide();
+                    }
+                    else
+                    {
+                        pane.Show();
+                    }
                 }
+                catch (Exception ex)
+                {
+                    Logger.Error("Lỗi khi Show/Hide DockablePane", ex);
+                    try { pane.Show(); } catch { }
+                }
+
                 return Result.Succeeded;
             }
             catch (Exception ex)

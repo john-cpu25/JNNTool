@@ -18,7 +18,7 @@ namespace JNNTool.Core.Palette
     /// Thiết kế chuẩn bố cục 2 cột (Danh sách lệnh hàng ngang + Thanh Category dọc bên phải)
     /// kèm Footer tích hợp Theme Color Preview, nút Settings (UI Manager) và License.
     /// </summary>
-    public partial class CommandPalettePage : Page, IDockablePaneProvider
+    public partial class CommandPalettePage : UserControl, IDockablePaneProvider
     {
         public static readonly DockablePaneId PaneId =
             new DockablePaneId(new Guid("D5C7B6E2-3A19-4F58-9A2E-8E14B927CF01"));

@@ -1110,6 +1110,18 @@ namespace JNNTool
                 var requestedName = new AssemblyName(args.Name).Name;
                 if (string.IsNullOrEmpty(requestedName)) return null;
 
+                // 0. Bỏ qua các assembly Revit và hệ thống để tránh xung đột phiên bản và crash CLR
+                if (requestedName.StartsWith("RevitAPI", StringComparison.OrdinalIgnoreCase) ||
+                    requestedName.StartsWith("RevitServices", StringComparison.OrdinalIgnoreCase) ||
+                    requestedName.StartsWith("System.", StringComparison.OrdinalIgnoreCase) ||
+                    requestedName.StartsWith("mscorlib", StringComparison.OrdinalIgnoreCase) ||
+                    requestedName.StartsWith("PresentationFramework", StringComparison.OrdinalIgnoreCase) ||
+                    requestedName.StartsWith("PresentationCore", StringComparison.OrdinalIgnoreCase) ||
+                    requestedName.StartsWith("WindowsBase", StringComparison.OrdinalIgnoreCase))
+                {
+                    return null;
+                }
+
                 // 1. Ưu tiên tìm trong thư mục chứa JNNTool.dll (bundle của phiên bản Revit hiện hành)
                 string currentDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
                 if (!string.IsNullOrEmpty(currentDir))
