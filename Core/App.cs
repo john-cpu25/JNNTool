@@ -51,13 +51,14 @@ namespace JNNTool
                 JNNTool.Core.Logging.Logger.Error("Lỗi khởi tạo WpfWindowHelper", ex);
             }
 
-            // Đăng ký Dockable Pane cho Command Palette
+            // Đăng ký Dockable Pane cho Command Palette (Lazy Host — chỉ tạo Grid trống,
+            // nội dung thực CommandPalettePage sẽ lazy-load khi pane Show lần đầu để tránh crash)
             try
             {
                 application.RegisterDockablePane(
-                    JNNTool.Core.Palette.CommandPalettePage.PaneId,
-                    JNNTool.Core.Palette.CommandPalettePage.PaneTitle,
-                    new JNNTool.Core.Palette.CommandPalettePage()
+                    JNNTool.Core.Palette.PaletteHost.PaneId,
+                    JNNTool.Core.Palette.PaletteHost.PaneTitle,
+                    new JNNTool.Core.Palette.PaletteHost()
                 );
             }
             catch (Exception ex)

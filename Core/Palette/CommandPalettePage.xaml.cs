@@ -17,16 +17,11 @@ namespace JNNTool.Core.Palette
     /// Command Palette Dockable Pane cho JNNTool:
     /// Thiết kế chuẩn bố cục 2 cột (Danh sách lệnh hàng ngang + Thanh Category dọc bên phải)
     /// kèm Footer tích hợp Theme Color Preview, nút Settings (UI Manager) và License.
+    /// Được lazy-load bởi PaletteHost khi pane Show lần đầu.
     /// </summary>
-    public partial class CommandPalettePage : UserControl, IDockablePaneProvider
+    public partial class CommandPalettePage : UserControl
     {
-        public static readonly DockablePaneId PaneId =
-            new DockablePaneId(new Guid("D5C7B6E2-3A19-4F58-9A2E-8E14B927CF01"));
-
-        public const string PaneTitle = "JNN Command Palette";
-
         private static JNNTool.Tools.UIManager.UI.UIManagerWindow? _uiManagerWindow;
-
         private readonly List<PaletteItemVm> _allItems;
         private readonly HashSet<string> _favorites;
         private readonly ObservableCollection<PaletteItemVm> _displayedItems = new ObservableCollection<PaletteItemVm>();
@@ -147,24 +142,7 @@ namespace JNNTool.Core.Palette
             Rebuild();
         }
 
-        // ── IDockablePaneProvider ─────────────────────────────────────────
-        public void SetupDockablePane(DockablePaneProviderData data)
-        {
-            try
-            {
-                data.FrameworkElement = this;
-                data.VisibleByDefault = false;
-                data.InitialState = new DockablePaneState
-                {
-                    DockPosition = DockPosition.Left,
-                    MinimumWidth = 240
-                };
-            }
-            catch (Exception ex)
-            {
-                JNNTool.Core.Logging.Logger.Error("Lỗi SetupDockablePane", ex);
-            }
-        }
+
 
         // ── Lọc và tái tạo danh sách công cụ hiển thị ─────────────────────
         private void Rebuild()

@@ -31,13 +31,13 @@ namespace JNNTool.Core.Palette
 
             try
             {
-                if (!DockablePane.PaneIsRegistered(CommandPalettePage.PaneId))
+                if (!DockablePane.PaneIsRegistered(PaletteHost.PaneId))
                 {
                     message = "Command Palette chưa được đăng ký trong phiên làm việc hiện tại của Revit.";
                     return Result.Failed;
                 }
 
-                DockablePane pane = commandData.Application.GetDockablePane(CommandPalettePage.PaneId);
+                DockablePane pane = commandData.Application.GetDockablePane(PaletteHost.PaneId);
                 if (pane == null)
                 {
                     message = "Không tìm thấy Dockable Pane Command Palette.";
