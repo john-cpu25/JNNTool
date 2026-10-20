@@ -39,28 +39,35 @@ namespace JNNTool.Core.Palette
         {
             InitializeComponent();
 
-            _favorites = FavoriteStore.Load();
-            var currentTheme = JNNTool.Tools.UIManager.Models.RibbonThemeSettings.Load()
-                            ?? new JNNTool.Tools.UIManager.Models.RibbonThemeSettings();
-
-            _allItems = CommandRegistry.Commands.Select(c => new PaletteItemVm(c, currentTheme)).ToList();
-            foreach (PaletteItemVm item in _allItems)
+            try
             {
-                item.IsFavorite = _favorites.Contains(item.Id);
+                _favorites = FavoriteStore.Load();
+                var currentTheme = JNNTool.Tools.UIManager.Models.RibbonThemeSettings.Load()
+                                ?? new JNNTool.Tools.UIManager.Models.RibbonThemeSettings();
+
+                _allItems = CommandRegistry.Commands.Select(c => new PaletteItemVm(c, currentTheme)).ToList();
+                foreach (PaletteItemVm item in _allItems)
+                {
+                    item.IsFavorite = _favorites.Contains(item.Id);
+                }
+
+                ToolsList.ItemsSource = _displayedItems;
+                CategoryTabsList.ItemsSource = _categoryTabs;
+
+                InitCategoryTabs();
+                ApplyThemeColors(currentTheme);
+
+                CommandRunner.StatusChanged += OnStatusChanged;
+                JNNTool.Tools.UIManager.Services.RibbonThemeService.ThemeApplied += OnThemeApplied;
+                PreviewKeyDown += Page_PreviewKeyDown;
+
+                // Mặc định chọn tab "Modeling" hoặc "General"
+                SelectCategoryById("Modeling");
             }
-
-            ToolsList.ItemsSource = _displayedItems;
-            CategoryTabsList.ItemsSource = _categoryTabs;
-
-            InitCategoryTabs();
-            ApplyThemeColors(currentTheme);
-
-            CommandRunner.StatusChanged += OnStatusChanged;
-            JNNTool.Tools.UIManager.Services.RibbonThemeService.ThemeApplied += OnThemeApplied;
-            PreviewKeyDown += Page_PreviewKeyDown;
-
-            // Mặc định chọn tab "Modeling" hoặc "General"
-            SelectCategoryById("Modeling");
+            catch (Exception ex)
+            {
+                JNNTool.Core.Logging.Logger.Error("Lỗi khởi tạo CommandPalettePage", ex);
+            }
         }
 
         // ── Khởi tạo các Tab Category dọc bên phải ────────────────────────
@@ -143,13 +150,20 @@ namespace JNNTool.Core.Palette
         // ── IDockablePaneProvider ─────────────────────────────────────────
         public void SetupDockablePane(DockablePaneProviderData data)
         {
-            data.FrameworkElement = this;
-            data.VisibleByDefault = false;
-            data.InitialState = new DockablePaneState
+            try
             {
-                DockPosition = DockPosition.Left,
-                MinimumWidth = 240
-            };
+                data.FrameworkElement = this;
+                data.VisibleByDefault = false;
+                data.InitialState = new DockablePaneState
+                {
+                    DockPosition = DockPosition.Left,
+                    MinimumWidth = 240
+                };
+            }
+            catch (Exception ex)
+            {
+                JNNTool.Core.Logging.Logger.Error("Lỗi SetupDockablePane", ex);
+            }
         }
 
         // ── Lọc và tái tạo danh sách công cụ hiển thị ─────────────────────

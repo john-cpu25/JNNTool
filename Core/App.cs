@@ -1050,50 +1050,6 @@ namespace JNNTool
                 JNNTool.Core.Logging.Logger.Error("Lỗi tự động nạp Ribbon Theme", ex);
             }
 
-            // ─── Auto-update check (background, non-blocking) ───────────────
-#if !NET48
-            string bundleDirForUpdate = Path.GetDirectoryName(assemblyPath) is { } d
-                ? Path.GetFullPath(Path.Combine(d, "..", ".."))
-                : "";
-            application.ControlledApplication.ApplicationInitialized += (s, e) =>
-            {
-                _ = Task.Run(async () =>
-                {
-                    try
-                    {
-                        string installedJson = Path.Combine(bundleDirForUpdate, "version.json");
-                        if (!File.Exists(installedJson)) return;
-
-                        var installedText = await File.ReadAllTextAsync(installedJson);
-                        var installed     = Newtonsoft.Json.JsonConvert.DeserializeObject<VersionInfo>(installedText);
-                        if (installed == null || string.IsNullOrWhiteSpace(installed.ManifestUrl)) return;
-
-                        using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(5) };
-                        var latestJson = await http.GetStringAsync(installed.ManifestUrl);
-                        var latest     = Newtonsoft.Json.JsonConvert.DeserializeObject<VersionInfo>(latestJson);
-                        if (latest == null) return;
-
-                        if (Version.TryParse(latest.Version, out var lv) &&
-                            Version.TryParse(installed.Version, out var iv) &&
-                            lv > iv)
-                        {
-                            // Hiện thông báo an toàn trên UI thread của Revit qua ExternalEvent
-                            JNNTool.Core.ExternalEvents.ActionEventHandler.Instance.Post(_ =>
-                            {
-                                TaskDialog dlg = new TaskDialog("JNNTool — Có phiên bản mới!");
-                                dlg.MainIcon        = TaskDialogIcon.TaskDialogIconInformation;
-                                dlg.MainInstruction = $"🔔 JNNTool v{latest.Version} đã sẵn sàng!";
-                                dlg.MainContent     = $"Bạn đang dùng v{installed.Version}.\n" +
-                                                      $"Vui lòng chạy JNNToolUpdater.exe để cập nhật.";
-                                dlg.Show();
-                            });
-                        }
-                    }
-                    catch { /* Không làm gì nếu lỗi network */ }
-                });
-            };
-#endif
-
             return Result.Succeeded;
         }
 
