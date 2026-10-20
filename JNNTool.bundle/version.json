@@ -1,9 +1,9 @@
 {
-    "version":  "2.1.4",
+    "version":  "2.1.5",
     "releaseDate":  "2026-10-20",
     "manifestUrl":  "https://raw.githubusercontent.com/john-cpu25/JNNTool/main/version.json",
-    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.1.4/JNNToolSetup_v2.1.4.msi",
+    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.1.5/JNNToolSetup_v2.1.5.msi",
     "changelog":  [
-                      "Sua triet de loi crash Unrecoverable Error khi mo Command Palette; Chuyen doi CommandPalettePage sang UserControl va bo sung debounce chong crash Revit"
+                      "Khac phuc triet de loi crash Unrecoverable Error tren Revit 2026: Dong bo target runtime sang .NET 10 (net10.0-windows), loai bo TaskDialog tu dong khi mo file, va bao ve try-catch cho Command Palette Dockable Pane."
                   ]
 }

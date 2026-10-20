@@ -9,7 +9,7 @@
 
   <Package Name="JNNTool Revit Plugin"
            Manufacturer="JNN"
-           Version="2.1.4"
+           Version="2.1.5"
            UpgradeCode="7f04a601-5e26-4b8c-8f4b-57f920f92b7c"
            Compressed="yes"
            Scope="perUser">
