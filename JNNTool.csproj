@@ -32,6 +32,7 @@
     <Compile Remove="Tools\StairDetail\**" />
 
     <Compile Remove="Tools\**\PreviewApp\**" />
+    <Compile Remove="Core\Palette\**" />
     <Compile Remove="Installer\**" />
     <Compile Remove="Tests\**" />
     <Compile Remove="HtStructural\**" />
@@ -42,6 +43,7 @@
     <Page Remove="Tools\StairDetail\**" />
 
     <Page Remove="Tools\**\PreviewApp\**" />
+    <Page Remove="Core\Palette\**" />
     <Page Remove="Installer\**" />
     <Page Remove="Tests\**" />
     <Page Remove="HtStructural\**" />

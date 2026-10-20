@@ -51,22 +51,6 @@ namespace JNNTool
                 JNNTool.Core.Logging.Logger.Error("Lỗi khởi tạo WpfWindowHelper", ex);
             }
 
-            // Đăng ký Dockable Pane cho Command Palette (Lazy Host — chỉ tạo Grid trống,
-            // nội dung thực CommandPalettePage sẽ lazy-load khi pane Show lần đầu để tránh crash)
-            try
-            {
-                application.RegisterDockablePane(
-                    JNNTool.Core.Palette.PaletteHost.PaneId,
-                    JNNTool.Core.Palette.PaletteHost.PaneTitle,
-                    new JNNTool.Core.Palette.PaletteHost()
-                );
-            }
-            catch (Exception ex)
-            {
-                JNNTool.Core.Logging.Logger.Error("Lỗi đăng ký Dockable Pane Command Palette", ex);
-            }
-
-
             // Lấy đường dẫn thực thi của tệp DLL
             string assemblyPath = Assembly.GetExecutingAssembly().Location;
             string assemblyDir = Path.GetDirectoryName(assemblyPath);
@@ -80,33 +64,6 @@ namespace JNNTool
             try
             {
                 RibbonPanel generalPanel = application.CreateRibbonPanel(tabName, "General");
-
-                // ------------------- Command Palette -------------------
-                PushButtonData btnPaletteData = new PushButtonData(
-                    "cmdPalette",
-                    "Command\nPalette",
-                    assemblyPath,
-                    "JNNTool.Core.Palette.TogglePaletteCmd"
-                );
-                btnPaletteData.AvailabilityClassName = "JNNTool.Core.Palette.AlwaysAvailable";
-                btnPaletteData.ToolTip = "Mở bảng Command Palette (Ctrl+F) tra cứu và thực thi nhanh toàn bộ công cụ JNNTool.";
-
-                PushButton btnPalette = generalPanel.AddItem(btnPaletteData) as PushButton;
-                if (btnPalette != null)
-                {
-                    string iconPathPalette = Path.Combine(resourcesPath, "CommandPalette.png");
-                    if (!File.Exists(iconPathPalette)) iconPathPalette = Path.Combine(resourcesPath, "UIManager.png");
-                    if (File.Exists(iconPathPalette))
-                    {
-                        BitmapImage img = new BitmapImage();
-                        img.BeginInit();
-                        img.UriSource = new Uri(iconPathPalette, UriKind.Absolute);
-                        img.CacheOption = BitmapCacheOption.OnLoad;
-                        img.EndInit();
-                        btnPalette.LargeImage = img;
-                        btnPalette.Image = img;
-                    }
-                }
 
                 // ------------------- Account / License -------------------
                 PushButtonData btnLicenseData = new PushButtonData(

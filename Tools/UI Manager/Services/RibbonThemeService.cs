@@ -23,7 +23,6 @@ namespace JNNTool.Tools.UIManager.Services
         private static readonly List<RibbonButtonItem> _knownButtons = new List<RibbonButtonItem>
         {
             // ───────────────── Panel: General ─────────────────
-            new RibbonButtonItem { CommandId = "cmdPalette", DisplayName = "Command\nPalette", PanelName = "General", Icon = JNNIcon.CommandPalette, ToolTip = "Mở bảng Command Palette (Ctrl+F) tra cứu và thực thi nhanh toàn bộ công cụ JNNTool." },
             new RibbonButtonItem { CommandId = "cmdLicense", DisplayName = "Account\nLicense", PanelName = "General", Icon = JNNIcon.Key, ToolTip = "Quản lý bản quyền, đăng nhập tài khoản và kích hoạt JNNTool." },
             new RibbonButtonItem { CommandId = "cmdUIManager", DisplayName = "Ribbon\nTheme", PanelName = "General", Icon = JNNIcon.Palette, ToolTip = "Tùy biến màu sắc theme và kiểu hiển thị Icon trên thanh Ribbon JNNTool." },
 
