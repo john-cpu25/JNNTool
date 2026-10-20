@@ -1,9 +1,9 @@
 {
-    "version":  "2.1.7",
+    "version":  "2.1.8",
     "releaseDate":  "2026-10-20",
     "manifestUrl":  "https://raw.githubusercontent.com/john-cpu25/JNNTool/main/version.json",
-    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.1.7/JNNToolSetup_v2.1.7.msi",
+    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.1.8/JNNToolSetup_v2.1.8.msi",
     "changelog":  [
-                      "Go bo hoan toan Dockable Pane Command Palette de tranh crash Revit khi hover chuot hoac mo file"
+                      "Fix triet de crash Command Palette trong Revit 2026: dong bo net8.0-windows, loai bo DropShadow va complex ToolTip, giu static reference chong GC"
                   ]
 }
