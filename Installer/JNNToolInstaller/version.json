@@ -1,9 +1,9 @@
 {
-    "version":  "2.1.3",
-    "releaseDate":  "2026-10-19",
+    "version":  "2.1.4",
+    "releaseDate":  "2026-10-20",
     "manifestUrl":  "https://raw.githubusercontent.com/john-cpu25/JNNTool/main/version.json",
-    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.1.3/JNNToolSetup_v2.1.3.msi",
+    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.1.4/JNNToolSetup_v2.1.4.msi",
     "changelog":  [
-                      "Bo tron 10px 4 goc giao dien Window; Bo tron va toi uu Dark Mode cho nut chon phien ban ComboBox"
+                      "Sua triet de loi crash Unrecoverable Error khi mo Command Palette; Chuyen doi CommandPalettePage sang UserControl va bo sung debounce chong crash Revit"
                   ]
 }
