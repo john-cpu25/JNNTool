@@ -1,9 +1,9 @@
 {
-    "version":  "2.2.0",
-    "releaseDate":  "2026-10-21",
+    "version":  "2.2.1",
+    "releaseDate":  "2026-10-22",
     "manifestUrl":  "https://raw.githubusercontent.com/john-cpu25/JNNTool/main/version.json",
-    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.2.0/JNNToolSetup_v2.2.0.msi",
+    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.2.1/JNNToolSetup_v2.2.1.msi",
     "changelog":  [
-                      "Nang cap he thong Command Palette (Dockable Page, tim kiem tieng Viet khong dau) va cap nhat vector icon mau chuan cho tool CSI x Revit (Import E2K)"
+                      "Phan chia panel Modeling thanh 4 panel (Numbering, Beam, Floor, Visibility); Sua loi Auto View\u0026Sheet khong bi cut dong con va ten mat bang khong bi lap; Cap nhat hien thi phien ban dong tren JNN Updater"
                   ]
 }
