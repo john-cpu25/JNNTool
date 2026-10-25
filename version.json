@@ -1,9 +1,9 @@
 {
-    "version":  "2.2.2",
-    "releaseDate":  "2026-10-22",
+    "version":  "2.3.0",
+    "releaseDate":  "2026-10-25",
     "manifestUrl":  "https://raw.githubusercontent.com/john-cpu25/JNNTool/main/version.json",
-    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.2.2/JNNToolSetup_v2.2.2.msi",
+    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.3.0/JNNToolSetup_v2.3.0.msi",
     "changelog":  [
-                      "Disallow Join Beam: bo sung giao dien JNN va tuy chon Active View; Create Section: nang cap UI chuan JNN bo cong Droplist; Create Filter va Speed Overrider: bo cong Droplist va sua loi popup chon mau bi nam sau; Quantity Takeoff: toi uu chi hien thi thong so Be Tong"
+                      "Tich hop Link CAD (Batch Link \u0026 Auto Align toan bo CAD cac tang theo file mau), Floor Void Cut (Tu dong cat lo mo \u0026 ha san tu CAD link), Export View (Xuat ban ve hang loat theo View Type), Merge Floor Active View 1-Click va tai cau truc Ribbon (Dimension, Link, Export)"
                   ]
 }
