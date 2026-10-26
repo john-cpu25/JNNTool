@@ -1,9 +1,10 @@
 {
-    "version":  "2.3.0",
-    "releaseDate":  "2026-10-25",
+    "version":  "2.4.0",
+    "releaseDate":  "2026-10-26",
     "manifestUrl":  "https://raw.githubusercontent.com/john-cpu25/JNNTool/main/version.json",
-    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.3.0/JNNToolSetup_v2.3.0.msi",
+    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.4.0/JNNToolSetup_v2.4.0.msi",
     "changelog":  [
-                      "Tich hop Link CAD (Batch Link \u0026 Auto Align toan bo CAD cac tang theo file mau), Floor Void Cut (Tu dong cat lo mo \u0026 ha san tu CAD link), Export View (Xuat ban ve hang loat theo View Type), Merge Floor Active View 1-Click va tai cau truc Ribbon (Dimension, Link, Export)"
+                      "Bao mat ban quyen: chu ky ES256, kiem tra ngam khong can mat khau, cho phep dung offline 7 ngay, ho tro proxy cong ty (can dang nhap lai 1 lan)",
+                      "Ribbon sinh tu dong tu CommandRegistry, ghi log loi day du, sua quy doi don vi, tach file lon (Print, Merge Floor)"
                   ]
 }
