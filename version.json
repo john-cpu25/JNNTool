@@ -1,10 +1,11 @@
 {
-    "version":  "2.4.0",
-    "releaseDate":  "2026-10-26",
+    "version":  "2.5.0",
+    "releaseDate":  "2026-10-28",
     "manifestUrl":  "https://raw.githubusercontent.com/john-cpu25/JNNTool/main/version.json",
-    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.4.0/JNNToolSetup_v2.4.0.msi",
+    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.5.0/JNNToolSetup_v2.5.0.msi",
     "changelog":  [
-                      "Bao mat ban quyen: chu ky ES256, kiem tra ngam khong can mat khau, cho phep dung offline 7 ngay, ho tro proxy cong ty (can dang nhap lai 1 lan)",
-                      "Ribbon sinh tu dong tu CommandRegistry, ghi log loi day du, sua quy doi don vi, tach file lon (Print, Merge Floor)"
+                      "Them moi tool Create View \u0026 Sheet (Tao View va Dan Sheet tu dong)",
+                      "Bo sung khung cai dat Sheet Numbering va Sheet Series",
+                      "Toi uu chong bam dup va khac phuc can tieu de viewport"
                   ]
 }
