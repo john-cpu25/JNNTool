@@ -1,13 +1,17 @@
 {
-    "version":  "2.7.0",
-    "releaseDate":  "2026-11-15",
+    "version":  "2.8.0",
+    "releaseDate":  "2026-11-25",
     "manifestUrl":  "https://raw.githubusercontent.com/john-cpu25/JNNTool/main/version.json",
-    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.7.0/JNNToolSetup_v2.7.0.msi",
+    "downloadUrl":  "https://github.com/john-cpu25/JNNTool/releases/download/v2.8.0/JNNToolSetup_v2.8.0.msi",
     "changelog":  [
-                      "Them Floor Split by Beams: tach san lon thanh o san theo mep dam/cot",
-                      "Them Allow Join Beam: cho phep noi lai dau dam",
-                      "Them Import SAFE (CSI x Revit)",
-                      "Gop Export View vao Print Sheet thanh mot nut Print / Export, giao dien moi",
-                      "Cap nhat Hatch Floor"
+                      "Them Super Tool: tu file ETABS ra ban ve (import, join, view, sheet, dim, tag, in)",
+                      "Them Auto Tag cot va dam",
+                      "Them JNN Rebar Column Rebar (thep cot)",
+                      "Auto Join: them nhom Wall va Auto Join Settings (thu tu uu tien)",
+                      "Dim Column: luat dim moi theo vi tri truc, chon vi tri dim",
+                      "Pile Location: tab Settings chon parameter toa do, sua loi don vi va nhan dien coc",
+                      "Import E2K/SAFE: Preview 3D, tab Settings, san va dam doc",
+                      "Hatch Floor: net bien mac dinh 161_HATCH",
+                      "Bo cai: bo sung DLL con thieu cho gop PDF va xuat Excel"
                   ]
 }
